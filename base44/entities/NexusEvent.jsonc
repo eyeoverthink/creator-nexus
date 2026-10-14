@@ -14,6 +14,10 @@
     "message": {
       "type": "string"
     },
+    "body": {
+      "type": "string",
+      "maxLength": 20000
+    },
     "kind": {
       "type": "string"
     }

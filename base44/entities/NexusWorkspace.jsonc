@@ -11,6 +11,10 @@
     "room_id": {
       "type": "string"
     },
+    "agent_roster_version": {
+      "type": "integer",
+      "default": 0
+    },
     "layout": {
       "type": "array",
       "items": {
