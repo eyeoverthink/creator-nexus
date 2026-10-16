@@ -12,6 +12,7 @@ export default async function(req) {
     const draft = await base44.entities.NexusDraft.get(input.draft_id);
     if (!draft || draft.owner_id !== user.id) return Response.json({error:'Workspace access denied'}, {status:403});
     if(input.operation!==undefined&&!['run','prepare_ollama'].includes(input.operation))return Response.json({error:'Unsupported agent operation'},{status:400});
+    if(input.operation!=='prepare_ollama'&&input.consent!==true)return Response.json({error:'Approve this specific hosted agent run before starting.'},{status:403});
     const context=JSON.stringify(input.context||{});if(context.length>48000)return Response.json({error:'Workspace context is too large'},{status:400});let result=null;
     const learning=await learningContext(base44,user,draft,input.agent,input.use_approved_examples!==false);
     const library=await base44.entities.NexusKnowledge.filter({owner_id:user.id,workspace_id:draft.workspace_id},{sort:'-created_date',limit:20,fields:['title']});
@@ -33,7 +34,7 @@ export default async function(req) {
       inspectDraft:tool({description:'Read the saved active draft',inputSchema:z.object({}),execute:async()=>({title:draft.title,body:draft.body})}),
       publishResult:tool({description:'Finish with a draft edit, inspiration cards, or a note. Only return one action.',inputSchema:resultSchema,execute:async(value)=>{result=value;return {accepted:true};}}),
     },stopWhen:[stepCountIs(4),hasToolCall('publishResult')]});
-    await agent.generate({prompt:`Task: ${input.task}\nShared live context: ${context}\nSaved draft: ${JSON.stringify({title:draft.title,body:draft.body})}\nAssigned learning context (user-authored skills and browser-reported evidence): ${JSON.stringify(learning)}\nBuilt-in Babel references always available via readLearningLibrary: reference=overview (README), reference=engine (actual source, use offset for next pages), reference=notes, reference=results. Do not search the user catalog to find these built-ins.\nAdditional reference catalog (retrieve by id, or search for more): ${JSON.stringify(library.items)}`});
+    await agent.generate({maxRetries:0,prompt:`Task: ${input.task}\nShared live context: ${context}\nSaved draft: ${JSON.stringify({title:draft.title,body:draft.body})}\nAssigned learning context (user-authored skills and browser-reported evidence): ${JSON.stringify(learning)}\nBuilt-in Babel references always available via readLearningLibrary: reference=overview (README), reference=engine (actual source, use offset for next pages), reference=notes, reference=results. Do not search the user catalog to find these built-ins.\nAdditional reference catalog (retrieve by id, or search for more): ${JSON.stringify(library.items)}`});
     if (!result) return Response.json({error:'The agent did not produce an action. Try a more specific task.'},{status:422});
     return Response.json({result});
   } catch(error) {return Response.json({error:error.message},{status:500});}

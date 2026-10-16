@@ -13,7 +13,8 @@
       "enum": [
         "researcher",
         "writer",
-        "strategist"
+        "strategist",
+        "director"
       ]
     },
     "name": {

@@ -1,0 +1,116 @@
+{
+  "name": "NexusSpark",
+  "type": "object",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "batch_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "hook": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "format": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "scenes": {
+      "type": "array",
+      "maxItems": 4,
+      "items": {
+        "type": "string",
+        "maxLength": 800
+      }
+    },
+    "why_now": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "signature_move": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "effort_minutes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 600
+    },
+    "risk_flags": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "string",
+        "maxLength": 200
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "idea",
+        "draft",
+        "approved",
+        "published",
+        "evaluated"
+      ],
+      "default": "idea"
+    },
+    "draft_id": {
+      "type": "string"
+    },
+    "brief": {
+      "type": "string",
+      "maxLength": 3000
+    },
+    "caption": {
+      "type": "string",
+      "maxLength": 3000
+    },
+    "disclosure": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "signature": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "approved_at": {
+      "type": "string"
+    },
+    "guard_result": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "batch_id",
+    "title",
+    "hook",
+    "format",
+    "scenes",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "data.owner_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

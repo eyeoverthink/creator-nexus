@@ -1,0 +1,72 @@
+{
+  "name": "NexusOriginRun",
+  "type": "object",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "operation": {
+      "type": "string",
+      "enum": [
+        "sparks",
+        "script"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "running",
+        "succeeded",
+        "failed"
+      ]
+    },
+    "consented_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string",
+      "default": "hosted"
+    },
+    "batch_id": {
+      "type": "string"
+    },
+    "spark_id": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "cost_note": {
+      "type": "string",
+      "maxLength": 500
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "operation",
+    "status",
+    "consented_at"
+  ],
+  "rls": {
+    "create": {
+      "data.owner_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

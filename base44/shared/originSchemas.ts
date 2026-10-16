@@ -1,0 +1,9 @@
+import {z} from 'npm:zod@4.4.3';
+export const dnaSchema=z.object({interests:z.string().trim().min(3).max(1500),skills:z.string().max(1500),audience:z.string().trim().min(3).max(1000),voice:z.string().trim().min(3).max(1000),goals:z.string().trim().min(3).max(1000),red_lines:z.string().max(1500),on_camera:z.enum(['yes','voice_only','no']),weekly_minutes:z.number().int().min(10).max(10080),monthly_budget:z.number().min(0).max(100000)});
+export const sparkSchema=z.object({title:z.string().min(1).max(160),hook:z.string().min(1).max(500),format:z.string().min(1).max(100),scenes:z.array(z.string().min(1).max(800)).length(4),why_now:z.string().min(1).max(1000),signature_move:z.string().min(1).max(500),effort_minutes:z.number().int().min(1).max(600),risk_flags:z.array(z.string().max(200)).max(8)});
+export const sparksSchema=z.object({sparks:z.array(sparkSchema).length(5)});
+export const scriptSchema=z.object({title:z.string().min(1).max(160),body:z.string().min(50).max(18000),brief:z.string().min(20).max(3000),caption:z.string().max(3000),disclosure:z.string().min(1).max(500)});
+export const draftSchema=z.object({title:z.string().trim().min(1).max(160),body:z.string().min(1).max(20000),revision:z.number().int().min(0)});
+export const ruleSchema=z.object({hypothesis:z.string().trim().min(10).max(1000),metric:z.enum(['views','likes','comments','clicks']),target:z.number().int().min(1).max(1000000000),minimum_views:z.number().int().min(1).max(1000000000),observation_hours:z.number().int().min(1).max(720)});
+export const resultSchema=z.object({observed_views:z.number().int().min(0).max(1000000000),observed_value:z.number().int().min(0).max(1000000000),notes:z.string().max(2000),finalize:z.boolean()});
+export function parse(schema,value){const result=schema.safeParse(value);if(!result.success)throw new Error(result.error.issues.map(i=>i.path.join('.')+': '+i.message).join('; ').slice(0,800));return result.data;}
