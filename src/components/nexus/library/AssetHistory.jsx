@@ -1,0 +1,9 @@
+import {useInfiniteQuery} from '@tanstack/react-query';
+import {base44} from '@/api/base44Client';
+import {assetScope} from '@/components/nexus/library/libraryConstants';
+import AssetPreview from '@/components/nexus/library/AssetPreview';
+import {Button} from '@/components/ui/button';
+export default function AssetHistory({workspace,asset}){
+ const history=useInfiniteQuery({queryKey:['asset-history',asset.id],initialPageParam:undefined,queryFn:({pageParam})=>base44.entities.NexusAssetRevision.filter({...assetScope(workspace),asset_id:asset.id},{sort:'-created_date',limit:10,...(pageParam?{cursor:pageParam}:{})}),getNextPageParam:p=>p.has_more?p.next_cursor:undefined});
+ return <section className="space-y-3"><h3 className="font-heading text-lg">Asset history</h3><p className="text-xs text-muted-foreground">Saved versions retain text, media references, project and agent assignments. Favorites do not create new versions.</p>{history.isPending&&<p role="status">Loading saved versions…</p>}{history.error&&<p role="alert" className="text-destructive">{history.error.message}</p>}{history.data?.pages.flatMap(p=>p.items).map(revision=><details key={revision.id} className="border border-border rounded-lg p-4"><summary className="text-sm cursor-pointer">Version {revision.version} · {new Date(revision.created_date).toLocaleString()}</summary><div className="space-y-3 mt-4"><p className="text-xs text-muted-foreground">{revision.note}</p><h4 className="font-heading">{revision.snapshot.title}</h4><p className="text-xs text-muted-foreground">Project: {revision.snapshot.project||'Unassigned'} · Agents: {revision.snapshot.agent_ids?.join(', ')||'None'}</p><AssetPreview asset={revision.snapshot}/></div></details>)}{history.hasNextPage&&<Button variant="outline" onClick={()=>history.fetchNextPage()} disabled={history.isFetchingNextPage}>Older versions</Button>}</section>;
+}

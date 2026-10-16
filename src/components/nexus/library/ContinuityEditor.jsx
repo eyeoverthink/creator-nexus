@@ -1,0 +1,18 @@
+import {useState} from 'react';
+import {useQuery,useQueryClient} from '@tanstack/react-query';
+import {base44} from '@/api/base44Client';
+import {assetScope,fieldClass} from '@/components/nexus/library/libraryConstants';
+import {Button} from '@/components/ui/button';
+export default function ContinuityEditor({workspace,scope,label}){
+ const cache=useQueryClient(),[form,setForm]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[saved,setSaved]=useState(false);
+ const record=useQuery({queryKey:['continuity',workspace.id,scope],queryFn:async()=>(await base44.entities.NexusContinuity.filter({...assetScope(workspace),scope},{limit:1,sort:'-updated_date'})).items[0]||{context:'',display_name:'',enabled:true,settings:{}}});
+ const value=form||record.data,set=(key,v)=>{setForm({...value,[key]:v});setSaved(false);};
+ async function save(e){e.preventDefault();setBusy(true);setError('');try{await base44.entities.NexusContinuity.upsert([{...assetScope(workspace),scope,display_name:value.display_name||'',context:value.context||'',enabled:value.enabled!==false,settings:value.settings||{}}],{key:['owner_id','workspace_id','scope']});await cache.invalidateQueries({queryKey:['continuity',workspace.id,scope]});setForm(null);setSaved(true);}catch(e){setError(e.message);}finally{setBusy(false);}}
+ if(record.isPending)return <p role="status">Loading saved context…</p>;
+ if(record.error)return <p role="alert" className="text-destructive">{record.error.message}</p>;
+ return <form onSubmit={save} className="space-y-5 max-w-3xl"><h2 className="font-heading text-2xl">{label}</h2><p className="text-sm text-muted-foreground">Saved to your workspace across sessions and devices. Relevant context is supplied to future agent runs, not used to train model weights.</p><fieldset disabled={busy} className="space-y-5">
+  {scope==='profile'&&<><label className="block text-sm">Name agents should use<input maxLength={100} value={value.display_name||''} onChange={e=>set('display_name',e.target.value)} className={fieldClass}/></label><div className="grid sm:grid-cols-2 gap-4"><label className="block text-sm">Preferred language<input maxLength={80} value={value.settings?.language||''} onChange={e=>set('settings',{...value.settings,language:e.target.value})} className={fieldClass}/></label><label className="block text-sm">Timezone<input maxLength={80} placeholder="America/Los_Angeles" value={value.settings?.timezone||''} onChange={e=>set('settings',{...value.settings,timezone:e.target.value})} className={fieldClass}/></label></div></>}
+  <label className="block text-sm">{scope==='profile'?'Preferences, style & working context':'Persistent memory & working notes'}<textarea rows={8} maxLength={6000} value={value.context||''} onChange={e=>set('context',e.target.value)} className={fieldClass} placeholder={scope==='profile'?'My audience, preferred voice, recurring constraints and goals…':'Decisions, project context, reusable instructions and things this agent should remember…'}/></label>
+  <label className="flex gap-2 items-center text-sm"><input type="checkbox" checked={value.enabled!==false} onChange={e=>set('enabled',e.target.checked)}/>Use this context in future runs</label>
+ </fieldset><Button disabled={busy}>{busy?'Saving…':'Save continuity'}</Button>{saved&&<p role="status" className="text-sm text-primary">Saved. Future runs will use this context.</p>}{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}</form>;
+}

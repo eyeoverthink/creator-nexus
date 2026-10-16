@@ -1,0 +1,17 @@
+import {useState,useEffect} from 'react';
+import {useInfiniteQuery} from '@tanstack/react-query';
+import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription} from '@/components/ui/dialog';
+import {Button} from '@/components/ui/button';
+import {sources,fieldClass} from '@/components/nexus/library/libraryConstants';
+import {libraryCall} from '@/components/nexus/library/libraryClient';
+export default function SourcePicker({workspace,onClose,onSaved}){
+ const [entity,setEntity]=useState('SparkCard'),[search,setSearch]=useState(''),[term,setTerm]=useState(''),[busy,setBusy]=useState(''),[message,setMessage]=useState(''),[error,setError]=useState('');
+ useEffect(()=>{const timer=setTimeout(()=>setTerm(search),300);return()=>clearTimeout(timer);},[search]);
+ const list=useInfiniteQuery({queryKey:['library-sources',workspace.id,entity,term],initialPageParam:undefined,queryFn:({pageParam})=>libraryCall(workspace,{action:'sources',entity,search:term,cursor:pageParam}),getNextPageParam:p=>p.has_more?p.next_cursor:undefined});
+ async function capture(item){setBusy(item.id);setError('');setMessage('');try{const data=await libraryCall(workspace,{action:'capture',entity,source_id:item.id});await onSaved();setMessage(data.unchanged?'Already saved: '+item.title:'Saved to library: '+item.title);}catch(e){setError(e.response?.data?.error||e.message);}finally{setBusy('');}}
+ return <Dialog open onOpenChange={open=>{if(!open)onClose();}}><DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Import existing creations</DialogTitle><DialogDescription>Save Spark cards and agent documents as reusable assets without changing the originals. Import again to capture updated source text.</DialogDescription></DialogHeader><div className="grid sm:grid-cols-2 gap-3"><label className="text-sm">Content source<select value={entity} onChange={e=>{setEntity(e.target.value);setMessage('');}} className={fieldClass}>{sources.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label><label className="text-sm">Search source<input type="search" maxLength={120} value={search} onChange={e=>setSearch(e.target.value)} className={fieldClass}/></label></div>
+  {message&&<p role="status" className="text-sm text-primary">{message}</p>}{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}{list.isPending&&<p role="status">Loading existing content…</p>}{list.error&&<p role="alert" className="text-sm text-destructive">{list.error.response?.data?.error||list.error.message}</p>}
+  <div className="space-y-2">{list.data?.pages.flatMap(p=>p.items).map(item=><article key={item.id} className="rounded-lg border border-border p-4 flex items-start justify-between gap-4"><div className="min-w-0"><h3 className="text-sm break-words">{item.title}</h3><p className="text-xs text-muted-foreground mt-1">Updated {new Date(item.updated_date).toLocaleString()}</p></div><Button size="sm" variant="outline" disabled={!!busy} onClick={()=>capture(item)}>{busy===item.id?'Saving…':'Import'}</Button></article>)}</div>
+  {list.data&&!list.data.pages[0].items.length&&<p className="text-sm text-muted-foreground">No content matches this source and search.</p>}{list.hasNextPage&&<Button variant="outline" disabled={list.isFetchingNextPage} onClick={()=>list.fetchNextPage()}>More creations</Button>}
+ </DialogContent></Dialog>;
+}

@@ -10,6 +10,7 @@ import Home from '@/pages/Home';
 import Knowledge from '@/pages/Knowledge';
 import Spark from '@/pages/Spark';
 import Origin from '@/pages/Origin';
+import Library from '@/pages/Library';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -49,7 +50,7 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/oauth/consent" element={<OAuthConsent />} />
-      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}><Route path="/" element={<Home />} /><Route path="/origin" element={<Origin />} /><Route path="/knowledge" element={<Knowledge />} /><Route path="/spark" element={<Spark />} /></Route>
+      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}><Route path="/" element={<Home />} /><Route path="/origin" element={<Origin />} /><Route path="/knowledge" element={<Knowledge />} /><Route path="/spark" element={<Spark />} /><Route path="/library" element={<Library />} /></Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

@@ -1,0 +1,4 @@
+import {agents} from '@/components/nexus/library/libraryConstants';
+export default function AgentAssignment({value,onChange,disabled=false}){
+ return <fieldset disabled={disabled} className="space-y-2"><legend className="text-sm font-medium">Reusable agent assignments</legend><p className="text-xs text-muted-foreground">Assigned agents receive this asset’s text and description during future runs.</p><div className="flex flex-wrap gap-4">{agents.map(([id,name])=><label key={id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={value.includes(id)} onChange={e=>onChange(e.target.checked?[...value,id]:value.filter(a=>a!==id))}/>{name}</label>)}</div></fieldset>;
+}
