@@ -1,0 +1,66 @@
+{
+  "name": "SparkLearningLog",
+  "type": "object",
+  "description": "Append-only application log of visible actions, decision summaries and real pipeline handoffs, not hidden model reasoning.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "agent": {
+      "type": "string"
+    },
+    "recipient": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "action",
+        "decision",
+        "handoff",
+        "failure"
+      ]
+    },
+    "action": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "details": {
+      "type": "object"
+    },
+    "spark_id": {
+      "type": "string"
+    },
+    "batch_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "agent",
+    "kind",
+    "action",
+    "summary"
+  ],
+  "rls": {
+    "create": {
+      "data.owner_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

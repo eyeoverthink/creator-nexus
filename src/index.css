@@ -25,6 +25,7 @@
     --input: 225 10% 19%;
     --ring: 78 76% 70%;
     --agent-blue: 200 76% 73%;
+    --caution: 38 92% 65%;
     --agent-purple: 264 74% 76%;
     --radius: 0.65rem;
     --font-heading: 'Space Grotesk', sans-serif;
@@ -62,6 +63,7 @@
     --input: 225 10% 19%;
     --ring: 78 76% 70%;
     --agent-blue: 200 76% 73%;
+    --caution: 38 92% 65%;
     --agent-purple: 264 74% 76%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;

@@ -1,0 +1,4 @@
+import KanbanLane from '@/components/nexus/spark/KanbanLane';
+export default function SparkKanban({spark}){
+ return <section className="space-y-5"><header><h2 className="font-heading text-2xl">Spark production board</h2><p className="text-sm text-muted-foreground mt-2">Projects move through real actions: make a script, review it, then explicitly queue the video. Production cards display live runner progress; dragging cannot bypass approval.</p></header><div className="grid lg:grid-cols-3 gap-5 items-start">{[['proposed','Ideas'],['script_drafted','Script review'],['queued','Production · queued to done']].map(([status,label])=><KanbanLane key={status} spark={spark} status={status} label={label}/>)}</div><p className="text-xs text-muted-foreground">Runner status refreshes every 15 seconds. Finished videos stay on the VPS; there is no download button or automatic publishing.</p></section>;
+}

@@ -12,6 +12,7 @@ module.exports = {
   		},
   		colors: {
             'agent-blue': 'hsl(var(--agent-blue))',
+            caution: 'hsl(var(--caution))',
             'agent-purple': 'hsl(var(--agent-purple))',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
