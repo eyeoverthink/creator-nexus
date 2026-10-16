@@ -15,9 +15,9 @@ export default function Sidebar({nexus,collapsed=false,onCollapse,originTab,onOr
    <details open={location.pathname==='/knowledge'||location.pathname==='/origin'&&['employees','learn','sparks'].includes(view)}>
     <summary className="nexus-nav-link" title="Advanced" aria-label="Advanced"><Settings2 size={20} className="shrink-0"/><span className="nexus-nav-label">Advanced</span></summary>
     <div className="mt-1 space-y-1">{advanced.map(link)}</div>
+    {nexus&&<StudioPanelLinks nexus={nexus}/>}
    </details>
   </nav>
-  {nexus&&<StudioPanelLinks nexus={nexus}/>}
   <div className="mt-auto pt-6"><div className="border-t border-border pt-4 flex items-center gap-3 px-2"><span className="rounded-avatar h-8 w-8 bg-secondary grid place-items-center text-xs shrink-0">You</span><span className="nexus-nav-label text-xs text-muted-foreground">Personal workspace</span></div></div>
  </aside>;
 }
