@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import Home from '@/pages/Home';
+import Knowledge from '@/pages/Knowledge';
 import Origin from '@/pages/Origin';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
@@ -47,7 +48,7 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/oauth/consent" element={<OAuthConsent />} />
-      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}><Route path="/" element={<Home />} /><Route path="/origin" element={<Origin />} /></Route>
+      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}><Route path="/" element={<Home />} /><Route path="/origin" element={<Origin />} /><Route path="/knowledge" element={<Knowledge />} /></Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

@@ -1,0 +1,11 @@
+import {Send,Loader2} from 'lucide-react';
+import agents from '@/components/nexus/agentProfiles';
+import {Button} from '@/components/ui/button';
+export default function ChatComposer({chat,models}) {
+  return <form onSubmit={event => {event.preventDefault();chat.send();}} className="space-y-3 border-t border-border pt-5">
+    <div className="flex flex-wrap items-end gap-4"><label className="text-xs">Talk with<select value={chat.agent} onChange={event=>chat.setAgent(event.target.value)} disabled={chat.busy || !!chat.approval || !!chat.pendingTurn} className="block mt-1 rounded-md bg-secondary border border-border p-2">{agents.map(agent=><option key={agent.id} value={agent.id}>{agent.name} · {agent.role}</option>)}</select></label><label className="flex items-center gap-2 text-xs pb-2"><input type="checkbox" checked={chat.useLibrary} onChange={event=>chat.setUseLibrary(event.target.checked)} disabled={chat.busy}/>Search my library</label></div>
+    <label className="block text-sm" htmlFor="knowledge-question">Ask a question</label><textarea id="knowledge-question" value={chat.question} onChange={event=>chat.setQuestion(event.target.value)} maxLength={2000} required rows={3} placeholder="Ask about your research, explore an idea, or refine your content…" className="block w-full resize-y rounded-lg bg-secondary border border-input p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"/>
+    <div className="flex flex-wrap justify-between items-center gap-3"><p className="text-xs text-muted-foreground">{models.settings.provider==='ollama'?'Runs on your configured Ollama model.':'Hosted AI requires approval for each question.'}</p><Button type="submit" disabled={!models.loaded || chat.busy || !!chat.approval || !!chat.pendingTurn || !chat.question.trim()}>{chat.busy?<Loader2 className="animate-spin"/>:<Send/>}{chat.busy?'Thinking…':'Send question'}</Button></div>
+    <p className="text-[11px] text-muted-foreground">Chat history and library text are saved online in this workspace, including when using Ollama. Library retrieval uses keywords, not semantic embeddings; this is not an offline server.</p>
+  </form>;
+}
