@@ -1,0 +1,65 @@
+{
+  "name": "NexusExample",
+  "type": "object",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "draft_id": {
+      "type": "string"
+    },
+    "proposal_id": {
+      "type": "string"
+    },
+    "agent": {
+      "type": "string",
+      "enum": [
+        "writer",
+        "researcher",
+        "strategist"
+      ]
+    },
+    "task": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "before_title": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "before_body": {
+      "type": "string",
+      "maxLength": 20000
+    },
+    "after_title": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "after_body": {
+      "type": "string",
+      "maxLength": 20000
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "provider": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "draft_id",
+    "proposal_id",
+    "agent",
+    "before_body",
+    "after_body"
+  ]
+}

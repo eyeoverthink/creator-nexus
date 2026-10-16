@@ -1,0 +1,7 @@
+import {base44} from '@/api/base44Client';
+export default async function exportApprovedExamples(query){
+ const lines=[];let cursor,more=true;
+ while(more){const page=await base44.entities.NexusExample.filter(query,{sort:'created_date',limit:50,...(cursor?{cursor}:{})});for(const e of page.items)lines.push(JSON.stringify({messages:[{role:'system',content:'You are a creative workspace agent. Propose a complete draft revision for human approval. Return JSON with kind, title, body, summary, and ideas.'},{role:'user',content:JSON.stringify({agent:e.agent,task:e.task||'Refine the draft',draft:{title:e.before_title,body:e.before_body}})},{role:'assistant',content:JSON.stringify({kind:'edit',title:e.after_title,body:e.after_body,summary:e.summary||'Approved draft edit',ideas:[]})}]}));more=page.has_more;cursor=page.next_cursor;}
+ if(!lines.length)throw new Error('No approved examples to export yet. Accept and remember a draft suggestion first.');
+ const url=URL.createObjectURL(new Blob([lines.join('\n')+'\n'],{type:'application/x-ndjson'})),a=document.createElement('a');a.href=url;a.download='nexus-'+query.agent+'-approved-examples.jsonl';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return lines.length;
+}

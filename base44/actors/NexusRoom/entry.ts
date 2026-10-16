@@ -1,6 +1,7 @@
 import { Actor } from 'base44:runtime/actors';
+import {proposeEdit,reviewProposal} from '../../shared/nexusProposals.ts';
 export default class NexusRoom extends Actor {
-  state = {context:{panels:[],active:'draft',selection:null},draft:null,feed:[],agents:{},events:[],revision:0}; owner=null; workspace=null; seats=new Map();
+  state = {context:{panels:[],active:'draft',selection:null},draft:null,feed:[],agents:{},events:[],proposals:[],revision:0}; owner=null; workspace=null; seats=new Map(); reviewing=false;
   async handleStart() { const saved=await this.storage.get('state'); if(saved)this.state=saved; this.owner=await this.storage.get('owner'); this.workspace=await this.storage.get('workspace'); }
   async handleConnect(conn) {
     if(conn.identity.type!=='authenticated' || (this.owner && this.owner!==conn.identity.userId)){conn.reject(4003,'Private workspace');return;}
@@ -9,6 +10,10 @@ export default class NexusRoom extends Actor {
   }
   async handleMessage(conn,msg) {
     if(conn.identity.type!=='authenticated'||conn.identity.userId!==this.owner||!msg||typeof msg!=='object')return;
+    if(this.reviewing&&['edit','accept_proposal','reject_proposal'].includes(msg.type)){conn.send({type:'error',message:'A draft approval is being saved. Please retry your edit in a moment.'});return;}
+    if(['accept_proposal','reject_proposal'].includes(msg.type)&&typeof msg.id==='string'){
+      this.reviewing=true;try{await reviewProposal(this,conn,msg);}catch(error){conn.send({type:'error',message:error.message});}finally{this.reviewing=false;}return;
+    }
     if(msg.type==='initialize' && typeof msg.workspace_id==='string' && typeof msg.draft_id==='string') {
       const w=await this.client.asServiceRole.entities.NexusWorkspace.get(msg.workspace_id); const d=await this.client.asServiceRole.entities.NexusDraft.get(msg.draft_id);
       if(w.owner_id!==this.owner||d.owner_id!==this.owner||d.workspace_id!==w.id)return;
@@ -32,7 +37,7 @@ export default class NexusRoom extends Actor {
     } else if(msg.type==='agent_result' && ['writer','researcher','strategist'].includes(msg.agent)&&msg.result&&this.state.draft) {
       const r=msg.result;let message=String(r.summary||'Agent finished').slice(0,500);
       if(r.kind==='edit') {
-        if(msg.baseRevision!==this.state.revision){message='Draft changed while I worked. My edit was not applied; run me again on the latest context.';}else{this.state.draft={...this.state.draft,title:String(r.title||this.state.draft.title).slice(0,160),body:String(r.body||'').slice(0,20000)};this.state.revision++;await this.saveDraft();}
+        if(proposeEdit(this,msg)){message='Draft suggestion ready for review. '+message;}else{message='Suggestion not added: invalid draft content or 8 proposals already await review. Review existing proposals, then retry.';}
       } else if(r.kind==='feed'&&Array.isArray(r.ideas)){this.state.feed=[...r.ideas.slice(0,5).map(i=>({id:crypto.randomUUID(),title:String(i.title).slice(0,160),body:String(i.body).slice(0,1200),tag:String(i.tag).slice(0,30),agent:msg.agent})),...this.state.feed].slice(0,30);}
       this.state.agents[msg.agent]='ready';const event={id:crypto.randomUUID(),agent:msg.agent,message,body:r.kind==='note'?String(r.body||'').slice(0,20000):'',kind:r.kind,time:Date.now()};this.state.events=[event,...this.state.events].slice(0,30);
       const audit=await this.client.asServiceRole.entities.NexusEvent.create({owner_id:this.owner,workspace_id:this.workspace,agent:msg.agent,message,body:event.body,kind:r.kind});event.id=audit.id;await this.publish();
