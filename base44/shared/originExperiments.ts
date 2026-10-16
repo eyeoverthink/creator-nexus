@@ -1,5 +1,6 @@
 import {owned,experimentFor,httpUrl} from './originAccess.ts';
 import {ruleSchema,resultSchema,parse} from './originSchemas.ts';
+import {recordOrigin} from './regressionLogging.ts';
 export async function experimentAction(base44,user,workspace,input){
  const spark=await owned(base44,'NexusSpark',input.spark_id,user,workspace.id),experiment=await experimentFor(base44,user,spark);
  if(input.action==='register'){
@@ -22,7 +23,9 @@ export async function experimentAction(base44,user,workspace,input){
   const value=experiment.metric==='views'?values.observed_views:values.observed_value;
   const outcome=!values.finalize?'pending':values.observed_views<experiment.minimum_views?'inconclusive':value>=experiment.target?'win':'loss';
   const record=await base44.entities.NexusExperiment.update(experiment.id,{observed_views:values.observed_views,observed_value:value,notes:values.notes,outcome,status:values.finalize?'final':'observing'});
-  if(values.finalize)await base44.entities.NexusSpark.update(spark.id,{status:'evaluated'});return {experiment:record};
+  let regression_warning;
+  if(values.finalize){await base44.entities.NexusSpark.update(spark.id,{status:'evaluated'});try{await recordOrigin(base44,user,workspace,record,spark);}catch(error){regression_warning='Results saved, but regression logging failed. Use Sync saved results in the proof loop. '+error.message;}}
+  return {experiment:record,...(regression_warning?{regression_warning}:{})};
  }
  throw new Error('Unsupported experiment action.');
 }

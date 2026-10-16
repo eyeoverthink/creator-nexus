@@ -1,3 +1,5 @@
+import {recordProposal} from './regressionLogging.ts';
+async function logDecision(room,conn,p,accepted){try{await recordProposal(room,p,accepted);}catch(error){conn.send({type:'error',message:'Your draft decision was saved, but regression logging failed: '+error.message});}}
 export async function reviewProposal(room,conn,msg){
  const proposals=room.state.proposals||[],p=proposals.find(p=>p.id===msg.id);if(!p)return;
  if(msg.type==='accept_proposal'){
@@ -7,12 +9,14 @@ export async function reviewProposal(room,conn,msg){
   room.state.draft={...previous,title:p.title,body:p.body};room.state.revision++;
   try{await room.saveDraft();}catch(error){room.state.draft=previous;room.state.revision=revision;throw error;}
   room.state.proposals=(room.state.proposals||[]).filter(x=>x.id!==p.id);await room.publish();
+  await logDecision(room,conn,p,true);
   if(msg.remember===true){
    await room.client.asServiceRole.entities.NexusExample.upsert([{owner_id:room.owner,workspace_id:room.workspace,draft_id:p.draft_id,proposal_id:p.id,agent:p.agent,task:p.task,before_title:p.before_title,before_body:p.before_body,after_title:p.title,after_body:p.body,summary:p.summary,provider:p.provider,model:p.model}],{key:'proposal_id'});
   }
  }
  room.state.proposals=(room.state.proposals||[]).filter(x=>x.id!==p.id);
  const accepted=msg.type==='accept_proposal';
+ if(!accepted)await logDecision(room,conn,p,false);
  room.state.events=[{id:crypto.randomUUID(),agent:p.agent,message:accepted?'Suggestion accepted'+(msg.remember===true?' and saved as a learning example.':'.'):'Suggestion rejected; draft unchanged.',body:'',kind:accepted?'accepted':'rejected',time:Date.now()},...room.state.events].slice(0,30);
  await room.publish();
 }
