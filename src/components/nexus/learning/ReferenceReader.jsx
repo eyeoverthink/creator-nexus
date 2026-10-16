@@ -1,0 +1,8 @@
+import {useEffect,useState} from 'react';
+import ReactMarkdown from 'react-markdown';
+import {readReference,references,commit} from '@/components/nexus/learning/babelSource';
+export default function ReferenceReader(){
+ const [path,setPath]=useState('README.md'),[text,setText]=useState(''),[error,setError]=useState(''),[loading,setLoading]=useState(true);
+ useEffect(()=>{let alive=true;setLoading(true);setError('');readReference(path).then(text=>{if(alive)setText(text);}).catch(e=>{if(alive)setError(e.message);}).finally(()=>{if(alive)setLoading(false);});return()=>{alive=false;};},[path]);
+ return <section className="space-y-3"><label className="text-xs">Babel reference<select value={path} onChange={e=>setPath(e.target.value)} className="block w-full mt-1 rounded-md bg-secondary border border-border p-2">{Object.entries(references).map(([label,value])=><option key={value} value={value}>{label}</option>)}</select></label><p className="text-[10px] text-muted-foreground">Pinned at {commit.slice(0,7)} · MIT · Copyright (c) 2026 Vaughn Scott</p>{loading?<p className="text-xs">Loading reference…</p>:error?<p role="alert" className="text-xs text-destructive">{error}</p>:path.endsWith('.js')?<pre className="overflow-auto max-h-96 bg-secondary p-3 text-[10px] whitespace-pre">{text}</pre>:<ReactMarkdown className="nexus-markdown max-h-96 overflow-auto text-xs">{text}</ReactMarkdown>}</section>;
+}

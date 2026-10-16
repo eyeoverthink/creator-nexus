@@ -1,0 +1,44 @@
+{
+  "name": "NexusLearningRun",
+  "type": "object",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "agent": {
+      "type": "string",
+      "enum": [
+        "researcher",
+        "writer",
+        "strategist"
+      ]
+    },
+    "engine": {
+      "type": "string"
+    },
+    "commit": {
+      "type": "string"
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "rounds": {
+      "type": "integer"
+    },
+    "metrics": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "agent",
+    "engine",
+    "seed",
+    "rounds",
+    "metrics"
+  ]
+}
