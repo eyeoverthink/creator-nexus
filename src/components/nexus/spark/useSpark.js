@@ -1,11 +1,11 @@
 import {useRef,useState} from 'react';
 import {useQuery,useQueryClient} from '@tanstack/react-query';
 import {base44} from '@/api/base44Client';
-
+import {initialLayout} from '@/components/nexus/useNexus';
 import {sparkCall,scope} from '@/components/nexus/spark/sparkClient';
 export default function useSpark(){
  const cache=useQueryClient(),lock=useRef(false),[busy,setBusy]=useState(''),[error,setError]=useState(''),[notice,setNotice]=useState(''),[approval,setApproval]=useState(null),[batch,setBatch]=useState(''),[result,setResult]=useState(null),[review,setReview]=useState(null);
- const boot=useQuery({queryKey:['origin','workspace'],queryFn:async()=>{const user=await base44.auth.me();const page=await base44.entities.NexusWorkspace.filter({owner_id:user.id},{sort:'created_date',limit:1});return page.items[0]||null;}});
+ const boot=useQuery({queryKey:['origin','workspace'],queryFn:async()=>{const user=await base44.auth.me();const page=await base44.entities.NexusWorkspace.filter({owner_id:user.id},{sort:'created_date',limit:1});return page.items[0]||await base44.entities.NexusWorkspace.create({owner_id:user.id,name:'My creative space',room_id:crypto.randomUUID(),layout:initialLayout,agent_roster_version:1});}});
  const workspace=boot.data;
  const profile=useQuery({queryKey:['spark','profile',workspace?.id],enabled:!!workspace,queryFn:async()=>(await base44.entities.SparkProfile.filter(scope(workspace),{sort:'-version',limit:1})).items[0]||null});
  const latest=useQuery({queryKey:['spark','latest',workspace?.id],enabled:!!workspace,queryFn:async()=>(await base44.entities.SparkCard.filter(scope(workspace),{sort:'-created_date',limit:1,fields:['batch_id']})).items[0]?.batch_id||''});
