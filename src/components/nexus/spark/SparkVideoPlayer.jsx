@@ -1,0 +1,6 @@
+import {useQuery} from '@tanstack/react-query';
+import {base44} from '@/api/base44Client';
+export default function SparkVideoPlayer({fileUri,title}){
+ const video=useQuery({queryKey:['spark','video',fileUri],queryFn:async()=>{const {signed_url}=await base44.integrations.Core.CreateFileSignedUrl({file_uri:fileUri,expires_in:3600});return signed_url;},staleTime:45*60*1000,refetchInterval:45*60*1000});
+ return <div className="space-y-2">{video.isPending?<p role="status">Opening saved video…</p>:video.error?<div role="alert"><p className="text-destructive">Could not open video: {video.error.message}</p><button className="text-primary underline" onClick={()=>video.refetch()}>Retry</button></div>:<><video key={video.data} controls playsInline preload="metadata" className="max-h-[32rem] w-full rounded-lg bg-background" aria-label={title||'Rendered Spark video'} src={video.data}/><a className="inline-block text-primary underline" href={video.data} download target="_blank" rel="noopener noreferrer">Open or download video</a></>}<p className="text-muted-foreground">Saved video (stored privately)</p></div>;
+}

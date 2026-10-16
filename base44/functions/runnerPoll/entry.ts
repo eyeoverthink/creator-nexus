@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { authorizeRunner, readInput, json, runnerId, parseBody, markers, byAge, ID_RE } from '../../shared/runnerBridge.ts';
+import {pendingVideos} from '../../shared/runnerVideos.ts';
 
 // Shared-secret webhook for the supplied VPS runner. Append-only NexusEvent operations.
 export default async function(req) {
@@ -11,6 +12,7 @@ export default async function(req) {
     const runner = runnerId(input.value.runner_id);
     const base44 = createClientFromRequest(req);
     const events = base44.asServiceRole.entities.NexusEvent;
+    if(input.value.operation==='transfers')return json(await pendingVideos(events,runner,typeof input.value.cursor==='string'?input.value.cursor:undefined));
     const queued = await events.filter({ kind: 'job.queued' }, { sort: '-created_date', limit: 200 });
     const valid = queued.items.filter(event => ID_RE.test(event.id));
     if (!valid.length) return json({ job: null });

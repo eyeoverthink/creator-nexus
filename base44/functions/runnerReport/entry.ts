@@ -1,11 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { authorizeRunner, readInput, json, runnerId, ID_RE, markerQuery, cleanResult } from '../../shared/runnerBridge.ts';
+import {receiveVideo} from '../../shared/runnerVideos.ts';
 
 // Shared-secret webhook for completion reports from the supplied VPS runner.
 export default async function(req) {
   try {
     const denied = await authorizeRunner(req, 'report');
     if (denied) return denied;
+    if((req.headers.get('content-type')||'').toLowerCase().startsWith('multipart/form-data'))return await receiveVideo(req,createClientFromRequest(req));
     const parsed = await readInput(req, 30000);
     if (parsed.error) return parsed.error;
     const input = parsed.value;
