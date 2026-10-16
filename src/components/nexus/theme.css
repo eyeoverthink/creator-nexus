@@ -1,5 +1,6 @@
 .nexus-app { background-image:radial-gradient(ellipse at 70% 0%,hsl(var(--primary)/.025),transparent 55%); }
-.nexus-sidebar { width:228px; }
+.nexus-sidebar { width:228px; min-height:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior-y:contain; scrollbar-width:thin; scrollbar-gutter:stable; }
+.nexus-sidebar > * { flex-shrink:0; }
 .eyebrow {font-size:9px;letter-spacing:.14em;font-weight:500;color:hsl(var(--muted-foreground));}
 .nexus-markdown {font-size:14px;line-height:1.8;color:hsl(var(--foreground));}
 .nexus-markdown h1 {font-size:28px;font-family:var(--font-heading);line-height:1.25;margin-bottom:24px;}
