@@ -15,7 +15,7 @@ export function sandboxObservation(user,workspace,run){
 export async function recordOrigin(base44,user,workspace,experiment,spark){
  const concept=spark||await owned(base44,'NexusSpark',experiment.spark_id,user,workspace.id),draft=await owned(base44,'NexusDraft',experiment.draft_id,user,workspace.id);
  if(draft.revision!==experiment.draft_revision)throw new Error('The script no longer matches the pre-registered revision.');
- return base44.entities.NexusRegressionObservation.upsert([originObservation(user,workspace,experiment,concept,draft)],{key:'source_key'});
+ return base44.asServiceRole.entities.NexusRegressionObservation.upsert([originObservation(user,workspace,experiment,concept,draft)],{key:'source_key'});
 }
 export async function recordProposal(room,p,accepted){
  const row=observation({owner_id:room.owner,workspace_id:room.workspace,source:'behavior',source_key:`${room.owner}:${room.workspace}:behavior:${p.id}`,record_id:p.id,group_key:`behavior:${p.draft_id}`,agent:p.agent,metric:'acceptance',label:`${p.agent}: ${accepted?'accepted':'rejected'} proposal`,measured_at:new Date().toISOString(),provenance:'Workspace proposal review decision',x1:words(p.before_body),x2:100*(p.body.length-p.before_body.length)/Math.max(1,p.before_body.length),x3:words(p.task),y:accepted?1:0});
@@ -23,7 +23,7 @@ export async function recordProposal(room,p,accepted){
 }
 export async function recordSaved(base44,user,workspace,input){
  if(input.source==='origin'){const experiment=await owned(base44,'NexusExperiment',input.record_id,user,workspace.id);return recordOrigin(base44,user,workspace,experiment);}
- if(input.source==='sandbox'){const run=await owned(base44,'NexusLearningRun',input.record_id,user,workspace.id);return base44.entities.NexusRegressionObservation.upsert([sandboxObservation(user,workspace,run)],{key:'source_key'});}
+ if(input.source==='sandbox'){const run=await owned(base44,'NexusLearningRun',input.record_id,user,workspace.id);return base44.asServiceRole.entities.NexusRegressionObservation.upsert([sandboxObservation(user,workspace,run)],{key:'source_key'});}
  throw new Error('Behavior measurements are recorded only when a proposal is actually reviewed.');
 }
 export async function syncSaved(base44,user,workspace,input,config){
@@ -36,6 +36,6 @@ export async function syncSaved(base44,user,workspace,input,config){
   const byId=items=>new Map(items.map(x=>[x.id,x])),s=byId(sparks.items),d=byId(drafts.items);
   for(const e of page.items){try{const draft=d.get(e.draft_id),spark=s.get(e.spark_id);if(!draft||!spark||draft.revision!==e.draft_revision)throw new Error('Missing project or changed script revision');rows.push(originObservation(user,workspace,e,spark,draft));}catch(error){skipped.push({id:e.id,reason:error.message});}}
  }else if(input.source==='sandbox')for(const r of page.items){try{rows.push(sandboxObservation(user,workspace,r));}catch(error){skipped.push({id:r.id,reason:error.message});}}
- if(rows.length)await base44.entities.NexusRegressionObservation.upsert(rows,{key:'source_key'});
+ if(rows.length)await base44.asServiceRole.entities.NexusRegressionObservation.upsert(rows,{key:'source_key'});
  return {synced:rows.length,skipped,has_more:page.has_more,next_cursor:page.next_cursor};
 }
