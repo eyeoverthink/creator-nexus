@@ -15,7 +15,7 @@ export default function OriginVideoSparks({workspace,jobsOnly=false}){
   {list.isPending&&<p role="status" className="text-sm text-muted-foreground">Loading your creations…</p>}
   {list.error&&<p role="alert" className="text-sm text-destructive">{list.error.message}</p>}
   {!list.isPending&&!list.error&&!list.rows.length&&<p className="text-sm text-muted-foreground">{jobsOnly?'No video jobs have been approved yet.':'No Spark Studio creations saved yet.'}</p>}
-  <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5 items-start">{list.rows.map(card=><SparkVideoCard key={card.id} card={card} jobs={jobs} readOnly/>)}</div>
+  <div className="nexus-asset-grid items-start">{list.rows.map(card=><SparkVideoCard key={card.id} card={card} jobs={jobs} readOnly/>)}</div>
   {list.hasNextPage&&<Button variant="outline" disabled={list.isFetchingNextPage} onClick={()=>list.fetchNextPage()}>Load more creations</Button>}
  </section>;
 }

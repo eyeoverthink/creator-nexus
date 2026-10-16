@@ -8,9 +8,19 @@ module.exports = {
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
+  			sm: 'calc(var(--radius) - 4px)',
+            xl: 'var(--radius)',
+            '2xl': 'var(--radius)',
+            '3xl': 'var(--radius)',
+            full: '4px',
+            avatar: '50%'
   		},
-  		colors: {
+          boxShadow: { sm: 'none', DEFAULT: 'none', md: 'none', lg: 'none', xl: 'none', '2xl': 'none' },
+		colors: {
+            link: 'hsl(var(--link))',
+            selection: 'var(--accent-subtle)',
+            hover: 'var(--bg-hover)',
+            success: 'hsl(var(--success))',
             'agent-blue': 'hsl(var(--agent-blue))',
             caution: 'hsl(var(--caution))',
             'agent-purple': 'hsl(var(--agent-purple))',

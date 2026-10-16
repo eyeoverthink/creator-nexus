@@ -1,0 +1,3 @@
+export default function AssetTypeChips({value,onChange}){
+ return <div role="group" aria-label="Asset type" className="flex flex-wrap gap-2">{[['all','All assets'],['upload','Uploaded media'],['generated','Generated creations'],['document','Documents']].map(([id,label])=><button key={id} className="nexus-filter-chip" aria-pressed={value===id} onClick={()=>onChange(id)}>{label}</button>)}</div>;
+}

@@ -1,91 +1,88 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 225 13% 8%;
-    --foreground: 220 14% 91%;
-    --card: 225 12% 11%;
-    --card-foreground: 220 14% 91%;
-    --popover: 225 12% 11%;
-    --popover-foreground: 220 14% 91%;
-    --primary: 78 76% 70%;
-    --primary-foreground: 225 18% 10%;
-    --secondary: 225 11% 15%;
-    --secondary-foreground: 220 14% 91%;
-    --muted: 225 11% 15%;
-    --muted-foreground: 225 9% 63%;
-    --accent: 78 76% 70%;
-    --accent-foreground: 225 18% 10%;
-    --destructive: 0 80% 72%;
-    --destructive-foreground: 0 0% 10%;
-    --border: 225 10% 19%;
-    --input: 225 10% 19%;
-    --ring: 78 76% 70%;
-    --agent-blue: 200 76% 73%;
-    --caution: 38 92% 65%;
-    --agent-purple: 264 74% 76%;
-    --radius: 0.65rem;
-    --font-heading: 'Space Grotesk', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
-    --font-display: 'Space Grotesk', sans-serif;
-    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+  /* Nexus Pro, palette A. All palette values live here, including dark mode. */
+  :root, .dark {
+    color-scheme: dark;
+    --bg-base: #111111;
+    --bg-1: #1B1B1B;
+    --bg-2: #222222;
+    --bg-control: #2C2C2C;
+    --bg-hover: #323232;
+    --border-subtle: #393939;
+    --border-control: #6D6D6D;
+    --text-primary: #F2F2F2;
+    --text-secondary: #AFAFAF;
+    --text-tertiary: #8A8A8A;
+    --accent-hover: #274DEA;
+    --accent-subtle: rgba(59,99,251,0.15);
+    --accent-selected-hover: rgba(59,99,251,0.25);
+    --background: 0 0% 6.666667%;
+    --foreground: 0 0% 94.901961%;
+    --card: 0 0% 10.588235%;
+    --card-foreground: var(--foreground);
+    --popover: 0 0% 13.333333%;
+    --popover-foreground: var(--foreground);
+    --primary: 227.5 96% 60.784314%;
+    --primary-foreground: 0 0% 100%;
+    --link: 223.846154 100% 74.509804%;
+    --secondary: 0 0% 17.254902%;
+    --secondary-foreground: var(--foreground);
+    --muted: var(--secondary);
+    --muted-foreground: 0 0% 68.627451%;
+    --accent: 0 0% 19.607843%;
+    --accent-foreground: var(--foreground);
+    --destructive: 3.221477 71.291866% 40.980392%;
+    --destructive-foreground: 0 0% 100%;
+    --danger: 358.089172 85.79235% 64.117647%;
+    --success: 151.260504 49.790795% 53.137255%;
+    --caution: 38.698225 76.470588% 56.666667%;
+    --border: 0 0% 22.352941%;
+    --input: 0 0% 42.745098%;
+    --ring: var(--primary);
+    --agent-blue: var(--muted-foreground);
+    --agent-purple: var(--muted-foreground);
+    --radius: 8px;
+    --font-heading: 'Inter', Arial, sans-serif;
+    --font-body: 'Inter', Arial, sans-serif;
+    --font-display: 'Inter', Arial, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --sidebar-background: var(--card);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--accent);
+    --sidebar-accent-foreground: var(--foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
+    --shadow-floating: 0 1px 4px rgba(0,0,0,0.36);
+    --shadow-dialog: 0 8px 24px rgba(0,0,0,0.48);
+    --motion-easing: cubic-bezier(0.45,0,0.4,1);
   }
-
-  .dark {
-    --background: 225 13% 8%;
-    --foreground: 220 14% 91%;
-    --card: 225 12% 11%;
-    --card-foreground: 220 14% 91%;
-    --popover: 225 12% 11%;
-    --popover-foreground: 220 14% 91%;
-    --primary: 78 76% 70%;
-    --primary-foreground: 225 18% 10%;
-    --secondary: 225 11% 15%;
-    --secondary-foreground: 220 14% 91%;
-    --muted: 225 11% 15%;
-    --muted-foreground: 225 9% 63%;
-    --accent: 78 76% 70%;
-    --accent-foreground: 225 18% 10%;
-    --destructive: 0 80% 72%;
-    --destructive-foreground: 0 0% 10%;
-    --border: 225 10% 19%;
-    --input: 225 10% 19%;
-    --ring: 78 76% 70%;
-    --agent-blue: 200 76% 73%;
-    --caution: 38 92% 65%;
-    --agent-purple: 264 74% 76%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground font-body; font-size:14px; line-height:20px; }
+  h1,h2,h3,h4,h5,h6 { font-weight:600; }
+  button { cursor:pointer; }
+  button,input,textarea,select,a,summary { transition-duration:130ms; transition-timing-function:var(--motion-easing); }
+  :is(button,input,textarea,select,a,summary,[tabindex]):focus-visible {
+    outline:2px solid hsl(var(--primary-foreground)) !important;
+    outline-offset:2px;
+    box-shadow:0 0 0 4px hsl(var(--primary)) !important;
   }
+  :is(input:not([type=checkbox]):not([type=radio]),textarea,select) { border-color:var(--border-control); }
+  :is(time,video,[role=status]) { font-variant-numeric:tabular-nums; }
+  svg.lucide { stroke-width:1.5; }
+  [role=dialog] { border-radius:8px; background:var(--bg-2); box-shadow:var(--shadow-dialog); }
+  [role=menu],[role=listbox],[data-radix-popper-content-wrapper] { --tw-shadow:var(--shadow-floating); }
+  @media(pointer:coarse) { :is(button,select,a[role=button],summary) { min-height:44px; } }
+  @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
 }
-
-
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-
-  body {
-    @apply bg-background text-foreground font-body;
-  }
-  button { @apply cursor-pointer; }
-  button:focus-visible, select:focus-visible { @apply outline-none ring-2 ring-primary; }
+@layer utilities {
+  .text-primary { color:hsl(var(--link)); }
+  .text-destructive { color:hsl(var(--danger)); }
+  .bg-primary:hover:not(:disabled) { background-color:var(--accent-hover); }
+  .animate-spin.rounded-full { border-radius:50%; }
 }
