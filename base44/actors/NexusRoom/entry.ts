@@ -1,5 +1,6 @@
 import { Actor } from 'base44:runtime/actors';
 import {proposeEdit,reviewProposal} from '../../shared/nexusProposals.ts';
+import initializeNexusRoom from '../../shared/initializeNexusRoom.ts';
 
 export default class NexusRoom extends Actor {
   state = {context:{panels:[],active:'draft',selection:null},draft:null,feed:[],agents:{},events:[],proposals:[],revision:0}; owner=null; workspace=null; seats=new Map(); reviewing=false;
@@ -16,14 +17,7 @@ export default class NexusRoom extends Actor {
       this.reviewing=true;try{await reviewProposal(this,conn,msg);}catch(error){conn.send({type:'error',message:error.message});}finally{this.reviewing=false;}return;
     }
     if(msg.type==='initialize' && typeof msg.workspace_id==='string' && typeof msg.draft_id==='string') {
-      const workspaces=await this.client.asServiceRole.entities.NexusWorkspace.filter({id:msg.workspace_id,owner_id:this.owner},{limit:1});
-      const w=(Array.isArray(workspaces)?workspaces:workspaces.items)[0];if(!w){conn.send({type:'error',message:'The saved workspace could not be found.'});return;}
-      const drafts=await this.client.asServiceRole.entities.NexusDraft.filter({id:msg.draft_id,owner_id:this.owner,workspace_id:w.id},{limit:1});
-      const d=(Array.isArray(drafts)?drafts:drafts.items)[0];if(!d){conn.send({type:'error',message:'The saved draft could not be found.'});return;}
-      if(this.workspace&&this.workspace!==w.id)return;
-      this.workspace=w.id;await this.storage.put('workspace',w.id);
-      if(!this.state.draft){this.state.draft=d;this.state.revision=d.revision||0;}
-      await this.publish();
+      await initializeNexusRoom(this,conn,msg);
     } else if(msg.type==='context') {
       if(Array.isArray(msg.panels))this.state.context.panels=msg.panels.filter(p=>['feed','draft','activity','preview','context','performance'].includes(p)).slice(0,10);
       if(['feed','draft','activity','preview','context','performance'].includes(msg.active))this.state.context.active=msg.active;
