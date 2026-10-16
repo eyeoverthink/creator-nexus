@@ -1,5 +1,6 @@
 import { Actor } from 'base44:runtime/actors';
 import {proposeEdit,reviewProposal} from '../../shared/nexusProposals.ts';
+
 export default class NexusRoom extends Actor {
   state = {context:{panels:[],active:'draft',selection:null},draft:null,feed:[],agents:{},events:[],proposals:[],revision:0}; owner=null; workspace=null; seats=new Map(); reviewing=false;
   async handleStart() { const saved=await this.storage.get('state'); if(saved)this.state=saved; this.owner=await this.storage.get('owner'); this.workspace=await this.storage.get('workspace'); }

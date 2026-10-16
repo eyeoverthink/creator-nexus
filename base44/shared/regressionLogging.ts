@@ -1,5 +1,6 @@
 import {observation,words} from './regressionCatalog.ts';
 import {owned} from './originAccess.ts';
+import {saveRoomRecord} from './roomRecords.ts';
 const commit='054be5f81488715fbafc8eb427d6847723402268';
 export function originObservation(user,workspace,experiment,spark,draft){
  if(experiment.status!=='final'||!['views','likes','comments','clicks'].includes(experiment.metric))throw new Error('Only finalized experiments can train an Origin regression.');
@@ -19,7 +20,7 @@ export async function recordOrigin(base44,user,workspace,experiment,spark){
 }
 export async function recordProposal(room,p,accepted){
  const row=observation({owner_id:room.owner,workspace_id:room.workspace,source:'behavior',source_key:`${room.owner}:${room.workspace}:behavior:${p.id}`,record_id:p.id,group_key:`behavior:${p.draft_id}`,agent:p.agent,metric:'acceptance',label:`${p.agent}: ${accepted?'accepted':'rejected'} proposal`,measured_at:new Date().toISOString(),provenance:'Workspace proposal review decision',x1:words(p.before_body),x2:100*(p.body.length-p.before_body.length)/Math.max(1,p.before_body.length),x3:words(p.task),y:accepted?1:0});
- await room.client.asServiceRole.entities.NexusRegressionObservation.upsert([row],{key:'source_key'});
+ await saveRoomRecord(room,'NexusRegressionObservation',{source_key:row.source_key},row);
 }
 export async function recordSaved(base44,user,workspace,input){
  if(input.source==='origin'){const experiment=await owned(base44,'NexusExperiment',input.record_id,user,workspace.id);return recordOrigin(base44,user,workspace,experiment);}
