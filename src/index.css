@@ -1,78 +1,61 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@700;800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 225 13% 8%;
-    --foreground: 220 14% 91%;
-    --card: 225 12% 11%;
-    --card-foreground: 220 14% 91%;
-    --popover: 225 12% 11%;
-    --popover-foreground: 220 14% 91%;
-    --primary: 78 76% 70%;
-    --primary-foreground: 225 18% 10%;
-    --secondary: 225 11% 15%;
-    --secondary-foreground: 220 14% 91%;
-    --muted: 225 11% 15%;
-    --muted-foreground: 225 9% 63%;
-    --accent: 78 76% 70%;
-    --accent-foreground: 225 18% 10%;
-    --destructive: 0 80% 72%;
-    --destructive-foreground: 0 0% 10%;
-    --border: 225 10% 19%;
-    --input: 225 10% 19%;
-    --ring: 78 76% 70%;
-    --agent-blue: 200 76% 73%;
-    --caution: 38 92% 65%;
-    --agent-purple: 264 74% 76%;
-    --radius: 0.65rem;
-    --font-heading: 'Space Grotesk', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
-    --font-display: 'Space Grotesk', sans-serif;
-    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 225 13% 8%;
-    --foreground: 220 14% 91%;
-    --card: 225 12% 11%;
-    --card-foreground: 220 14% 91%;
-    --popover: 225 12% 11%;
-    --popover-foreground: 220 14% 91%;
-    --primary: 78 76% 70%;
-    --primary-foreground: 225 18% 10%;
-    --secondary: 225 11% 15%;
-    --secondary-foreground: 220 14% 91%;
-    --muted: 225 11% 15%;
-    --muted-foreground: 225 9% 63%;
-    --accent: 78 76% 70%;
-    --accent-foreground: 225 18% 10%;
-    --destructive: 0 80% 72%;
-    --destructive-foreground: 0 0% 10%;
-    --border: 225 10% 19%;
-    --input: 225 10% 19%;
-    --ring: 78 76% 70%;
-    --agent-blue: 200 76% 73%;
-    --caution: 38 92% 65%;
-    --agent-purple: 264 74% 76%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+  :root, .dark {
+    color-scheme: dark;
+    --background: 252 23.810% 8.235%;
+    --foreground: 260 47.368% 96.275%;
+    --card: 252.857 22.581% 12.157%;
+    --card-foreground: var(--foreground);
+    --popover: var(--card);
+    --popover-foreground: var(--foreground);
+    --primary: 246.870 100% 74.314%;
+    --primary-foreground: var(--background);
+    --secondary: 253.333 21.429% 16.471%;
+    --secondary-foreground: var(--foreground);
+    --muted: var(--secondary);
+    --muted-foreground: 254.4 15.723% 68.824%;
+    --accent: 11.928 100% 67.451%;
+    --accent-foreground: var(--background);
+    --destructive: 353.919 100% 70.980%;
+    --destructive-foreground: var(--background);
+    --border: 253.636 18.966% 22.745%;
+    --input: 252 14.286% 51.961%;
+    --ring: var(--foreground);
+    --success: 158.077 67.241% 54.510%;
+    --caution: 39.667 100% 64.706%;
+    --agent-blue: var(--success);
+    --agent-purple: var(--primary);
+    --bg: var(--background);
+    --surface: var(--card);
+    --surface-raised: var(--secondary);
+    --hairline: var(--border);
+    --control-border: var(--input);
+    --text: var(--foreground);
+    --text-muted: var(--muted-foreground);
+    --warning: var(--caution);
+    --danger: var(--destructive);
+    --radius: 1rem;
+    --radius-input: 10px;
+    --radius-hero: 24px;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / .25), 0 8px 24px rgb(0 0 0 / .25);
+    --shadow-hover: var(--shadow-card), 0 0 28px hsl(var(--primary) / .16);
+    --ease-studio: cubic-bezier(.2,.8,.2,1);
+    --font-heading: 'Plus Jakarta Sans', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-display: var(--font-heading);
+    --font-mono: 'JetBrains Mono', monospace;
+    --sidebar-background: var(--background);
+    --sidebar-foreground: var(--muted-foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--secondary);
+    --sidebar-accent-foreground: var(--foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
   }
 }
 
@@ -86,6 +69,18 @@
   body {
     @apply bg-background text-foreground font-body;
   }
+  body { font-size:16px; line-height:1.5; }
+  h1,h2,h3,h4 { font-family:var(--font-heading); font-weight:700; line-height:1.15; }
   button { @apply cursor-pointer; }
-  button:focus-visible, select:focus-visible { @apply outline-none ring-2 ring-primary; }
+  a { display:inline-flex; align-items:center; }
+  select option { background:hsl(var(--card)); color:hsl(var(--foreground)); }
+  button, a, input, select, summary, [role='button'] { min-height:44px; }
+  button, select, summary { min-width:44px; }
+  input, select, textarea { border-color:hsl(var(--input)); border-radius:var(--radius-input); font-size:16px; }
+  :is(button,a,input,select,textarea,summary,[role='button'],[tabindex]):focus-visible { outline:2px solid white !important; outline-offset:3px !important; box-shadow:none !important; }
+  code,pre,.font-mono { font-family:var(--font-body); }
+  [data-advanced] :is(code,pre,.font-mono) { font-family:var(--font-mono); }
+  [role='dialog'],[role='alertdialog'] { border-radius:var(--radius-hero); max-width:calc(100vw - 32px); }
+  [role='dialog'] > button { display:grid; place-items:center; }
+  @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
 }

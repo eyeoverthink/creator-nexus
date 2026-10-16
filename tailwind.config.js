@@ -11,6 +11,7 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+            success: 'hsl(var(--success))',
             'agent-blue': 'hsl(var(--agent-blue))',
             caution: 'hsl(var(--caution))',
             'agent-purple': 'hsl(var(--agent-purple))',
