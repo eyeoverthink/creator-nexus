@@ -17,9 +17,9 @@ export default class NexusRoom extends Actor {
     }
     if(msg.type==='initialize' && typeof msg.workspace_id==='string' && typeof msg.draft_id==='string') {
       const workspaces=await this.client.asServiceRole.entities.NexusWorkspace.filter({id:msg.workspace_id,owner_id:this.owner},{limit:1});
-      const w=workspaces.items[0];if(!w)return;
+      const w=(Array.isArray(workspaces)?workspaces:workspaces.items)[0];if(!w){conn.send({type:'error',message:'The saved workspace could not be found.'});return;}
       const drafts=await this.client.asServiceRole.entities.NexusDraft.filter({id:msg.draft_id,owner_id:this.owner,workspace_id:w.id},{limit:1});
-      const d=drafts.items[0];if(!d)return;
+      const d=(Array.isArray(drafts)?drafts:drafts.items)[0];if(!d){conn.send({type:'error',message:'The saved draft could not be found.'});return;}
       if(this.workspace&&this.workspace!==w.id)return;
       this.workspace=w.id;await this.storage.put('workspace',w.id);
       if(!this.state.draft){this.state.draft=d;this.state.revision=d.revision||0;}
