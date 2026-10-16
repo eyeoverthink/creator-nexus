@@ -1,6 +1,6 @@
 import {base44} from '@/api/base44Client';
 
-export default function connectWorkspaceRoom({workspace,draft,onState,onReady,onStatus,onError}){
+export default function connectWorkspaceRoom({workspace,draft,onState,onReady,onStatus,onError,onMissingWorkspace}){
  let id=sessionStorage.getItem('nexus-connection');
  if(!id){id=crypto.randomUUID();sessionStorage.setItem('nexus-connection',id);}
  const connection=base44.actors.NexusRoom(workspace.room_id).connect({id});
@@ -30,6 +30,14 @@ export default function connectWorkspaceRoom({workspace,draft,onState,onReady,on
   if(message.type==='saved'&&verified)onStatus('Saved');
   if(message.type==='error'){
    if(!verified||message.code==='workspace_initialization_failed'){clearTimeout(timer);verified=false;initializing=false;connectionError=true;onReady(false);onStatus('Disconnected');}
+   if(message.message==='The saved workspace could not be found.'){
+    base44.entities.NexusWorkspace.filter({id:workspace.id,owner_id:workspace.owner_id},{limit:1}).then(({items})=>{
+     if(closed)return;
+     if(!items.length){onMissingWorkspace?.();return;}
+     onError('Your saved workspace exists, but the live connection could not open it. Retry the connection to continue editing.');
+    }).catch(()=>{if(!closed)onError('The workspace could not be verified. Retry the connection; no replacement workspace has been created.');});
+    return;
+   }
    onError(message.message);
   }
  });
