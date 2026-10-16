@@ -10,7 +10,7 @@ export default function StudioEmptyState({phase,creating,error,onCreate,onRetry}
    {!loading&&phase!=='error'&&<p className="text-sm text-muted-foreground mt-2">Create a workspace when you’re ready. Nothing is created automatically.</p>}
   </div>
   {error&&<p role="alert" className="text-sm text-destructive max-w-md">{error}</p>}
-  {phase==='empty'&&<Button onClick={onCreate} disabled={creating}>{creating&&<LoaderCircle className="animate-spin" aria-hidden="true"/>}{creating?'Creating workspace…':'Create workspace'}</Button>}
+  {(phase==='empty'||phase==='draft_missing')&&<Button onClick={onCreate} disabled={creating}>{creating&&<LoaderCircle className="animate-spin" aria-hidden="true"/>}{creating?'Creating…':phase==='draft_missing'?'Create draft':'Create workspace'}</Button>}
   {phase==='error'&&<Button variant="outline" onClick={onRetry}>Retry loading studio</Button>}
  </section>;
 }

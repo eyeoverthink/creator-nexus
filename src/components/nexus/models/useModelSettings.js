@@ -12,7 +12,6 @@ export default function useModelSettings(workspaceId){
   if(page.items[0])return {scope,settings:clean(page.items[0].settings)};
   let legacy=null;try{legacy=JSON.parse(localStorage.getItem('nexus-model:'+workspaceId)||'null');}catch{legacy=null;}
   const settings=clean(legacy);
-  if(legacy)await base44.entities.NexusContinuity.upsert([{...scope,settings}],{key:['owner_id','workspace_id','scope']});
   return {scope,settings};
  }});
  const persist=async()=>{const payload=pending.current;if(!payload)return;pending.current=null;try{await base44.entities.NexusContinuity.upsert([payload],{key:['owner_id','workspace_id','scope']});setError('');}catch(e){setError('Model settings could not be saved: '+e.message);}};
