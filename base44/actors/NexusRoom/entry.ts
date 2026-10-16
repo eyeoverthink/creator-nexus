@@ -15,8 +15,10 @@ export default class NexusRoom extends Actor {
       this.reviewing=true;try{await reviewProposal(this,conn,msg);}catch(error){conn.send({type:'error',message:error.message});}finally{this.reviewing=false;}return;
     }
     if(msg.type==='initialize' && typeof msg.workspace_id==='string' && typeof msg.draft_id==='string') {
-      const w=await this.client.asServiceRole.entities.NexusWorkspace.get(msg.workspace_id); const d=await this.client.asServiceRole.entities.NexusDraft.get(msg.draft_id);
-      if(w.owner_id!==this.owner||d.owner_id!==this.owner||d.workspace_id!==w.id)return;
+      const workspaces=await this.client.asServiceRole.entities.NexusWorkspace.filter({id:msg.workspace_id,owner_id:this.owner},{limit:1});
+      const w=workspaces.items[0];if(!w)return;
+      const drafts=await this.client.asServiceRole.entities.NexusDraft.filter({id:msg.draft_id,owner_id:this.owner,workspace_id:w.id},{limit:1});
+      const d=drafts.items[0];if(!d)return;
       if(this.workspace&&this.workspace!==w.id)return;
       this.workspace=w.id;await this.storage.put('workspace',w.id);
       if(!this.state.draft){this.state.draft=d;this.state.revision=d.revision||0;}
