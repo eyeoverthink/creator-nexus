@@ -1,0 +1,7 @@
+import {useState} from 'react';
+import {Button} from '@/components/ui/button';
+export default function RegressionScenario({data,busy,onAnalyze}){
+ const [values,setValues]=useState(null),[horizon,setHorizon]=useState(7),ready=data.fit.status==='ready';
+ const current=values||data.fit.means||[0,0,0];
+ return <form onSubmit={e=>{e.preventDefault();onAnalyze(ready?current.map(Number):undefined,Number(horizon));}} className="space-y-3"><h4 className="font-heading text-sm">Predict a scenario</h4>{ready&&<div className="grid sm:grid-cols-3 gap-3">{data.catalog.features.map((f,i)=><label key={f.key} className="text-xs">{f.label}<input required type="number" step="any" min={f.min} max={f.max} value={current[i]} onChange={e=>setValues(current.map((v,j)=>j===i?e.target.value:v))} className="block w-full mt-1 rounded-md border border-input bg-secondary p-2"/></label>)}</div>}<label className="text-xs block">Time-trend horizon (days)<input required type="number" min="1" max="90" step="1" value={horizon} onChange={e=>setHorizon(e.target.value)} className="block mt-1 w-28 rounded-md border border-input bg-secondary p-2"/></label><Button size="sm" disabled={busy}>{busy?'Working…':'Fit, predict & log analysis'}</Button><p className="text-[10px] text-muted-foreground">Scenario predictions use multiple linear regression; the separate date trend extrapolates the recorded outcomes. Both are exploratory.</p></form>;
+}
