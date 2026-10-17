@@ -8,6 +8,7 @@ export default class NexusRoom extends Actor {
   async handleConnect(conn) {
     if(conn.identity.type!=='authenticated' || (this.owner && this.owner!==conn.identity.userId)){conn.reject(4003,'Private workspace');return;}
     if(!this.owner){this.owner=conn.identity.userId;await this.storage.put('owner',this.owner);}
+    conn.send({type:'room_ready'});
     conn.send({type:'state',state:this.state});
   }
   async handleMessage(conn,msg) {

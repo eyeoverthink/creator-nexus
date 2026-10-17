@@ -28,7 +28,7 @@ export default function useNexus(){
  const open=type=>{if(!workspace)return;const existing=layout.find(p=>p.tabs.includes(type));if(existing){changeLayout(layout.map(p=>p.id===existing.id?{...p,active:type}:p));return;}changeLayout([...layout,{id:crypto.randomUUID(),tabs:[type],active:type,x:15,y:8,w:55,h:82}]);};
  const edit=(title,body)=>{const current=latest.current;if(!current?.draft)return;setStatus('Saving');send({type:'edit',title,body,baseRevision:current.revision});};
  const executeRun=async (task,agentId=agent)=>{
-  const agent=agentId;if(!latest.current?.draft||latest.current.agents[agent]==='working')return;
+  const agent=agentId;if(!latest.current?.draft){setError('Reconnect to the workspace before running an agent. No agent action was started.');return;}if(latest.current.agents[agent]==='working')return;
   const current=latest.current,{settings,token}=models;
   if((current.proposals||[]).length>=8){setError('Review or reject pending draft suggestions before requesting another agent action.');open('draft');return;}
   setError('');send({type:'agent_status',agent,busy:true});
@@ -40,7 +40,7 @@ export default function useNexus(){
    if(result.kind==='edit')open('draft');
   }catch(e){setError(e.message);send({type:'agent_status',agent,busy:false});}
  };
- const run=(task,agentId=agent)=>models.settings.provider==='ollama'?executeRun(task,agentId):setPaidApproval({label:'Run '+({writer:'Scribe',researcher:'Scout',strategist:'Pulse'}[agentId]||'the selected agent'),task,agentId});
+ const run=(task,agentId=agent)=>{if(!latest.current?.draft){setError('Reconnect to the workspace before running an agent. No agent action was started.');return;}return models.settings.provider==='ollama'?executeRun(task,agentId):setPaidApproval({label:'Run '+({writer:'Scribe',researcher:'Scout',strategist:'Pulse'}[agentId]||'the selected agent'),task,agentId});};
  const confirmPaidRun=()=>{const request=paidApproval;setPaidApproval(null);if(request)executeRun(request.task,request.agentId);};
  useEffect(()=>{const key=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();send({type:'save'});}if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='p'){e.preventDefault();open('preview');}};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[layout]);
  return {workspace,layout,state,status,error,layoutStatus,setError,agent,setAgent,send,edit,run,open,changeLayout,models,paidApproval,confirmPaidRun,cancelPaidRun:()=>setPaidApproval(null),connected,retryConnection:studio.reload,studioPhase:studio.phase,studioError:studio.createError||studio.error,creatingWorkspace:studio.creating,createWorkspace:studio.createWorkspace};
