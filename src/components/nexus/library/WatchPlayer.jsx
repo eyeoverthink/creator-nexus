@@ -2,6 +2,7 @@ import {useEffect,useState} from 'react';
 import {Button} from '@/components/ui/button';
 import useVideoUrl from '@/components/nexus/library/useVideoUrl';
 import {videoDate,videoSize} from '@/components/nexus/library/videoRecords';
+import VideoProductionDetails from '@/components/nexus/library/VideoProductionDetails';
 export default function WatchPlayer({video,children}){
  const {url,loading,error,retry}=useVideoUrl(video),[failed,setFailed]=useState(false);
  useEffect(()=>setFailed(false),[url]);
@@ -16,6 +17,7 @@ export default function WatchPlayer({video,children}){
    {video.description&&<p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{video.description}</p>}
    <dl className="space-y-3 text-sm"><div><dt className="text-muted-foreground">Uploaded</dt><dd><time dateTime={video.uploadedAt}>{videoDate(video.uploadedAt)}</time></dd></div><div><dt className="text-muted-foreground">Size</dt><dd>{videoSize(video.sizeBytes)}</dd></div></dl>
    {url&&<a href={url} download target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center rounded-md border border-input px-4 text-sm text-link hover:bg-secondary">Download</a>}
+   <VideoProductionDetails production={video.production}/>
    {children}
   </aside>
  </div>;

@@ -1,4 +1,5 @@
 import { secrets } from 'base44:runtime';
+import { cleanVideoProduction } from './runnerResultMetadata.ts';
 
 export const ID_RE = /^[A-Za-z0-9_-]{6,64}$/;
 const RUNNER_RE = /^[A-Za-z0-9_.-]{1,40}$/;
@@ -78,7 +79,7 @@ export function byAge(a, b) {
   return (Date.parse(a.created_date) || 0) - (Date.parse(b.created_date) || 0) || String(a.id).localeCompare(String(b.id));
 }
 export function cleanResult(result) {
-  const out = {};
+  const out = cleanVideoProduction(result);
   if (typeof result.job_id === 'string' && ID_RE.test(result.job_id)) out.job_id = result.job_id;
   if (typeof result.error === 'string') out.error = result.error.slice(0, 3000);
   if (typeof result.output_path === 'string') out.output_path = result.output_path.slice(0, 300);
