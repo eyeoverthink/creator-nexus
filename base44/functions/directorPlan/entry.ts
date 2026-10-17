@@ -50,7 +50,8 @@ OUTPUT FORMAT (this exact shape)
 Allowed keys per scene: id, start_word, end_word, visual, data, reveal_words. Do not add any other key (no image, url, src, color, animation, notes). Do not add a style or kicker.
 
 If the program replies with a list of errors, fix exactly those problems and return the complete corrected JSON object again, nothing else.`;
-const RESPONSE_SCHEMA = {type:'object',required:['schema','generator','scenes'],additionalProperties:false,properties:{schema:{const:'nexus.scene_plan/1'},generator:{type:'string'},scenes:{type:'array',minItems:1,maxItems:40,items:{type:'object',required:['id','start_word','end_word','visual','data'],additionalProperties:false,properties:{id:{type:'string',pattern:'^[A-Za-z0-9_-]{1,20}$'},start_word:{type:'integer',minimum:0},end_word:{type:'integer',minimum:0},visual:{enum:['title_card','hero_stat','keyword_card','bullet_build','spec_table','code_snippet','diagram_flow']},data:{type:'object'},reveal_words:{type:'array',items:{type:'integer'}}}}}}};
+// Request JSON through the prompt, then enforce the full schema in validate().
+// An open-ended card-data schema is rejected by the model's structured-output API.
 const rate = new Map(); // Only user IDs, request counts and expiry times; never content.
 const round = n => Math.round(n * 100) / 100;
 const object = v => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -78,9 +79,9 @@ function parseReply(reply) {
  return parsed;
 }
 function itemsOf(scene) {return scene.visual==='bullet_build'?scene.data?.bullets:scene.visual==='spec_table'?scene.data?.rows:scene.visual==='diagram_flow'?scene.data?.nodes:null;}
-function normalise(raw,tokens) {
+function normalise(raw,tokens,aspectRatio='9:16') {
  const plan=structuredClone(raw),repairs=[],audio=tokens.length/2.6,total=audio+0.4;
- plan.schema='nexus.scene_plan/1';plan.generator='visual-director-v1';plan.audio_seconds=round(audio);
+ plan.schema='nexus.scene_plan/1';plan.generator='visual-director-v1';plan.audio_seconds=round(audio);plan.aspect_ratio=aspectRatio;
  for(const key of ['style','kicker'])if(key in plan){delete plan[key];repairs.push('Removed '+key+'.');}
  const cleanText=(v,path)=>{
   if(typeof v==='string'){const clean=v.replace(/[\u2010\u2011\u2012\u2212]/g,'-').replace(/[\u00a0\u202f\u2009\u2007]/g,' ').replace(/[\u200b\u200c\u200d\u2060\ufeff\u00ad]/g,'');if(clean!==v)repairs.push(path+': normalised look-alike characters.');return clean;}
@@ -112,8 +113,9 @@ function scriptNumbers(tokens) {
 function validate(plan,tokens) {
  const failures=[],soft=[],add=(id,message)=>failures.push({id,message});
  const known=(value,allowed,path,row=0)=>{if(!object(value)){add(row,path+' must be an object.');return false;}for(const key of Object.keys(value))if(!allowed.includes(key))add(row,path+': unknown key '+key+'.');return true;};
- if(!known(plan,['schema','generator','style','kicker','audio_seconds','scenes'],'plan'))return {failures,soft};
+ if(!known(plan,['schema','generator','style','kicker','audio_seconds','aspect_ratio','scenes'],'plan'))return {failures,soft};
  if(plan.schema!=='nexus.scene_plan/1')add(0,'H1: schema must be nexus.scene_plan/1.');
+ if(!['9:16','16:9'].includes(plan.aspect_ratio))add(0,'H1: aspect_ratio must be 9:16 or 16:9.');
  if(!Array.isArray(plan.scenes)||!plan.scenes.length||plan.scenes.length>40){add(0,'H1: scenes must contain 1 to 40 scenes.');return {failures,soft};}
  const words=new Set((tokens.join(' ').match(wordRE)||[]).map(w=>w.toLowerCase())),numbers=scriptNumbers(tokens),common=new Set('a an the and or vs of to per in on at for with by is are'.split(' ')),code=new Set('if else return for while true false null not and or'.split(' '));
  const ids=new Set(),changes=[],audio=tokens.length/2.6,visuals={};
@@ -158,7 +160,7 @@ function validate(plan,tokens) {
  if(plan.scenes.length>=8){if(Object.keys(visuals).length<4)soft.push('Fewer than 4 distinct visuals in a plan of at least 8 scenes.');if(Object.values(visuals).some(n=>n/plan.scenes.length>0.4))soft.push('One visual exceeds 40 percent of scenes.');}
  return {failures,soft};
 }
-function heuristic(tokens) {
+function heuristic(tokens,aspectRatio='9:16') {
  const scenes=[],n=tokens.length,hasAI=disclosure(tokens.join(' '));let start=0;
  const safeWord=w=>w.replace(/[^\x20-\x7e\u00c0-\u024f\u00b7\u2013\u2014\u2018\u2019\u201c\u201d\u2026]/gu,'');
  const phrase=(words,max,count)=>{const chosen=[];for(const word of words){if(chosen.length>=count)break;const clean=safeWord(word);if(!clean||prohibited.test(clean)||chosen.concat(clean).join(' ').length>max)break;chosen.push(clean);}return chosen.join(' ');};
@@ -167,7 +169,7 @@ function heuristic(tokens) {
   scenes.push({id:'sc'+String(scenes.length+1).padStart(2,'0'),start_word:start,end_word:end,visual,data:first?{title:text}:{phrase:text}});start=end+1;
  }
  if(hasAI&&scenes.length){const last=scenes.at(-1),sentence=lastSentence(tokens.join(' ')),sentenceWords=sentence.split(/\s+/);let text='';for(let i=0;i<sentenceWords.length;i++){for(let count=3;count>=1;count--){const candidate=phrase(sentenceWords.slice(i,i+count),24,count);if(/\bAI\b/i.test(candidate)&&candidate.split(/\s+/).length<=3){text=candidate;break;}}if(text)break;}last.visual='keyword_card';last.data={phrase:text};}
- const result=normalise({scenes},tokens);result.plan.generator='heuristic';return result;
+ const result=normalise({scenes},tokens,aspectRatio);result.plan.generator='heuristic';return result;
 }
 function checksFor(validation,tokens) {
  return rowLabels.map((label,id)=>{const messages=id===9?validation.soft:validation.failures.filter(e=>e.id===id).map(e=>e.message);if(id===4&&!messages.length)messages.push('Start-time alignment holds by construction with estimated word timings.');if(id===8&&!disclosure(tokens.join(' ')))messages.push('No AI sentence in the script');return {id:'check-'+(id+1),label,status:messages.length&&(id!==4||validation.failures.some(e=>e.id===4))&&(id!==8||disclosure(tokens.join(' ')))?(id===9?'warn':'fail'):'pass',messages};});
@@ -180,27 +182,30 @@ export default async function(req) {
   if(Number(req.headers.get('content-length'))>80000)return json({error:'request_too_large'},413);
   const reader=req.body?.getReader(),decoder=new TextDecoder();let raw='',bytes=0;if(reader){while(true){const chunk=await reader.read();if(chunk.done)break;bytes+=chunk.value.byteLength;raw+=decoder.decode(chunk.value,{stream:true});if(bytes>80000||raw.length>20000){await reader.cancel();return json({error:'request_too_large'},413);}}raw+=decoder.decode();}if(raw.length>20000)return json({error:'request_too_large'},413);
   let body;try{body=JSON.parse(raw);}catch{return json({error:'invalid_input'},400);}if(!object(body)||typeof body.script!=='string'||(body.ai_disclosure!==undefined&&typeof body.ai_disclosure!=='boolean'))return json({error:'invalid_input'},400);
+  const aspectRatio=body.aspect_ratio===undefined?'9:16':body.aspect_ratio;
+  if(!['9:16','16:9'].includes(aspectRatio))return json({error:'invalid_format'},400);
   let script=cleanScript(body.script);if(!script)return json({error:'invalid_input'},400);if(script.length>1500)return json({error:'script_too_long'},413);
   if(body.ai_disclosure===true&&!disclosure(script))script+=' The voice and captions in this video were made with AI.';
   if(script.length>1500)return json({error:'script_too_long'},413); // Never truncate away the disclosure or silently lose narration.
   const now=Date.now();for(const [id,entry] of rate)if(entry.until<=now)rate.delete(id);const entry=rate.get(user.id)||{count:0,until:now+3600000};if(entry.count>=10)return json({error:'rate_limited'},429);entry.count++;rate.set(user.id,entry);
   const tokens=script.split(/\s+/),audio=tokens.length/2.6,userMessage=buildUserMessage(tokens,audio+0.4),attempts=[],deadline=Date.now()+45000;let previous='',problems=[],best=null,bestValidation=null,softRetryAt=null,reason='The model did not produce a hard-valid scene plan.';
   for(let n=1;n<=3&&Date.now()<deadline;n++){
-   const started=Date.now(),attempt={n,ms:0,hard_errors:[],soft_errors:[],repairs:[]};let timedOut=false;
+   const started=Date.now(),attempt={n,ms:0,hard_errors:[],soft_errors:[],repairs:[]};let timedOut=false,stopRetry=false;
    try {
-    const prompt='SYSTEM INSTRUCTIONS:\n'+SYSTEM_PROMPT+'\n\n'+userMessage+(n>1?'\n\nYOUR PREVIOUS REPLY:\n'+previous+'\n\nCHECKER FEEDBACK:\n'+feedback(problems):'');
-    let timer;let reply;try{reply=await Promise.race([base44.asServiceRole.integrations.Core.InvokeLLM({prompt,response_json_schema:RESPONSE_SCHEMA}),new Promise((_,reject)=>{timer=setTimeout(()=>{timedOut=true;reject(Error('Model time budget exceeded.'));},Math.max(1,deadline-Date.now()));})]);}finally{clearTimeout(timer);}
+    const direction=aspectRatio==='9:16'?SYSTEM_PROMPT:SYSTEM_PROMPT.replace('vertical explainer video (1080x1920)','landscape explainer video (1920x1080)');
+    const prompt='SYSTEM INSTRUCTIONS:\n'+direction+'\n\nTarget aspect ratio: '+aspectRatio+'. Compose short, readable cards for this orientation.\n\n'+userMessage+(n>1?'\n\nYOUR PREVIOUS REPLY:\n'+previous+'\n\nCHECKER FEEDBACK:\n'+feedback(problems):'');
+    let timer;let reply;try{reply=await Promise.race([base44.asServiceRole.integrations.Core.InvokeLLM({prompt}),new Promise((_,reject)=>{timer=setTimeout(()=>{timedOut=true;reject(Error('Model time budget exceeded.'));},Math.max(1,deadline-Date.now()));})]);}finally{clearTimeout(timer);}
     previous=(typeof reply==='string'?reply:JSON.stringify(reply))?.slice(0,40000)||'';
-    const {plan,repairs}=normalise(parseReply(reply),tokens),validation=validate(plan,tokens);attempt.repairs=repairs;attempt.hard_errors=validation.failures.map(e=>e.message);attempt.soft_errors=validation.soft;
+    const {plan,repairs}=normalise(parseReply(reply),tokens,aspectRatio),validation=validate(plan,tokens);attempt.repairs=repairs;attempt.hard_errors=validation.failures.map(e=>e.message);attempt.soft_errors=validation.soft;
     if(!validation.failures.length&&(!bestValidation||validation.soft.length<bestValidation.soft.length)){best=plan;bestValidation=validation;}
     if(!validation.failures.length&&validation.soft.length&&softRetryAt===null)softRetryAt=n;
     problems=attempt.hard_errors.length?attempt.hard_errors:attempt.soft_errors;
-   } catch {attempt.error=timedOut?'Model time budget exceeded.':'Model request failed, returned empty text or returned invalid JSON.';attempt.hard_errors=[attempt.error];problems=attempt.hard_errors;previous='{}';reason=attempt.error;}
+   } catch(error) {const status=Number(error.status||error.response?.status);stopRetry=[400,401,403,429].includes(status);attempt.error=timedOut?'Model time budget exceeded.':status?'Model request failed (HTTP '+status+').':'Model request failed, returned empty text or returned invalid JSON.';attempt.hard_errors=[attempt.error];problems=attempt.hard_errors;previous='{}';reason=attempt.error;}
    attempt.ms=Date.now()-started;attempts.push(attempt);
-   if(timedOut||bestValidation&&!bestValidation.soft.length||softRetryAt!==null&&n>softRetryAt)break;
+   if(timedOut||stopRetry||bestValidation&&!bestValidation.soft.length||softRetryAt!==null&&n>softRetryAt)break;
   }
   let fallback=false,fallbackReason=null,plan=best,validation=bestValidation;
-  if(!plan){fallback=true;fallbackReason=reason;const result=heuristic(tokens);validation=validate(result.plan,tokens);plan=validation.failures.length?null:result.plan;}
+  if(!plan){fallback=true;fallbackReason=reason;const result=heuristic(tokens,aspectRatio);validation=validate(result.plan,tokens);plan=validation.failures.length?null:result.plan;}
   return json({ok:!!plan,plan,script_used:script,tokens,timing:{mode:'estimated',words_per_sec:2.6,audio_seconds:round(audio)},generator:plan?.generator||'none',fallback,fallback_reason:fallbackReason,accepted_with_soft_warnings:!!plan&&!!validation.soft.length,attempts,checks:checksFor(validation,tokens)});
  } catch {return json({error:'internal_error'},500);}
 }
