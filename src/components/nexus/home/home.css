@@ -1,0 +1,4 @@
+.nexus-home .home-card { transition: border-color 150ms var(--motion-easing); }
+.nexus-home .home-card:hover { border-color:var(--border-control); }
+.nexus-home *,.nexus-home *::before,.nexus-home *::after { animation:none!important; transition-property:border-color; transition-duration:150ms; }
+@media(prefers-reduced-motion:reduce) { .nexus-home *,.nexus-home *::before,.nexus-home *::after { transition:none!important; } }

@@ -4,7 +4,7 @@ import {base44} from '@/api/base44Client';
 import useWorkspaceAccess from '@/components/nexus/useWorkspaceAccess';
 import {sparkCall,scope} from '@/components/nexus/spark/sparkClient';
 export default function useSpark(){
- const cache=useQueryClient(),lock=useRef(false),[busy,setBusy]=useState(''),[error,setError]=useState(''),[notice,setNotice]=useState(''),[approval,setApproval]=useState(null),[batch,setBatch]=useState(''),[result,setResult]=useState(null),[review,setReview]=useState(null);
+ const cache=useQueryClient(),lock=useRef(false),[busy,setBusy]=useState(''),[error,setError]=useState(''),[notice,setNotice]=useState(''),[approval,setApproval]=useState(null),[batch,setBatch]=useState(()=>new URLSearchParams(window.location.search).get('batch')||''),[result,setResult]=useState(null),[review,setReview]=useState(null);
  const workspaceAccess=useWorkspaceAccess(),boot=workspaceAccess.boot;
  const workspace=boot.data;
  const profile=useQuery({queryKey:['spark','profile',workspace?.id],enabled:!!workspace,queryFn:async()=>(await base44.entities.SparkProfile.filter(scope(workspace),{sort:'-version',limit:1})).items[0]||null});

@@ -13,7 +13,7 @@ import AssetTypeChips from '@/components/nexus/library/AssetTypeChips';
 import readLibraryPage from '@/components/nexus/library/readLibraryPage';
 import LibraryVideoCard from '@/components/nexus/library/LibraryVideoCard';
 export default function AssetBrowser({workspace}){
- const cache=useQueryClient(),[search,setSearch]=useState(''),[term,setTerm]=useState(''),[favorite,setFavorite]=useState(false),[kind,setKind]=useState('all'),[agent,setAgent]=useState('all'),[add,setAdd]=useState(false),[importing,setImporting]=useState(false),[selected,setSelected]=useState(null);
+ const cache=useQueryClient(),[search,setSearch]=useState(''),[term,setTerm]=useState(''),[favorite,setFavorite]=useState(false),[kind,setKind]=useState(()=>new URLSearchParams(window.location.search).get('kind')==='videos'?'videos':'all'),[agent,setAgent]=useState('all'),[add,setAdd]=useState(false),[importing,setImporting]=useState(false),[selected,setSelected]=useState(null);
  useEffect(()=>{const timer=setTimeout(()=>setTerm(search.trim()),300);return()=>clearTimeout(timer);},[search]);
  const query={...assetScope(workspace),...(favorite?{favorite:true}:{}),...(kind==='all'?{}:{kind}),...(agent==='all'?{}:{agent_ids:agent}),...(term?{$or:['title','body','project'].map(field=>({[field]:{$regex:escapeSearch(term),$options:'i'}}))}:{})};
  const includeVideos=(kind==='all'||kind==='videos')&&!term&&!favorite&&agent==='all';

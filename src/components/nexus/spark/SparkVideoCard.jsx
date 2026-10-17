@@ -1,3 +1,4 @@
+import {useEffect,useRef} from 'react';
 import {Sparkles,Play} from 'lucide-react';
 import VideoOutputPreview from '@/components/nexus/spark/VideoOutputPreview';
 import JobStatusTag from '@/components/nexus/spark/JobStatusTag';
@@ -6,9 +7,12 @@ import {rubric,safeSource} from '@/components/nexus/spark/sparkClient';
 import SparkSafety from '@/components/nexus/spark/SparkSafety';
 import SparkJobStatus from '@/components/nexus/spark/SparkJobStatus';
 export default function SparkVideoCard({card,spark,jobs,compact=false,readOnly=false}){
+ const element=useRef(null);
+ const focused=new URLSearchParams(window.location.search).get('card')===card.id;
+ useEffect(()=>{if(focused){element.current?.focus({preventScroll:true});element.current?.scrollIntoView({block:'center'});}},[focused,card.id]);
  const wn=card.why_now||{},blocked=!!card.gates_failed?.length||card.safe_by_default?.sameness?.verdict==='block'||card.safe_by_default?.risk_level==='high';
  const output=jobs?.data?.[card.job_event_id],status=output?.kind==='job.done'?'Ready':output?.kind==='job.failed'?'Failed':output?.kind==='job.claimed'?'Rendering':card.status==='script_drafted'?'Needs review':card.status==='queued'?'Queued':'Idea';
- return <article className="min-w-0 rounded-lg border border-border bg-card p-3 space-y-3">
+ return <article ref={element} tabIndex={-1} aria-label={card.hook_title} className="min-w-0 rounded-lg border border-border bg-card p-3 space-y-3">
   {output?.kind==='job.done'?<VideoOutputPreview title={card.hook_title} fileUri={output.file_uri} videoUrl={output.video_url} sizeBytes={output.size_bytes??output.file_size_bytes} uploadedAt={output.uploaded_at}/>:<div className="aspect-video rounded-lg bg-secondary grid place-items-center text-muted-foreground" aria-hidden="true"><Play size={24}/></div>}
   <div className="flex flex-wrap items-center gap-2 text-[11px]"><span className="rounded-md bg-secondary px-2 py-1">{card.format}</span>{card.is_pick&&<span className="text-primary flex items-center gap-1"><Sparkles size={12}/>Director’s pick</span>}<span className="ml-auto"><JobStatusTag status={status}/></span></div>
   <h3 className="font-heading text-sm leading-5 line-clamp-2">{card.hook_title}</h3><p className="text-sm text-muted-foreground">{card.one_line_pitch}</p>

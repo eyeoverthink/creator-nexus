@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import Home from '@/pages/Home';
+import Studio from '@/pages/Studio';
 import Knowledge from '@/pages/Knowledge';
 import Spark from '@/pages/Spark';
 import Origin from '@/pages/Origin';
@@ -51,7 +52,7 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/oauth/consent" element={<OAuthConsent />} />
-      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}><Route path="/" element={<Home />} /><Route path="/origin" element={<Origin />} /><Route path="/knowledge" element={<Knowledge />} /><Route path="/spark" element={<Spark />} /><Route path="/library" element={<Library />} /><Route path="/watch/:jobId" element={<Watch />} /></Route>
+      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}><Route path="/" element={<Home />} /><Route path="/studio" element={<Studio />} /><Route path="/origin" element={<Origin />} /><Route path="/knowledge" element={<Knowledge />} /><Route path="/spark" element={<Spark />} /><Route path="/library" element={<Library />} /><Route path="/watch/:jobId" element={<Watch />} /></Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
