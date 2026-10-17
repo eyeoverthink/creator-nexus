@@ -1,7 +1,7 @@
 import {base44} from '@/api/base44Client';
 import {canonicalVideoEvents,cardsForJobs} from '@/components/nexus/library/videoReads';
 import {sourcePattern,videoRecord,videoPath} from '@/components/nexus/library/videoRecords';
-const jobPath=card=>card?'/spark?view=kanban&card='+encodeURIComponent(card.id):'/spark?view=logs';
+const jobPath=card=>card?'/spark?view=kanban&card='+encodeURIComponent(card.id):'/spark?view=logs&source=runner';
 export default async function readHomeJobs(scope){
  const [queued,reviews]=await Promise.all([
   base44.entities.NexusEvent.filter({...scope,kind:'job.queued'},{sort:'-created_date',limit:4,fields:['message','created_date']}),
