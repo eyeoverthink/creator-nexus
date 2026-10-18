@@ -1,9 +1,16 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { authorizeRunner, readInput, json, runnerId, parseBody, markers, byAge, ID_RE } from '../../shared/runnerBridge.ts';
-import {pendingVideos} from '../../shared/runnerVideos.ts';
-import {pendingAudios} from '../../shared/runnerAudio.ts';
-
+import { pendingVideos } from '../../shared/runnerVideos.ts';
 // Shared-secret webhook for the supplied VPS runner. Append-only NexusEvent operations.
+
+async function pendingAudios(events:any,runner:string,cursor?:string){
+ const escaped=runner.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+ const page=await events.filter({kind:'job.done',body:{$regex:'"job_type"\\s*:\\s*"tts".*"runner_id"\\s*:\\s*"'+escaped+'"'}},{sort:'created_date',limit:50,...(cursor?{cursor}:{})});
+ const completed=page.items.map(parseBody).filter((v:any)=>v&&ID_RE.test(v.source_event_id));
+ const uploaded=new Set(completed.length?(await markers(events,completed.map((v:any)=>v.source_event_id),['job.audio'])).map((v:any)=>parseBody(v)?.source_event_id):[]);
+ return {transfers:completed.filter((v:any)=>!uploaded.has(v.source_event_id)).map((v:any)=>({source_event_id:v.source_event_id,job_id:'job-'+v.source_event_id})),next_cursor:page.next_cursor,has_more:page.has_more};
+}
+
 export default async function(req) {
   try {
     const denied = await authorizeRunner(req, 'poll');
@@ -13,8 +20,10 @@ export default async function(req) {
     const runner = runnerId(input.value.runner_id);
     const base44 = createClientFromRequest(req);
     const events = base44.asServiceRole.entities.NexusEvent;
-    if(input.value.operation==='transfers')return json(await pendingVideos(events,runner,typeof input.value.cursor==='string'?input.value.cursor:undefined));
-    if(input.value.operation==='audio-transfers')return json(await pendingAudios(events,runner,typeof input.value.cursor==='string'?input.value.cursor:undefined));
+    const op = input.value.operation;
+    if(op==='transfers')return json(await pendingVideos(events,runner,typeof input.value.cursor==='string'?input.value.cursor:undefined));
+    if(op==='audio-transfers')return json(await pendingAudios(events,runner,typeof input.value.cursor==='string'?input.value.cursor:undefined));
+    if(typeof op==='string')return json({error:'unknown_operation',operation:op},400);
     const queued = await events.filter({ kind: 'job.queued' }, { sort: '-created_date', limit: 200 });
     const valid = queued.items.filter(event => ID_RE.test(event.id));
     if (!valid.length) return json({ job: null });
@@ -41,7 +50,7 @@ export default async function(req) {
       if (job.test === true) payload.test = true;
       return json({ job_id: `job-${event.id}`, source_event_id: event.id, owner_id: event.owner_id, workspace_id: event.workspace_id, payload });
     }
-    return json({ job: null });
+    return json({ job: null, _v: 'audio-patch-1' });
   } catch {
     console.error('runnerPoll: unexpected error');
     return json({ error: 'internal_error' }, 500);
