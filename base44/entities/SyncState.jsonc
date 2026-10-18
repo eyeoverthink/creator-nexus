@@ -1,0 +1,18 @@
+{
+  "name": "SyncState",
+  "type": "object",
+  "properties": {
+    "sync_token": {
+      "type": "string"
+    },
+    "last_synced_at": {
+      "type": "string"
+    },
+    "synced_events": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}

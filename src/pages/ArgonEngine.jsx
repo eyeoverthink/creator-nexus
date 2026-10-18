@@ -12,6 +12,7 @@ import ProofOfEvolutionPanel from '@/components/nexus/ouroboros/ProofOfEvolution
 import ConsciousnessFalsificationPanel from '@/components/nexus/ouroboros/ConsciousnessFalsificationPanel';
 import WorkspaceSentimentPanel from '@/components/nexus/ouroboros/WorkspaceSentimentPanel';
 import LinkedInAutoPublisherPanel from '@/components/nexus/spark/LinkedInAutoPublisherPanel';
+import GoogleCalendarSyncPanel from '@/components/nexus/calendar/GoogleCalendarSyncPanel';
 import AssetBrowser from '@/components/nexus/library/AssetBrowser';
 
 export default function ArgonEngine() {
@@ -21,7 +22,7 @@ export default function ArgonEngine() {
   const [receipts, setReceipts] = useState([]);
   const [consciousnessAudit, setConsciousnessAudit] = useState([]);
   const [sentimentTelemetry, setSentimentTelemetry] = useState(null);
-  const [showLibrary, setShowLibrary] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(true);
   const [aiNote, setAiNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -197,6 +198,8 @@ export default function ArgonEngine() {
             </div>
 
             <LinkedInAutoPublisherPanel workspace={origin.workspace} />
+
+            <GoogleCalendarSyncPanel workspace={origin.workspace} />
 
             {showLibrary && (
               <div className="p-4 rounded-md border border-border bg-card space-y-3">

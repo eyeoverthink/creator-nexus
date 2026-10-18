@@ -1,0 +1,41 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "connector",
+      "events": [
+        "events"
+      ],
+      "integration_type": "googlecalendar",
+      "resource_id": "primary"
+    }
+  },
+  "description": "Listens for real-time Google Calendar webhook notifications and performs incremental syncToken updates into SyncState.",
+  "name": "Google Calendar Real-Time Event Sync",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "google_calendar_realtime_sync",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "sync_calendar_changes": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "googleCalendarSync",
+            "args": {
+              "data": "${ .trigger.data }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Incremental Google Calendar Sync",
+            "description": "Applies syncToken delta to workspace SyncState"
+          }
+        }
+      }
+    ]
+  }
+}
