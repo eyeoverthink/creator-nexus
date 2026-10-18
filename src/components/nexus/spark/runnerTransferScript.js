@@ -16,7 +16,7 @@ def read_env(path):
     return values
 
 def request(endpoint, secret, body, content_type):
-    req = urllib.request.Request(APP + "/functions/" + endpoint, data=body, headers={"x-runner-secret": secret, "Content-Type": content_type}, method="POST")
+    req = urllib.request.Request(APP + "/functions/" + endpoint, data=body, headers={"x-runner-secret": secret, "Content-Type": content_type, "User-Agent": "nexus-video-transfer/1.0"}, method="POST")
     with urllib.request.urlopen(req, timeout=180) as response:
         return json.load(response)
 
