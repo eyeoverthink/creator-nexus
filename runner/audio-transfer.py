@@ -33,20 +33,38 @@ def request(endpoint, secret, body, content_type, extra_headers=None):
     with urllib.request.urlopen(req, timeout=120) as response:
         return json.load(response)
 
-# TODO(human): implement the upload() function
-# It should:
-#   1. Validate source_event_id from the job dict
-#   2. Find out.wav at jobs_root / ("job-" + source) / "out.wav"
-#   3. Verify the file exists, is between 44 bytes and MAX_SIZE, and starts with b"RIFF"
-#   4. Build a multipart/form-data body with two fields: source_event_id (text) and file (the WAV)
-#   5. POST it to runnerReport with X-Media-Type: audio header
-#   6. Check the response has ok=True
-#
-# Reference: video-transfer.py's upload() does the same thing for MP4 files.
-# Key differences from video: check for "RIFF" magic bytes (not "ftyp"),
-# content type is audio/wav (not video/mp4), and pass X-Media-Type: audio header.
 def upload(job, secret, jobs_root):
-    raise NotImplementedError("needs implementation")
+    """Upload a finished TTS job's out.wav to the app (mirrors video-transfer.py upload())."""
+    source = job.get("source_event_id", "")
+    if not re.fullmatch(r"[A-Za-z0-9_-]{6,64}", source):
+        raise ValueError("Invalid job identifier")
+    root = jobs_root.resolve()
+    path = (root / ("job-" + source) / "out.wav").resolve()
+    if not path.is_relative_to(root) or not path.is_file():
+        print("Waiting for local WAV:", source, flush=True)
+        return
+    size = path.stat().st_size
+    if size < 44 or size > MAX_SIZE:
+        print("Audio must be between 44 bytes and 50 MB:", source, flush=True)
+        return
+    with path.open("rb") as handle:
+        header = handle.read(12)
+    if header[0:4] != b"RIFF" or header[8:12] != b"WAVE":
+        raise ValueError("Invalid WAV")
+    boundary = "nexus-" + uuid.uuid4().hex
+    prefix = (
+        "--" + boundary + '\r\nContent-Disposition: form-data; name="source_event_id"\r\n\r\n' + source
+        + "\r\n--" + boundary + '\r\nContent-Disposition: form-data; name="file"; filename="audio.wav"\r\nContent-Type: audio/wav\r\n\r\n'
+    ).encode()
+    body = prefix + path.read_bytes() + ("\r\n--" + boundary + "--\r\n").encode()
+    result = request(
+        "runnerReport", secret, body,
+        "multipart/form-data; boundary=" + boundary,
+        extra_headers={"X-Media-Type": "audio"},
+    )
+    if not result.get("ok"):
+        raise ValueError("Transfer not acknowledged")
+    print("Audio saved in Spark:", source, flush=True)
 
 
 import argparse
