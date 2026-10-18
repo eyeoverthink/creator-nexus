@@ -14,6 +14,7 @@ import {
   evaluateIn5StageGauntlet,
   generateTriTimelineCandidates,
 } from '../../shared/ouroborosEngine.ts';
+import { runConsciousnessFalsificationSuite } from '../../shared/consciousnessFalsification.ts';
 
 const ID_RE = /^[A-Za-z0-9_-]{6,64}$/;
 const json = (obj, status = 200) => Response.json(obj, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -139,7 +140,34 @@ export default async function(req) {
     let seq = state.maxSeq;
 
     if (action === 'state') {
-      return json({ ok: true, state });
+      const consciousnessAudit = runConsciousnessFalsificationSuite();
+      return json({ ok: true, state, consciousnessAudit });
+    }
+
+    if (action === 'audit_consciousness') {
+      const mirrorOverride = input.mirror_override !== false;
+      const counterfactualOverride = input.counterfactual_override !== false;
+      const consciousnessAudit = runConsciousnessFalsificationSuite({
+        mirrorOverride,
+        counterfactualOverride,
+      });
+      const coreResult = consciousnessAudit[consciousnessAudit.length - 1];
+      await logLedgerEvent(
+        base44,
+        scope,
+        ++seq,
+        'EP_CONSCIOUSNESS_AUDIT',
+        coreResult.provenIntegratedCore ? 'CONSCIOUSNESS_4_OF_4_PROVEN' : 'CONSCIOUSNESS_FALSIFIED',
+        `${coreResult.architectureName} | EI=${coreResult.effectiveInformationBits.toFixed(4)}b | Phi_MIP=${coreResult.phiMipBits.toFixed(4)}b (${coreResult.weakestLinkCut}) | MirrorΔ=${coreResult.mirrorDeltaBits >= 0 ? '+' : ''}${coreResult.mirrorDeltaBits.toFixed(4)} | CF=${coreResult.counterfactualGain >= 0 ? '+' : ''}${coreResult.counterfactualGain.toFixed(4)} -> ${coreResult.verdictReason}`,
+        {
+          fitness: coreResult.phiMipBits,
+          branch: 'CONSCIOUSNESS_SUITE',
+          code_hash: coreResult.provenIntegratedCore ? 'PHI_PROVEN' : 'PHI_DENIED',
+          stages: [...coreResult.proofsPassed, coreResult.provenIntegratedCore],
+        }
+      );
+      const freshState = await loadEngineState(base44, scope);
+      return json({ ok: true, state: freshState, consciousnessAudit });
     }
 
     if (action === 'evolve') {

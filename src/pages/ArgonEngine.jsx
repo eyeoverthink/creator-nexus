@@ -9,12 +9,14 @@ import { Zap, RotateCcw, ArrowLeft, Cpu, BookOpen, Sparkles } from 'lucide-react
 import CentripetalOrbitCanvas from '@/components/nexus/ouroboros/CentripetalOrbitCanvas';
 import TriTimelineCards from '@/components/nexus/ouroboros/TriTimelineCards';
 import ProofOfEvolutionPanel from '@/components/nexus/ouroboros/ProofOfEvolutionPanel';
+import ConsciousnessFalsificationPanel from '@/components/nexus/ouroboros/ConsciousnessFalsificationPanel';
 
 export default function ArgonEngine() {
   const origin = useOrigin();
   const workspaceId = origin.workspace?.id;
   const [state, setState] = useState(null);
   const [receipts, setReceipts] = useState([]);
+  const [consciousnessAudit, setConsciousnessAudit] = useState([]);
   const [aiNote, setAiNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -31,6 +33,7 @@ export default function ArgonEngine() {
       });
       if (data?.state) setState(data.state);
       if (data?.receipts) setReceipts(data.receipts);
+      if (data?.consciousnessAudit) setConsciousnessAudit(data.consciousnessAudit);
       if (data?.aiSynthesisNote) setAiNote(data.aiSynthesisNote);
     } catch (err) {
       setError(err?.response?.data?.error || err.message || 'Engine operation failed');
@@ -182,6 +185,12 @@ export default function ArgonEngine() {
                 </div>
               </div>
             </div>
+
+            <ConsciousnessFalsificationPanel
+              results={consciousnessAudit}
+              busy={busy}
+              onRunAudit={(opts) => callEngine('audit_consciousness', opts)}
+            />
 
             <ProofOfEvolutionPanel
               state={state}
