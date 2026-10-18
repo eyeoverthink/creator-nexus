@@ -1,5 +1,6 @@
 {
-  "description": "Automatically publishes approved Origin Sparks and final Video Sparks to the connected LinkedIn feed at peak weekday times (9am, 12pm, and 5pm PT).",
+  "name": "LinkedIn Optimal Feed Dispatcher",
+  "description": "Checks workspace settings hourly and automatically dispatches approved Origin Sparks and final Video Sparks to LinkedIn during the workspace's configured optimal posting hours.",
   "definition": {
     "document": {
       "dsl": "1.0.0",
@@ -19,21 +20,20 @@
           },
           "then": "end",
           "x-base44": {
-            "title": "Dispatch approved video sparks to LinkedIn",
-            "description": "Publishes due Sparks at optimal feed window"
+            "title": "Dispatch approved video sparks at workspace optimal hours",
+            "description": "Evaluates workspace timezone & optimal hours and publishes due Sparks"
           }
         }
       }
     ]
   },
-  "name": "LinkedIn Optimal Feed Dispatcher",
   "trigger": {
     "condition": null,
     "config": {
       "trigger_type": "scheduled",
       "events": [],
       "schedule_mode": "recurring",
-      "cron_expression": "0 9,12,17 * * 1-5",
+      "cron_expression": "0 * * * *",
       "one_time_date": null,
       "timezone": "America/Los_Angeles",
       "interval_value": null,

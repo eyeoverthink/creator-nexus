@@ -1,26 +1,83 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 
 const LINKEDIN_CONNECTOR_ID = '6ad536e8bd5af14b360808eb';
-const OPTIMAL_UTC_HOURS = [16, 19, 0]; // 09:00, 12:00, 17:00 America/Los_Angeles (UTC-7)
+const DEFAULT_TIMEZONE = 'America/Los_Angeles';
+const DEFAULT_HOURS = [9, 12, 17];
 const json = (obj, status = 200) => Response.json(obj, { status, headers: { 'Cache-Control': 'no-store' } });
 
-function computeNextOptimalWindow(now = new Date()) {
-  const candidate = new Date(now.getTime());
-  candidate.setUTCMinutes(0, 0, 0);
+function normalizeHours(rawHours) {
+  if (Array.isArray(rawHours)) {
+    const parsed = rawHours.map((h) => Number(h)).filter((h) => Number.isInteger(h) && h >= 0 && h <= 23);
+    if (parsed.length) return [...new Set(parsed)].sort((a, b) => a - b);
+  }
+  if (typeof rawHours === 'string' && rawHours.trim()) {
+    const parsed = rawHours
+      .split(',')
+      .map((s) => parseInt(s.trim().split(':')[0], 10))
+      .filter((h) => Number.isInteger(h) && h >= 0 && h <= 23);
+    if (parsed.length) return [...new Set(parsed)].sort((a, b) => a - b);
+  }
+  return DEFAULT_HOURS;
+}
 
-  for (let offsetHours = 0; offsetHours <= 96; offsetHours++) {
-    const check = new Date(candidate.getTime() + offsetHours * 3600 * 1000);
-    if (check.getTime() <= now.getTime() + 60 * 1000) continue;
-    const day = check.getUTCDay();
-    // Skip Saturday (6) and Sunday (0) for peak LinkedIn B2B/creator feed engagement
-    if (day === 0 || day === 6) continue;
-    if (OPTIMAL_UTC_HOURS.includes(check.getUTCHours())) {
+function getLocalParts(date, timeZone) {
+  let tz = timeZone || DEFAULT_TIMEZONE;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+  } catch {
+    tz = DEFAULT_TIMEZONE;
+  }
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    hour12: false,
+    weekday: 'short',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const parts = Object.fromEntries(formatter.formatToParts(date).map((p) => [p.type, p.value]));
+  const hour = parseInt(parts.hour === '24' ? '0' : parts.hour, 10);
+  const minute = parseInt(parts.minute || '0', 10);
+  const weekday = parts.weekday || 'Mon';
+  const isWeekend = weekday === 'Sat' || weekday === 'Sun';
+  return {
+    tz,
+    hour,
+    minute,
+    weekday,
+    isWeekend,
+    dateStr: `${parts.year}-${parts.month}-${parts.day}`,
+  };
+}
+
+function computeNextOptimalWindowFromSettings(settings = {}, now = new Date()) {
+  const tz = settings.timezone || DEFAULT_TIMEZONE;
+  const hours = normalizeHours(settings.linkedin_posting_hours);
+  const weekdaysOnly = settings.linkedin_weekdays_only !== false;
+  const mode = settings.linkedin_posting_mode || 'auto_best';
+
+  const baseHour = new Date(now.getTime());
+  baseHour.setUTCMinutes(0, 0, 0);
+
+  for (let offsetHours = 0; offsetHours <= 120; offsetHours++) {
+    const check = new Date(baseHour.getTime() + offsetHours * 3600 * 1000);
+    if (check.getTime() <= now.getTime() - 15 * 60 * 1000) continue;
+    const local = getLocalParts(check, tz);
+    if (weekdaysOnly && local.isWeekend) continue;
+    if (hours.includes(local.hour)) {
       const diffMinutes = Math.round((check.getTime() - now.getTime()) / 60000);
+      const formattedHour = `${String(local.hour).padStart(2, '0')}:00`;
       return {
         optimal_iso: check.toISOString(),
-        publish_now: diffMinutes <= 25,
-        minutes_until_slot: diffMinutes,
-        window_label: `${check.toISOString().slice(0, 16).replace('T', ' ')} UTC`,
+        publish_now: Math.abs(diffMinutes) <= 25,
+        minutes_until_slot: Math.max(0, diffMinutes),
+        timezone: local.tz,
+        posting_mode: mode,
+        posting_hours: hours,
+        weekdays_only: weekdaysOnly,
+        window_label: `${local.weekday} ${local.dateStr} ${formattedHour} (${local.tz})`,
       };
     }
   }
@@ -30,7 +87,93 @@ function computeNextOptimalWindow(now = new Date()) {
     optimal_iso: fallback.toISOString(),
     publish_now: false,
     minutes_until_slot: 60,
+    timezone: tz,
+    posting_mode: mode,
+    posting_hours: hours,
+    weekdays_only: weekdaysOnly,
     window_label: `${fallback.toISOString().slice(0, 16).replace('T', ' ')} UTC`,
+  };
+}
+
+async function loadOrInitWorkspaceSchedule(base44, ownerId, workspaceId) {
+  let wsId = workspaceId;
+  if (!wsId) {
+    const wsPage = await base44.asServiceRole.entities.NexusWorkspace.filter(
+      { owner_id: String(ownerId) },
+      { sort: 'created_date', limit: 1 }
+    );
+    wsId = wsPage.items[0]?.id || '';
+  }
+  if (!wsId) {
+    return {
+      workspace_id: '',
+      settings: {
+        timezone: DEFAULT_TIMEZONE,
+        linkedin_auto_publish: true,
+        linkedin_posting_mode: 'auto_best',
+        linkedin_posting_hours: DEFAULT_HOURS,
+        linkedin_weekdays_only: true,
+      },
+    };
+  }
+
+  const [contPage, dnaPage] = await Promise.all([
+    base44.asServiceRole.entities.NexusContinuity.filter(
+      { owner_id: String(ownerId), workspace_id: String(wsId), scope: 'profile' },
+      { sort: '-updated_date', limit: 1 }
+    ),
+    base44.asServiceRole.entities.CreatorDNA.filter(
+      { owner_id: String(ownerId), workspace_id: String(wsId) },
+      { sort: '-updated_date', limit: 1 }
+    ),
+  ]);
+
+  const existing = contPage.items[0];
+  const dna = dnaPage.items[0];
+  const rawSettings = existing?.settings || {};
+
+  // Derive best hours automatically from workspace audience/settings when in auto_best mode
+  const mode = rawSettings.linkedin_posting_mode || 'auto_best';
+  let derivedHours = normalizeHours(rawSettings.linkedin_posting_hours);
+  if (mode === 'auto_best' && !rawSettings.linkedin_posting_hours) {
+    const audienceText = String(dna?.audience || existing?.context || '').toLowerCase();
+    if (audienceText.includes('executive') || audienceText.includes('founder') || audienceText.includes('b2b')) {
+      derivedHours = [8, 12, 17];
+    } else {
+      derivedHours = [9, 12, 17];
+    }
+  }
+
+  const mergedSettings = {
+    ...rawSettings,
+    timezone: rawSettings.timezone || DEFAULT_TIMEZONE,
+    linkedin_auto_publish: rawSettings.linkedin_auto_publish !== false,
+    linkedin_posting_mode: mode,
+    linkedin_posting_hours: derivedHours,
+    linkedin_weekdays_only: rawSettings.linkedin_weekdays_only !== false,
+  };
+
+  if (!existing || rawSettings.linkedin_auto_publish === undefined) {
+    await base44.asServiceRole.entities.NexusContinuity.upsert(
+      [
+        {
+          owner_id: String(ownerId),
+          workspace_id: String(wsId),
+          scope: 'profile',
+          display_name: existing?.display_name || '',
+          context: existing?.context || '',
+          enabled: existing?.enabled !== false,
+          settings: mergedSettings,
+        },
+      ],
+      { key: ['owner_id', 'workspace_id', 'scope'] }
+    );
+  }
+
+  return {
+    workspace_id: wsId,
+    continuity_id: existing?.id || null,
+    settings: mergedSettings,
   };
 }
 
@@ -143,15 +286,67 @@ export default async function(req) {
 
     const input = await req.json().catch(() => ({}));
     const action = input.action || 'status';
-    const nextSlot = computeNextOptimalWindow();
 
-    // 1. Check LinkedIn App User connection + queue state
+    const scheduleState = await loadOrInitWorkspaceSchedule(base44, user.id, input.workspace_id);
+    const nextSlot = computeNextOptimalWindowFromSettings(scheduleState.settings);
+
+    // Save workspace LinkedIn schedule settings into NexusContinuity (scope: 'profile')
+    if (action === 'save_workspace_schedule') {
+      const wsId = scheduleState.workspace_id;
+      if (!wsId) return json({ error: 'Workspace required' }, 400);
+
+      const contPage = await base44.asServiceRole.entities.NexusContinuity.filter(
+        { owner_id: String(user.id), workspace_id: String(wsId), scope: 'profile' },
+        { sort: '-updated_date', limit: 1 }
+      );
+      const existing = contPage.items[0];
+      const nextSettings = {
+        ...(existing?.settings || scheduleState.settings),
+        timezone: String(input.timezone || scheduleState.settings.timezone || DEFAULT_TIMEZONE).trim(),
+        linkedin_auto_publish: input.linkedin_auto_publish !== false,
+        linkedin_posting_mode: input.linkedin_posting_mode || 'auto_best',
+        linkedin_posting_hours: normalizeHours(input.linkedin_posting_hours ?? scheduleState.settings.linkedin_posting_hours),
+        linkedin_weekdays_only: input.linkedin_weekdays_only !== false,
+      };
+
+      await base44.asServiceRole.entities.NexusContinuity.upsert(
+        [
+          {
+            owner_id: String(user.id),
+            workspace_id: String(wsId),
+            scope: 'profile',
+            display_name: existing?.display_name || '',
+            context: existing?.context || '',
+            enabled: existing?.enabled !== false,
+            settings: nextSettings,
+          },
+        ],
+        { key: ['owner_id', 'workspace_id', 'scope'] }
+      );
+
+      const updatedSlot = computeNextOptimalWindowFromSettings(nextSettings);
+      return json({
+        ok: true,
+        workspace_schedule: nextSettings,
+        next_optimal_window: updatedSlot,
+      });
+    }
+
+    if (action === 'get_workspace_schedule') {
+      return json({
+        ok: true,
+        workspace_schedule: scheduleState.settings,
+        next_optimal_window: nextSlot,
+      });
+    }
+
+    // 1. Check LinkedIn App User connection + queue state (Rule 2: throws if not connected)
     if (action === 'status') {
       const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection(LINKEDIN_CONNECTOR_ID);
       const profile = await fetchLinkedInProfile(accessToken);
 
-      const workspaceFilter = input.workspace_id
-        ? { owner_id: String(user.id), workspace_id: String(input.workspace_id) }
+      const workspaceFilter = scheduleState.workspace_id
+        ? { owner_id: String(user.id), workspace_id: String(scheduleState.workspace_id) }
         : { owner_id: String(user.id) };
 
       const [eventsPage, sparksPage, cardsPage] = await Promise.all([
@@ -178,6 +373,7 @@ export default async function(req) {
         connected: true,
         connector_id: LINKEDIN_CONNECTOR_ID,
         profile,
+        workspace_schedule: scheduleState.settings,
         next_optimal_window: nextSlot,
         stats: {
           approved_origin_sparks: sparksPage.items.filter((s) => s.status === 'approved').length,
@@ -213,11 +409,11 @@ export default async function(req) {
       });
     }
 
-    // 2. Workflow step: enqueue an approved NexusSpark or completed video event for optimal-time LinkedIn publishing
+    // 2. Workflow step: enqueue an approved NexusSpark or completed video event using workspace settings
     if (action === 'auto_enqueue_spark') {
       const sparkId = input.spark_id;
       const eventId = input.event_id;
-      let targetWorkspaceId = input.workspace_id || '';
+      let targetWorkspaceId = input.workspace_id || scheduleState.workspace_id || '';
       let targetOwnerId = String(user.id);
       let title = 'Approved Video Spark';
 
@@ -237,18 +433,24 @@ export default async function(req) {
         }
       }
 
-      if (targetWorkspaceId) {
+      const wsSchedule = await loadOrInitWorkspaceSchedule(base44, targetOwnerId, targetWorkspaceId);
+      const slot = computeNextOptimalWindowFromSettings(wsSchedule.settings);
+      const autoPublishEnabled = wsSchedule.settings.linkedin_auto_publish !== false;
+
+      if (targetWorkspaceId && autoPublishEnabled) {
         await base44.asServiceRole.entities.NexusEvent.create({
           owner_id: targetOwnerId,
           workspace_id: targetWorkspaceId,
           agent: 'strategist',
           kind: 'linkedin.queued',
-          message: `Scheduled "${title.slice(0, 120)}" for optimal LinkedIn window (${nextSlot.window_label})`,
+          message: `Scheduled "${title.slice(0, 120)}" for workspace optimal LinkedIn window (${slot.window_label})`,
           body: JSON.stringify({
             spark_id: sparkId || null,
             video_event_id: eventId || null,
-            optimal_iso: nextSlot.optimal_iso,
-            window_label: nextSlot.window_label,
+            optimal_iso: slot.optimal_iso,
+            window_label: slot.window_label,
+            timezone: slot.timezone,
+            posting_hours: slot.posting_hours,
             queued_at: new Date().toISOString(),
           }),
         });
@@ -256,13 +458,15 @@ export default async function(req) {
 
       return json({
         ok: true,
+        auto_publish_enabled: autoPublishEnabled,
         spark_id: sparkId || null,
         event_id: eventId || null,
-        ...nextSlot,
+        ...slot,
+        publish_now: autoPublishEnabled && slot.publish_now,
       });
     }
 
-    // 3. Publish a specific SparkCard or NexusSpark to LinkedIn immediately (or when workflow timer expires)
+    // 3. Publish a specific SparkCard or NexusSpark to LinkedIn
     if (action === 'publish_spark') {
       const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection(LINKEDIN_CONNECTOR_ID);
       const profile = await fetchLinkedInProfile(accessToken);
@@ -273,7 +477,7 @@ export default async function(req) {
       let postText = '';
       let title = '';
       let mediaUrl = null;
-      let workspaceId = input.workspace_id;
+      let workspaceId = input.workspace_id || scheduleState.workspace_id;
       let ownerId = String(user.id);
 
       if (itemType === 'spark_card') {
@@ -283,7 +487,6 @@ export default async function(req) {
         ownerId = card.owner_id;
         title = card.hook_title;
 
-        // Check if there is a rendered video signed URL or public reference
         if (card.job_event_id) {
           const videoEvPage = await base44.asServiceRole.entities.NexusEvent.filter(
             { workspace_id: workspaceId, kind: 'job.video' },
@@ -356,9 +559,33 @@ export default async function(req) {
       });
     }
 
-    // 4. Automated cron dispatcher: publishes all approved/final video sparks that haven't been posted to LinkedIn yet
+    // 4. Automated dispatcher: checks workspace settings for optimal posting hours and publishes due sparks
     if (action === 'dispatch_due_sparks') {
       if (user.role !== 'admin') return json({ error: 'Forbidden: admin required for scheduled dispatch' }, 403);
+
+      if (scheduleState.settings.linkedin_auto_publish === false && !input.force) {
+        return json({
+          ok: true,
+          skipped: true,
+          reason: 'linkedin_auto_publish is disabled in workspace settings',
+        });
+      }
+
+      const now = new Date();
+      const localNow = getLocalParts(now, scheduleState.settings.timezone);
+      const allowedHours = normalizeHours(scheduleState.settings.linkedin_posting_hours);
+      const weekdaysOnly = scheduleState.settings.linkedin_weekdays_only !== false;
+      const inOptimalWindow =
+        (!weekdaysOnly || !localNow.isWeekend) && allowedHours.includes(localNow.hour);
+
+      if (!inOptimalWindow && !input.force) {
+        return json({
+          ok: true,
+          skipped: true,
+          reason: `Current local time (${localNow.weekday} ${String(localNow.hour).padStart(2, '0')}:00 ${localNow.tz}) is outside workspace optimal hours (${allowedHours.map((h) => `${String(h).padStart(2, '0')}:00`).join(', ')})`,
+          next_optimal_window: nextSlot,
+        });
+      }
 
       const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection(LINKEDIN_CONNECTOR_ID);
       const profile = await fetchLinkedInProfile(accessToken);
@@ -372,7 +599,6 @@ export default async function(req) {
       const alreadyPostedIds = new Set(publishedPage.items.map((e) => parseEventBody(e)?.item_id).filter(Boolean));
       const results = [];
 
-      // Publish up to 2 due items per optimal window so the feed is paced naturally
       for (const spark of approvedSparksPage.items) {
         if (alreadyPostedIds.has(spark.id) || results.length >= 2) continue;
         const postText = formatSparkLinkedInPost({
