@@ -16,6 +16,7 @@ import {
 } from '../../shared/ouroborosEngine.ts';
 import { runConsciousnessFalsificationSuite } from '../../shared/consciousnessFalsification.ts';
 import { computeWorkspaceSentimentTelemetry } from '../../shared/workspaceSentiment.ts';
+import { normalizeUpstreamState, deriveSteeringFromEmotion } from '../../shared/ouroborosLiveBridge.ts';
 
 const ID_RE = /^[A-Za-z0-9_-]{6,64}$/;
 const json = (obj, status = 200) => Response.json(obj, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -125,15 +126,160 @@ async function loadEngineState(base44, scope) {
   };
 }
 
+function buildCleanServiceClient(req) {
+  const cleanHeaders = new Headers();
+  for (const [k, v] of req.headers.entries()) {
+    const lower = k.toLowerCase();
+    if (lower === 'authorization' || lower === 'cookie' || lower.includes('user')) continue;
+    cleanHeaders.set(k, v);
+  }
+  const cleanReq = new Request(req.url, { method: req.method, headers: cleanHeaders });
+  return createClientFromRequest(cleanReq);
+}
+
 export default async function(req) {
   try {
     if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
-    const db = base44.asServiceRole;
+    const rawClient = createClientFromRequest(req.clone());
+    const user = await rawClient.auth.me().catch(() => null);
+    const cleanClient = buildCleanServiceClient(req);
+    const db = cleanClient.asServiceRole;
 
     const input = await req.json().catch(() => ({}));
     const action = input.action || 'state';
+
+    const baseUrl = (Deno.env.get('NEXUS_EVOLUTION_URL') ?? '').replace(/\/+$/, '');
+    const token = Deno.env.get('NEXUS_EVOLUTION_TOKEN') ?? '';
+    const sseUrl = baseUrl ? `${baseUrl}/api/telemetry` : '';
+    const relayHeaders = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+
+    const resolveDefaultWorkspace = async () => {
+      try {
+        if (input.workspace_id && ID_RE.test(String(input.workspace_id))) {
+          const p = await db.entities.NexusWorkspace.filter({ id: String(input.workspace_id) }, { limit: 1 });
+          if (p.items?.[0]) return p.items[0];
+        }
+        if (user?.id) {
+          const p = await db.entities.NexusWorkspace.filter({ owner_id: String(user.id) }, { sort: 'created_date', limit: 1 });
+          if (p.items?.[0]) return p.items[0];
+        }
+        const p = await db.entities.NexusWorkspace.list('created_date', 1);
+        const first = Array.isArray(p) ? p[0] : p?.items?.[0];
+        if (first) return first;
+      } catch {
+        // Ignore if workspace lookup is unavailable
+      }
+      return { id: input.workspace_id || 'ouroboros_live_ws', owner_id: user?.id || 'ouroboros', name: 'Argon Quantum Workspace' };
+    };
+
+    // Direct EmotionEngine actions: feeling, event, tick, recall, health
+    if (baseUrl && token && ['health', 'feeling', 'event', 'tick', 'recall'].includes(action)) {
+      const isEmotion = ['feeling', 'event', 'tick', 'recall'].includes(action);
+      const method = ['event', 'tick', 'recall'].includes(action) ? 'POST' : 'GET';
+      const path = isEmotion ? `/api/emotion/${action}` : `/api/${action}`;
+      const fetchOpts: RequestInit = {
+        method,
+        headers: relayHeaders,
+        signal: AbortSignal.timeout(12000),
+      };
+      if (method === 'POST' && (input.payload || input.context || input.event_type)) {
+        fetchOpts.body = JSON.stringify(input.payload || input);
+      }
+      const upstreamRes = await fetch(`${baseUrl}${path}`, fetchOpts);
+      const upstreamData = await upstreamRes.json().catch(() => ({}));
+      return json({
+        ok: upstreamRes.ok,
+        ...upstreamData,
+        emotion: isEmotion && action !== 'recall' ? upstreamData : undefined,
+        emotionState: isEmotion && action !== 'recall' ? upstreamData : undefined,
+        sse_url: sseUrl,
+      }, upstreamRes.status);
+    }
+
+    // Live OuroborosQuantumServer + EmotionEngine proxy for telemetry / state / evolve / rollback
+    if (baseUrl && token && ['telemetry', 'state', 'evolve', 'rollback'].includes(action)) {
+      try {
+        let rawState = null;
+        let rawEmotion = null;
+
+        if (action === 'telemetry' || action === 'state') {
+          const [stRes, emRes] = await Promise.all([
+            fetch(`${baseUrl}/api/state`, { headers: relayHeaders, signal: AbortSignal.timeout(10000) }).then((r) => (r.ok ? r.json() : null)),
+            fetch(`${baseUrl}/api/emotion/feeling`, { headers: relayHeaders, signal: AbortSignal.timeout(10000) }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+          ]);
+          rawState = stRes;
+          rawEmotion = emRes;
+        } else if (action === 'evolve') {
+          const evRes = await fetch(`${baseUrl}/api/evolve`, {
+            method: 'POST',
+            headers: relayHeaders,
+            signal: AbortSignal.timeout(25000),
+          });
+          if (evRes.ok) {
+            rawState = await evRes.json();
+            rawEmotion = rawState?.emotionState || null;
+          }
+        } else if (action === 'rollback') {
+          const [rbRes, emRes] = await Promise.all([
+            fetch(`${baseUrl}/api/rollback`, { method: 'POST', headers: relayHeaders, signal: AbortSignal.timeout(12000) }).then((r) => (r.ok ? r.json() : null)),
+            fetch(`${baseUrl}/api/emotion/feeling`, { headers: relayHeaders, signal: AbortSignal.timeout(10000) }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+          ]);
+          rawState = rbRes;
+          rawEmotion = emRes;
+        }
+
+        if (rawState && !rawState.error) {
+          const ws = await resolveDefaultWorkspace();
+          const normalized = normalizeUpstreamState(rawState, rawEmotion);
+          const emotionObj = normalized?.emotionState || rawEmotion || null;
+          const steeringObj = normalized?.emotionSteering || deriveSteeringFromEmotion(emotionObj, normalized?.activeGenome?.generation ?? 2, normalized?.receipts || []);
+          const consciousnessAudit = runConsciousnessFalsificationSuite();
+          const sentimentTelemetry = computeWorkspaceSentimentTelemetry({
+            ledger: normalized?.ledger || [],
+            activeGenome: normalized?.activeGenome,
+            orbits: normalized?.orbits || [],
+            fossils: normalized?.fossils || [],
+            blackHoles: normalized?.blackHoles || [],
+            receipts: normalized?.receipts || [],
+          });
+
+          let aiSynthesisNote = null;
+          if (action === 'evolve' && input.use_ai_transmuter === true && input.consent === true) {
+            try {
+              const llmRes = await db.integrations.Core.InvokeLLM({
+                prompt: `You are Argon's Bicameral Right-Brain Quantum Synthesizer. In 2 concise sentences, explain how emotion-steered mutation (exploration=${steeringObj.exploration_rate}, curiosity=${steeringObj.curiosity}, fear=${steeringObj.fear}) shaped candidate selection across ALPHA_AST (${steeringObj.alpha_runs}), BETA_RULE30 (${steeringObj.beta_runs}), and GAMMA_BICAMERAL (${steeringObj.gamma_runs}) at Generation ${normalized?.activeGenome?.generation}.`,
+              });
+              aiSynthesisNote = typeof llmRes === 'string' ? llmRes.trim().slice(0, 400) : null;
+            } catch {
+              aiSynthesisNote = null;
+            }
+          }
+
+          return json({
+            ok: true,
+            hydrated: true,
+            liveEngine: true,
+            workspace: { id: ws.id, owner_id: ws.owner_id, name: ws.name || 'Argon Quantum Workspace' },
+            streamTimestamp: new Date().toISOString(),
+            sse_url: sseUrl,
+            ...normalized,
+            state: normalized,
+            emotion: emotionObj,
+            emotionState: emotionObj,
+            emotionSteering: steeringObj,
+            receipts: normalized?.receipts || [],
+            consciousnessAudit,
+            sentimentTelemetry,
+            aiSynthesisNote,
+          });
+        }
+      } catch {
+        // Fall through to sovereign local engine if upstream tunnel is temporarily unreachable
+      }
+    }
 
     let workspace = null;
     if (input.workspace_id && ID_RE.test(String(input.workspace_id))) {
