@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import ProShell from '@/components/nexus/ProShell';
 import useOrigin from '@/components/nexus/origin/useOrigin';
+import { invokeNexusEvolution } from '@/components/nexus/useWorkspaceAccess';
 import WorkspaceRequired from '@/components/nexus/WorkspaceRequired';
 import { Button } from '@/components/ui/button';
 import { Zap, RotateCcw, ArrowLeft, Cpu, BookOpen, Sparkles } from 'lucide-react';
@@ -50,7 +51,8 @@ export default function ArgonEngine() {
   const origin = useOrigin();
   const [resolvedWorkspace, setResolvedWorkspace] = useState(null);
   const activeWorkspace = origin.workspace || resolvedWorkspace;
-  const workspaceId = activeWorkspace?.id;
+  const workspaceIdRef = useRef(activeWorkspace?.id);
+  workspaceIdRef.current = activeWorkspace?.id;
 
   const [state, setState] = useState(null);
   const [emotionState, setEmotionState] = useState(null);
@@ -71,10 +73,13 @@ export default function ArgonEngine() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const esRef = useRef(null);
+  const hydratedRef = useRef(false);
 
   const applyEnginePayload = useCallback((data, isEvolve = false) => {
     if (!data) return;
-    if (data.workspace) setResolvedWorkspace(data.workspace);
+    if (data.workspace) {
+      setResolvedWorkspace((prev) => (prev?.id === data.workspace.id ? prev : data.workspace));
+    }
     if (data.sse_url) setSseUrl(data.sse_url);
 
     const nextState = data.state || (data.activeGenome ? data : null);
@@ -82,8 +87,19 @@ export default function ArgonEngine() {
       setState((prev) => ({
         ...(prev || {}),
         ...nextState,
+        orbits: Array.isArray(data.orbits) ? data.orbits : nextState.orbits || prev?.orbits || [],
+        ledger: Array.isArray(data.ledger) ? data.ledger : nextState.ledger || prev?.ledger || [],
+        activeGenome: data.activeGenome || nextState.activeGenome || prev?.activeGenome || null,
+        activeSource:
+          data.activeSource ??
+          nextState.activeSource ??
+          data.activeGenome?.source_code ??
+          nextState.activeGenome?.source_code ??
+          prev?.activeSource ??
+          '',
       }));
     }
+
     if (Array.isArray(data.receipts)) {
       setReceipts(data.receipts);
     } else if (Array.isArray(nextState?.receipts)) {
@@ -123,13 +139,14 @@ export default function ArgonEngine() {
     async (action, extra = {}) => {
       if (action !== 'telemetry') setBusy(true);
       setError('');
+      const wsId = workspaceIdRef.current;
       const payload = {
         action,
-        ...(workspaceId ? { workspace_id: workspaceId } : {}),
+        ...(wsId ? { workspace_id: wsId } : {}),
         ...extra,
       };
       try {
-        const { data } = await base44.functions.invoke('nexusEvolution', payload);
+        const data = await invokeNexusEvolution(payload);
         if (action === 'recall') {
           setSomaticRecallResult(data);
         } else {
@@ -137,39 +154,24 @@ export default function ArgonEngine() {
         }
         return data;
       } catch (err) {
-        try {
-          const res = await fetch('/functions/nexusEvolution', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-          const data = await res.json();
-          if (!res.ok || data?.error) {
-            throw new Error(data?.error || err?.response?.data?.error || err.message || 'Engine operation failed');
-          }
-          if (action === 'recall') {
-            setSomaticRecallResult(data);
-          } else {
-            applyEnginePayload(data, action === 'evolve');
-          }
-          return data;
-        } catch (fallbackErr) {
-          setError(fallbackErr.message || 'Engine operation failed');
-          return null;
-        }
+        setError(err.message || 'Engine operation failed');
+        return null;
       } finally {
-        setBusy(false);
+        if (action !== 'telemetry') setBusy(false);
       }
     },
-    [workspaceId, applyEnginePayload]
+    [applyEnginePayload]
   );
 
-  // Spec 4a & 4c: Hydrate immediately from API telemetry on mount
+  // 1. Page mount -> call nexusEvolution({ action: "telemetry" }) -> hydrate all UI
   useEffect(() => {
-    callEngine('telemetry');
+    if (!hydratedRef.current) {
+      hydratedRef.current = true;
+      callEngine('telemetry');
+    }
   }, [callEngine]);
 
-  // Spec 4a: Connect via EventSource to sse_url returned by telemetry action
+  // 2. SSE -> connect to sse_url from telemetry response -> live updates
   const connectSseStream = useCallback((url) => {
     if (!url || typeof EventSource === 'undefined') return;
     if (esRef.current) {
@@ -294,7 +296,6 @@ export default function ArgonEngine() {
   const bootErrorMsg = origin.workspaceAccess?.boot?.error?.message || '';
   const dopamineVal = Number(emotionState?.dopamine ?? 0);
 
-  // Spec 4b: Header dot next to version number
   const headerDotClass =
     connectionStatus === 'connected'
       ? 'bg-success'
@@ -322,12 +323,10 @@ export default function ArgonEngine() {
                 <h1 className="font-display font-semibold text-base sm:text-lg tracking-wide">
                   ARGON // OUROBOROS-GAUNTLET QUANTUM RSI ENGINE v2.0
                 </h1>
-                {/* Spec 4b: Connection Status Indicator next to version number */}
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-secondary border border-border text-[10px] font-mono">
                   <span className={`w-2 h-2 rounded-full ${headerDotClass}`} />
                   {headerStatusText}
                 </span>
-                {/* Spec 3e: Header Dopamine Indicator */}
                 {emotionState && (
                   <span
                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] font-mono font-semibold ${
@@ -340,7 +339,6 @@ export default function ArgonEngine() {
                     {dopamineVal >= 0 ? '▲' : '▼'}
                   </span>
                 )}
-                {/* Spec 5: Flash dominant emotion name briefly after Evolve */}
                 {flashedEmotion && (
                   <span
                     className="px-2 py-0.5 rounded text-[10px] font-mono font-bold animate-pulse"
@@ -361,6 +359,7 @@ export default function ArgonEngine() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {/* 3. Evolve button -> call nexusEvolution({ action: "evolve" }) -> update all UI from response */}
             <Button size="sm" disabled={busy} onClick={() => callEngine('evolve')}>
               <Zap size={14} /> {busy ? 'Running Gauntlet…' : 'Evolve Next Generation'}
             </Button>
@@ -434,7 +433,6 @@ export default function ArgonEngine() {
           <WorkspaceRequired access={origin.workspaceAccess} />
         ) : (
           <>
-            {/* Spec Section 3: Emotion Ring, 7 Steering Dials, Mutation Strategy, Somatic Markers, Dopamine, SSE Status */}
             <SovereignTelemetryDeck
               emotionState={emotionState}
               emotionSteering={emotionSteering}
@@ -490,6 +488,25 @@ export default function ArgonEngine() {
                 </div>
 
                 <TriTimelineCards receipts={receipts} activeGenome={active} />
+
+                {/* Inline Mutation Strategy Bar inside Gauntlet Arena per Spec 3c */}
+                {emotionSteering && (
+                  <div className="p-2.5 rounded bg-secondary/80 border border-border text-[11px] font-mono flex flex-wrap items-center justify-between gap-2">
+                    <span>
+                      STRATEGY · Curiosity: <strong className="text-[#60A5FA]">{Number(emotionSteering.curiosity || 0).toFixed(2)}</strong> · Fear:{' '}
+                      <strong className="text-[#F87171]">{Number(emotionSteering.fear || 0).toFixed(2)}</strong>
+                    </span>
+                    <span>
+                      ALPHA: <strong>{emotionSteering.alpha_runs ?? 1}</strong> · BETA: <strong>{emotionSteering.beta_runs ?? 1}</strong> · GAMMA:{' '}
+                      <strong>{emotionSteering.gamma_runs ?? 1}</strong> ({emotionSteering.total_candidates ?? 3} candidates)
+                    </span>
+                    <span className={emotionSteering.improved ? 'text-success font-semibold' : 'text-caution font-semibold'}>
+                      {emotionSteering.improved
+                        ? `IMPROVED (+${Number(emotionSteering.fitness_delta || 0).toFixed(4)} Δfit)`
+                        : 'NO IMPROVEMENT (stagnation)'}
+                    </span>
+                  </div>
+                )}
 
                 {aiNote && (
                   <div className="p-2.5 rounded bg-secondary border border-border text-xs font-mono text-foreground">

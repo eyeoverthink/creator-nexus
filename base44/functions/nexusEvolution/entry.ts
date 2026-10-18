@@ -216,15 +216,22 @@ export default async function(req) {
           const evRes = await fetch(`${baseUrl}/api/evolve`, {
             method: 'POST',
             headers: relayHeaders,
+            body: '{}',
             signal: AbortSignal.timeout(25000),
           });
           if (evRes.ok) {
             rawState = await evRes.json();
             rawEmotion = rawState?.emotionState || null;
+            if (!rawEmotion) {
+              rawEmotion = await fetch(`${baseUrl}/api/emotion/feeling`, {
+                headers: relayHeaders,
+                signal: AbortSignal.timeout(10000),
+              }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+            }
           }
         } else if (action === 'rollback') {
           const [rbRes, emRes] = await Promise.all([
-            fetch(`${baseUrl}/api/rollback`, { method: 'POST', headers: relayHeaders, signal: AbortSignal.timeout(12000) }).then((r) => (r.ok ? r.json() : null)),
+            fetch(`${baseUrl}/api/rollback`, { method: 'POST', headers: relayHeaders, body: '{}', signal: AbortSignal.timeout(12000) }).then((r) => (r.ok ? r.json() : null)),
             fetch(`${baseUrl}/api/emotion/feeling`, { headers: relayHeaders, signal: AbortSignal.timeout(10000) }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
           ]);
           rawState = rbRes;
@@ -235,7 +242,15 @@ export default async function(req) {
           const ws = await resolveDefaultWorkspace();
           const normalized = normalizeUpstreamState(rawState, rawEmotion);
           const emotionObj = normalized?.emotionState || rawEmotion || null;
-          const steeringObj = normalized?.emotionSteering || deriveSteeringFromEmotion(emotionObj, normalized?.activeGenome?.generation ?? 2, normalized?.receipts || []);
+          const steeringObj =
+            normalized?.emotionSteering ||
+            deriveSteeringFromEmotion(
+              emotionObj,
+              normalized?.activeGenome?.generation ?? 2,
+              normalized?.receipts || [],
+              normalized?.ledger || [],
+              normalized?.activeGenome?.fitness ?? 0
+            );
           const consciousnessAudit = runConsciousnessFalsificationSuite();
           const sentimentTelemetry = computeWorkspaceSentimentTelemetry({
             ledger: normalized?.ledger || [],

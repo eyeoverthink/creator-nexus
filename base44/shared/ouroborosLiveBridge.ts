@@ -4,7 +4,13 @@ import {
   EVENT_HORIZON_RADIUS,
 } from './ouroborosEngine.ts';
 
-export function deriveSteeringFromEmotion(emotionState: any, activeGen = 2, receipts: any[] = []) {
+export function deriveSteeringFromEmotion(
+  emotionState: any,
+  activeGen = 2,
+  receipts: any[] = [],
+  ledger: any[] = [],
+  activeFitness = 0
+) {
   const dials = emotionState?.dials || {};
   const emotions = Array.isArray(emotionState?.emotions) ? emotionState.emotions : [];
   const getIntensity = (name: string) => {
@@ -35,7 +41,17 @@ export function deriveSteeringFromEmotion(emotionState: any, activeGen = 2, rece
     gammaRuns = Math.max(gammaRuns, 1);
   }
 
-  const bestReceipt = receipts.reduce((best, r) => (Number(r?.fitness || 0) > Number(best?.fitness || 0) ? r : best), null);
+  const bestReceipt = receipts.reduce(
+    (best, r) => (Number(r?.fitness || 0) > Number(best?.fitness || 0) ? r : best),
+    null
+  );
+  const latestEvent = ledger[0] || null;
+  const latestType = String(latestEvent?.eventType || latestEvent?.event_type || '').toUpperCase();
+  const superseded = latestType === 'GENOME_SUPERSEDED' || latestType === 'NUCLEUS_SUPERSEDED';
+  const delta =
+    bestReceipt && Number(bestReceipt.fitness || 0) > activeFitness
+      ? Number((Number(bestReceipt.fitness) - activeFitness).toFixed(4))
+      : 0.0;
 
   return {
     exploration_rate: Number(explorationRate.toFixed(4)),
@@ -47,8 +63,8 @@ export function deriveSteeringFromEmotion(emotionState: any, activeGen = 2, rece
     beta_runs: betaRuns,
     gamma_runs: gammaRuns,
     total_candidates: alphaRuns + betaRuns + gammaRuns,
-    improved: Boolean(bestReceipt && Number(bestReceipt.fitness || 0) > 0),
-    fitness_delta: 0.0,
+    improved: superseded || delta > 0,
+    fitness_delta: delta,
   };
 }
 
@@ -180,10 +196,9 @@ export function normalizeUpstreamState(rawState: any, rawEmotion?: any) {
   const emotionState = rawState.emotionState || rawEmotion || null;
   const emotionSteering =
     rawState.emotionSteering ||
-    (emotionState ? deriveSteeringFromEmotion(emotionState, activeGen, receipts) : null);
+    (emotionState ? deriveSteeringFromEmotion(emotionState, activeGen, receipts, ledger, activeFitness) : null);
 
   return {
-    ...rawState,
     activeGenome: normalizedActiveGenome,
     activeSource,
     orbits: normalizedOrbits,
