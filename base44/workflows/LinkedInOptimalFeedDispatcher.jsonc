@@ -1,0 +1,47 @@
+{
+  "description": "Automatically publishes approved Origin Sparks and final Video Sparks to the connected LinkedIn feed at peak weekday times (9am, 12pm, and 5pm PT).",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "linkedin_optimal_feed_dispatcher",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "dispatch_due_sparks": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "linkedinSparkPublisher",
+            "args": {
+              "action": "dispatch_due_sparks"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Dispatch approved video sparks to LinkedIn",
+            "description": "Publishes due Sparks at optimal feed window"
+          }
+        }
+      }
+    ]
+  },
+  "name": "LinkedIn Optimal Feed Dispatcher",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 9,12,17 * * 1-5",
+      "one_time_date": null,
+      "timezone": "America/Los_Angeles",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}
