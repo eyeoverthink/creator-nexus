@@ -5,14 +5,14 @@ export {default as agents} from '@/components/nexus/agentProfiles';
 export default function Sidebar({nexus,collapsed=false,onCollapse,originTab,onOriginTab}){
  const location=useLocation(),view=originTab||location.state?.originTab||'sparks';
  const primary=[['Home','/',Home],['Create','/spark',Clapperboard],['Library','/library',FolderOpen],['Brand','/origin',Fingerprint,'dna'],['Publish','/origin',Upload,'runs']];
- const advanced=[['Origin projects','/origin',Clapperboard,'sparks'],['Knowledge & AI chat','/knowledge',BookOpen],['AI employees','/origin',Users,'employees'],['Proof loop','/origin',FlaskConical,'learn'],['Director Lab','/director-lab',FlaskConical]];
+ const advanced=[['Origin projects','/origin',Clapperboard,'sparks'],['Knowledge & AI chat','/knowledge',BookOpen],['AI employees','/origin',Users,'employees'],['Proof loop','/origin',FlaskConical,'learn'],['Director Lab','/director-lab',FlaskConical],['Argon RSI Brain','/argon',FlaskConical]];
  const active=([,path,,tab])=>location.pathname===path&&(!tab||view===tab);
  const link=item=>{const [label,path,Icon,tab]=item;return <Link key={label} to={path} state={tab?{originTab:tab}:null} onClick={()=>{if(path==='/origin'&&location.pathname===path)onOriginTab?.(tab);}} aria-label={label} title={label} aria-current={active(item)?'page':undefined} className="nexus-nav-link"><Icon size={20} className="shrink-0"/><span className="nexus-nav-label">{label}</span></Link>;};
  return <aside data-collapsed={collapsed} className="nexus-sidebar border-r border-border p-4 flex flex-col">
   <Link to="/" aria-label="Creator Nexus home" className="flex items-center gap-3 px-2 py-3 mb-3 text-foreground"><Layers3 size={24} className="shrink-0"/><span className="nexus-nav-label font-heading text-base font-semibold">Creator Nexus</span></Link>
   <button onClick={onCollapse} aria-label={collapsed?'Expand navigation':'Collapse navigation'} aria-expanded={!collapsed} className="nexus-nav-link mb-4">{collapsed?<PanelLeftOpen size={20}/>:<PanelLeftClose size={20}/>}<span className="nexus-nav-label">Collapse navigation</span></button>
   <nav aria-label="Main navigation" className="space-y-1">{primary.map(link)}
-   <details open={location.pathname==='/director-lab'||location.pathname==='/knowledge'||location.pathname==='/origin'&&['employees','learn','sparks'].includes(view)}>
+   <details open={location.pathname==='/argon'||location.pathname==='/director-lab'||location.pathname==='/knowledge'||location.pathname==='/origin'&&['employees','learn','sparks'].includes(view)}>
     <summary className="nexus-nav-link" title="Advanced" aria-label="Advanced"><Settings2 size={20} className="shrink-0"/><span className="nexus-nav-label">Advanced</span></summary>
     <div className="mt-1 space-y-1">{advanced.map(link)}</div>
     {nexus&&<StudioPanelLinks nexus={nexus}/>}

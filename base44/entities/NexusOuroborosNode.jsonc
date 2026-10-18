@@ -1,0 +1,106 @@
+{
+  "type": "object",
+  "name": "NexusOuroborosNode",
+  "description": "Centripetal Polar Memory node, active genome, fossil archive (.bak), or Digital Black Hole boundary shard for the Argon Ouroboros-Gauntlet RSI Engine.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "node_kind": {
+      "type": "string",
+      "enum": [
+        "nucleus",
+        "orbit",
+        "fossil",
+        "black_hole",
+        "proof_artifact"
+      ]
+    },
+    "branch_origin": {
+      "type": "string"
+    },
+    "code_hash": {
+      "type": "string"
+    },
+    "generation": {
+      "type": "integer",
+      "default": 0
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "source_code": {
+      "type": "string",
+      "maxLength": 20000
+    },
+    "fitness": {
+      "type": "number"
+    },
+    "baseline_latency_ns": {
+      "type": "number"
+    },
+    "latency_ns": {
+      "type": "number"
+    },
+    "speedup": {
+      "type": "number"
+    },
+    "structural_entropy": {
+      "type": "number"
+    },
+    "importance": {
+      "type": "number"
+    },
+    "radius": {
+      "type": "number"
+    },
+    "theta": {
+      "type": "number"
+    },
+    "continuity": {
+      "type": "number"
+    },
+    "access_count": {
+      "type": "integer",
+      "default": 1
+    },
+    "stages_passed": {
+      "type": "array",
+      "items": {
+        "type": "boolean"
+      }
+    },
+    "stage_metrics": {
+      "type": "object"
+    },
+    "diagnostic_summary": {
+      "type": "string",
+      "maxLength": 1000
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "node_kind",
+    "code_hash",
+    "generation"
+  ],
+  "rls": {
+    "create": {
+      "data.owner_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
