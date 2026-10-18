@@ -35,7 +35,9 @@ function getLedgerBadgeClass(eventType = '') {
 
 export default function ArgonEngine() {
   const origin = useOrigin();
-  const workspaceId = origin.workspace?.id;
+  const [resolvedWorkspace, setResolvedWorkspace] = useState(null);
+  const activeWorkspace = origin.workspace || resolvedWorkspace;
+  const workspaceId = activeWorkspace?.id;
   const [state, setState] = useState(null);
   const [receipts, setReceipts] = useState([]);
   const [consciousnessAudit, setConsciousnessAudit] = useState([]);
@@ -49,15 +51,15 @@ export default function ArgonEngine() {
   const [error, setError] = useState('');
 
   const callEngine = useCallback(async (action, extra = {}) => {
-    if (!workspaceId) return;
     if (action !== 'telemetry') setBusy(true);
     setError('');
-    try {
-      const { data } = await base44.functions.invoke('nexusEvolution', {
-        action,
-        workspace_id: workspaceId,
-        ...extra,
-      });
+    const payload = {
+      action,
+      ...(workspaceId ? { workspace_id: workspaceId } : {}),
+      ...extra,
+    };
+    const applyData = (data) => {
+      if (data?.workspace) setResolvedWorkspace(data.workspace);
       if (data?.state) setState(data.state);
       if (data?.receipts) setReceipts(data.receipts);
       if (data?.consciousnessAudit) setConsciousnessAudit(data.consciousnessAudit);
@@ -65,8 +67,25 @@ export default function ArgonEngine() {
       if (data?.aiSynthesisNote) setAiNote(data.aiSynthesisNote);
       setLastHeartbeat(data?.streamTimestamp || new Date().toISOString());
       setStreamEventsCount((c) => c + 1);
+    };
+    try {
+      const { data } = await base44.functions.invoke('nexusEvolution', payload);
+      applyData(data);
     } catch (err) {
-      setError(err?.response?.data?.error || err.message || 'Engine operation failed');
+      try {
+        const res = await fetch('/functions/nexusEvolution', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok || data?.error) {
+          throw new Error(data?.error || err?.response?.data?.error || err.message || 'Engine operation failed');
+        }
+        applyData(data);
+      } catch (fallbackErr) {
+        setError(fallbackErr.message || 'Engine operation failed');
+      }
     } finally {
       setBusy(false);
     }
@@ -74,20 +93,23 @@ export default function ArgonEngine() {
 
   // Prompt 1 fix: Hydrate immediately from real API telemetry on mount instead of zeroed simulation defaults
   useEffect(() => {
-    if (workspaceId) {
-      callEngine('telemetry');
-    }
-  }, [workspaceId, callEngine]);
+    callEngine('telemetry');
+  }, [callEngine]);
 
   // Prompt 2: Live SSE / real-time entity stream subscription + heartbeat
   useEffect(() => {
-    if (!workspaceId || !streamConnected) return;
-    const unsubscribe = base44.entities.NexusOuroborosEvent.subscribe((event) => {
-      if (event?.data?.workspace_id === workspaceId) {
-        setLastHeartbeat(new Date().toISOString());
-        setStreamEventsCount((c) => c + 1);
-      }
-    });
+    if (!streamConnected) return;
+    let unsubscribe = null;
+    try {
+      unsubscribe = base44.entities.NexusOuroborosEvent.subscribe((event) => {
+        if (!workspaceId || event?.data?.workspace_id === workspaceId) {
+          setLastHeartbeat(new Date().toISOString());
+          setStreamEventsCount((c) => c + 1);
+        }
+      });
+    } catch {
+      unsubscribe = null;
+    }
     const timer = setInterval(() => {
       callEngine('telemetry');
     }, 25000);
@@ -98,6 +120,7 @@ export default function ArgonEngine() {
   }, [workspaceId, streamConnected, callEngine]);
 
   const active = state?.activeGenome;
+  const bootErrorMsg = origin.workspaceAccess?.boot?.error?.message || '';
 
   return (
     <ProShell>
@@ -123,7 +146,7 @@ export default function ArgonEngine() {
           <div className="flex flex-wrap items-center gap-2">
             <Button
               size="sm"
-              disabled={busy || !workspaceId}
+              disabled={busy}
               onClick={() => callEngine('evolve')}
             >
               <Zap size={14} /> {busy ? 'Running Gauntlet…' : 'Evolve Next Generation'}
@@ -131,7 +154,7 @@ export default function ArgonEngine() {
             <Button
               size="sm"
               variant="secondary"
-              disabled={busy || !workspaceId}
+              disabled={busy}
               onClick={() => callEngine('evolve', { use_ai_transmuter: true, consent: true })}
               title="Run Tri-Timeline Evolution with Bicameral AI Synthesis Commentary"
             >
@@ -157,16 +180,39 @@ export default function ArgonEngine() {
       </header>
 
       <main className="max-w-7xl mx-auto p-5 sm:p-8 space-y-6">
-        {error && (
-          <div role="alert" className="p-3 rounded-md border border-destructive/40 bg-destructive/10 text-destructive text-xs flex justify-between">
-            <span>{error}</span>
-            <button onClick={() => setError('')} className="underline">Dismiss</button>
+        {(error || bootErrorMsg.includes('support panel')) && (
+          <div role="alert" className="p-3 rounded-md border border-caution/40 bg-caution/10 text-caution text-xs flex flex-wrap items-center justify-between gap-3">
+            <span>
+              {bootErrorMsg.includes('support panel')
+                ? 'Your browser has a temporary support-panel token stored in local storage. Click "Reset Session & Sign In" to sign in with your normal app account.'
+                : error}
+            </span>
+            <div className="flex items-center gap-2">
+              {bootErrorMsg.includes('support panel') && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    try {
+                      localStorage.clear();
+                      sessionStorage.clear();
+                    } catch {}
+                    base44.auth.logout('/login');
+                  }}
+                >
+                  Reset Session & Sign In
+                </Button>
+              )}
+              {error && (
+                <button onClick={() => setError('')} className="underline">Dismiss</button>
+              )}
+            </div>
           </div>
         )}
 
-        {origin.loading ? (
+        {!state && origin.loading ? (
           <p className="text-sm text-muted-foreground">Hydrating Argon Quantum RSI Telemetry from live workspace…</p>
-        ) : !origin.workspace ? (
+        ) : !state && !activeWorkspace ? (
           <WorkspaceRequired access={origin.workspaceAccess} />
         ) : (
           <>
@@ -280,11 +326,11 @@ export default function ArgonEngine() {
               onRunAudit={(opts) => callEngine('audit_consciousness', opts)}
             />
 
-            <LinkedInAutoPublisherPanel workspace={origin.workspace} />
+            {activeWorkspace && <LinkedInAutoPublisherPanel workspace={activeWorkspace} />}
 
-            <GoogleCalendarSyncPanel workspace={origin.workspace} />
+            {activeWorkspace && <GoogleCalendarSyncPanel workspace={activeWorkspace} />}
 
-            {showLibrary && (
+            {showLibrary && activeWorkspace && (
               <div className="p-4 rounded-md border border-border bg-card space-y-3">
                 <div className="flex items-center justify-between border-b border-border pb-2">
                   <h3 className="font-heading text-sm font-semibold">WORKSPACE CONTENTS & ASSET LIBRARY</h3>
@@ -292,7 +338,7 @@ export default function ArgonEngine() {
                     Open Full Library Page →
                   </Link>
                 </div>
-                <AssetBrowser workspace={origin.workspace} />
+                <AssetBrowser workspace={activeWorkspace} />
               </div>
             )}
 

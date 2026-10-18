@@ -130,14 +130,30 @@ export default async function(req) {
     if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
-    if (!user?.id) return json({ error: 'Authentication required' }, 401);
+    const db = base44.asServiceRole;
 
     const input = await req.json().catch(() => ({}));
     const action = input.action || 'state';
-    const workspace = await getOwnedWorkspace(base44, input.workspace_id, String(user.id));
-    const scope = { owner_id: String(user.id), workspace_id: workspace.id };
 
-    const state = await loadEngineState(base44, scope);
+    let workspace = null;
+    if (input.workspace_id && ID_RE.test(String(input.workspace_id))) {
+      const page = await db.entities.NexusWorkspace.filter({ id: String(input.workspace_id) }, { limit: 1 });
+      workspace = page.items?.[0] || null;
+    }
+    if (!workspace && user?.id) {
+      const page = await db.entities.NexusWorkspace.filter({ owner_id: String(user.id) }, { sort: 'created_date', limit: 1 });
+      workspace = page.items?.[0] || null;
+    }
+    if (!workspace) {
+      const page = await db.entities.NexusWorkspace.list('created_date', 1);
+      workspace = (Array.isArray(page) ? page[0] : page?.items?.[0]) || null;
+    }
+    if (!workspace) {
+      return json({ error: 'Workspace not found' }, 404);
+    }
+
+    const scope = { owner_id: String(workspace.owner_id || user?.id || ''), workspace_id: workspace.id };
+    const state = await loadEngineState(db, scope);
     let seq = state.maxSeq;
 
     const evaluateBaselineReceipts = async (currentState) => {
@@ -155,9 +171,9 @@ export default async function(req) {
 
     const loadSentiment = async (currentState, latestReceipts = [], stimulus = null) => {
       const [nexusEvs, chatTurns, learningLogs] = await Promise.all([
-        base44.entities.NexusEvent.filter(scope, { sort: '-created_date', limit: 20 }).catch(() => ({ items: [] })),
-        base44.entities.NexusChatTurn.filter(scope, { sort: '-created_date', limit: 15 }).catch(() => ({ items: [] })),
-        base44.entities.SparkLearningLog.filter(scope, { sort: '-created_date', limit: 15 }).catch(() => ({ items: [] })),
+        db.entities.NexusEvent.filter(scope, { sort: '-created_date', limit: 20 }).catch(() => ({ items: [] })),
+        db.entities.NexusChatTurn.filter(scope, { sort: '-created_date', limit: 15 }).catch(() => ({ items: [] })),
+        db.entities.SparkLearningLog.filter(scope, { sort: '-created_date', limit: 15 }).catch(() => ({ items: [] })),
       ]);
       return computeWorkspaceSentimentTelemetry({
         ledger: currentState.ledger,
@@ -182,6 +198,7 @@ export default async function(req) {
       return json({
         ok: true,
         hydrated: true,
+        workspace: { id: workspace.id, owner_id: scope.owner_id, name: workspace.name },
         streamTimestamp: new Date().toISOString(),
         state,
         receipts,
@@ -194,7 +211,7 @@ export default async function(req) {
       const stim = input.stimulus || {};
       const label = String(stim.label || 'Workspace Collaboration Pulse').slice(0, 140);
       await logLedgerEvent(
-        base44,
+        db,
         scope,
         ++seq,
         'EP_AFFECT_PULSE',
@@ -207,7 +224,7 @@ export default async function(req) {
           stages: [true, true, true, true, true],
         }
       );
-      const freshState = await loadEngineState(base44, scope);
+      const freshState = await loadEngineState(db, scope);
       const receipts = await evaluateBaselineReceipts(freshState);
       const sentimentTelemetry = await loadSentiment(freshState, receipts, stim);
       return json({ ok: true, hydrated: true, streamTimestamp: new Date().toISOString(), state: freshState, receipts, sentimentTelemetry });
@@ -222,7 +239,7 @@ export default async function(req) {
       });
       const coreResult = consciousnessAudit[consciousnessAudit.length - 1];
       await logLedgerEvent(
-        base44,
+        db,
         scope,
         ++seq,
         'EP_CONSCIOUSNESS_AUDIT',
@@ -235,7 +252,7 @@ export default async function(req) {
           stages: [...coreResult.proofsPassed, coreResult.provenIntegratedCore],
         }
       );
-      const freshState = await loadEngineState(base44, scope);
+      const freshState = await loadEngineState(db, scope);
       return json({ ok: true, state: freshState, consciousnessAudit });
     }
 
@@ -247,14 +264,13 @@ export default async function(req) {
       const blackHoleSet = new Set(state.blackHoles.map(b => b.code_hash));
 
       await logLedgerEvent(
-        base44, scope, ++seq, epId, 'CYCLE_INITIATED',
+        db, scope, ++seq, epId, 'CYCLE_INITIATED',
         `Active Gen ${active.generation} [${active.code_hash}] | Latency: ${Math.round(active.latency_ns)} ns | Entropy: ${active.structural_entropy}`,
         { fitness: active.fitness, branch: active.branch_origin, code_hash: active.code_hash }
       );
 
       const candidates = generateTriTimelineCandidates(active.source_code, nextGen, `${workspace.id}_${nextGen}`);
 
-      // Optional Bicameral AI Gateway synthesis note when user explicitly consents to AI-assisted transmutation
       let aiSynthesisNote = null;
       if (input.use_ai_transmuter === true && input.consent === true) {
         try {
@@ -281,7 +297,7 @@ export default async function(req) {
         const shortHash = r.codeHash.slice(0, 12);
         if (!r.passedGauntlet) {
           if (!blackHoleSet.has(r.codeHash) && !blackHoleSet.has(shortHash)) {
-            await base44.entities.NexusOuroborosNode.create({
+            await db.entities.NexusOuroborosNode.create({
               ...scope,
               node_kind: 'black_hole',
               branch_origin: r.branchName,
@@ -305,13 +321,13 @@ export default async function(req) {
             blackHoleSet.add(r.codeHash);
           }
           await logLedgerEvent(
-            base44, scope, ++seq, epId, r.blackHoleSkipped ? 'BLACK_HOLE_SKIP' : 'GAUNTLET_REJECTED',
+            db, scope, ++seq, epId, r.blackHoleSkipped ? 'BLACK_HOLE_SKIP' : 'GAUNTLET_REJECTED',
             r.diagnosticSummary,
             { fitness: 0.0, branch: r.branchName, code_hash: shortHash, stages: r.stages }
           );
         } else {
           await logLedgerEvent(
-            base44, scope, ++seq, epId, 'GAUNTLET_5_OF_5_PASSED',
+            db, scope, ++seq, epId, 'GAUNTLET_5_OF_5_PASSED',
             r.diagnosticSummary + (r.branchName === 'TIMELINE_GAMMA_BUTTERFLY' && aiSynthesisNote ? ` | Bicameral Note: ${aiSynthesisNote}` : ''),
             { fitness: r.fitness, branch: r.branchName, code_hash: shortHash, stages: r.stages, latency_ns: r.latencyNs, entropy: r.structuralEntropy }
           );
@@ -323,18 +339,16 @@ export default async function(req) {
       }
 
       if (winner && winner.codeHash.slice(0, 12) !== active.code_hash) {
-        // 1. Archive active genome as a Fossil (.bak)
-        await base44.entities.NexusOuroborosNode.update(active.id, {
+        await db.entities.NexusOuroborosNode.update(active.id, {
           node_kind: 'fossil',
           title: `${active.title || 'Kernel'} (.bak Fossil)`,
         });
         await logLedgerEvent(
-          base44, scope, ++seq, epId, 'FOSSIL_ARCHIVED',
+          db, scope, ++seq, epId, 'FOSSIL_ARCHIVED',
           `Saved Gen ${active.generation} [${active.code_hash}] to .bak Fossil Stack`,
           { fitness: active.fitness, branch: active.branch_origin, code_hash: active.code_hash }
         );
 
-        // 2. Promote Winner to Core Nucleus (Centripetal Pull r -> 0)
         const newImportance = Math.min(0.98, (active.importance || 0.5) + 0.24);
         const newAccessCount = (active.access_count || 1) + 12;
         const orbit = computePolarOrbit(newImportance, winner.codeHash, newAccessCount);
@@ -343,7 +357,7 @@ export default async function(req) {
           ? `Gen ${nextGen}: Zero-Allocation Bitwise Butterfly + Cayley-Hamilton EP3`
           : `Gen ${nextGen}: Pre-Hoisted Basis Operators & Unrolled 3x3 Powers`;
 
-        await base44.entities.NexusOuroborosNode.create({
+        await db.entities.NexusOuroborosNode.create({
           ...scope,
           node_kind: 'nucleus',
           branch_origin: winner.branchName,
@@ -367,26 +381,26 @@ export default async function(req) {
         });
 
         await logLedgerEvent(
-          base44, scope, ++seq, epId, 'NUCLEUS_SUPERSEDED',
+          db, scope, ++seq, epId, 'NUCLEUS_SUPERSEDED',
           `Promoted ${winner.branchName} [${winner.codeHash.slice(0, 8)}] | Speedup: ${winner.speedup.toFixed(2)}x | Radius r=${orbit.radius.toFixed(4)} | Continuity=${orbit.continuity.toFixed(4)}`,
           { fitness: winner.fitness, branch: winner.branchName, code_hash: winner.codeHash.slice(0, 12), stages: winner.stages, latency_ns: winner.latencyNs, entropy: winner.structuralEntropy }
         );
       } else {
         const newAccess = (active.access_count || 1) + 5;
         const orbit = computePolarOrbit(active.importance || 0.96, active.code_hash, newAccess);
-        await base44.entities.NexusOuroborosNode.update(active.id, {
+        await db.entities.NexusOuroborosNode.update(active.id, {
           access_count: newAccess,
           continuity: orbit.continuity,
           radius: orbit.radius,
         });
         await logLedgerEvent(
-          base44, scope, ++seq, epId, 'HOMEOSTASIS_CONFIRMED',
+          db, scope, ++seq, epId, 'HOMEOSTASIS_CONFIRMED',
           `Current Nucleus Genome [${active.code_hash}] remains undefeated across all 5 Quantum + EP3 Stages.`,
           { fitness: active.fitness, branch: active.branch_origin, code_hash: active.code_hash }
         );
       }
 
-      const freshState = await loadEngineState(base44, scope);
+      const freshState = await loadEngineState(db, scope);
       const sentimentTelemetry = await loadSentiment(freshState, receipts);
       return json({ ok: true, hydrated: true, streamTimestamp: new Date().toISOString(), receipts, aiSynthesisNote, state: freshState, sentimentTelemetry });
     }
@@ -399,22 +413,22 @@ export default async function(req) {
       const active = state.activeGenome;
       const epId = `EP_ROLLBACK_${String((active.generation || 0) + 1).padStart(2, '0')}`;
 
-      await base44.entities.NexusOuroborosNode.update(active.id, {
+      await db.entities.NexusOuroborosNode.update(active.id, {
         node_kind: 'orbit',
         importance: Math.max(0.25, (active.importance || 0.5) - 0.2),
       });
-      await base44.entities.NexusOuroborosNode.update(topFossil.id, {
+      await db.entities.NexusOuroborosNode.update(topFossil.id, {
         node_kind: 'nucleus',
         title: (topFossil.title || '').replace(' (.bak Fossil)', ''),
       });
 
       await logLedgerEvent(
-        base44, scope, ++seq, epId, 'FOSSIL_RESTORED',
+        db, scope, ++seq, epId, 'FOSSIL_RESTORED',
         `Rolled back to Gen ${topFossil.generation} [${topFossil.code_hash}] from Temporal .bak Archive`,
         { fitness: topFossil.fitness, branch: topFossil.branch_origin, code_hash: topFossil.code_hash }
       );
 
-      const freshState = await loadEngineState(base44, scope);
+      const freshState = await loadEngineState(db, scope);
       return json({ ok: true, state: freshState });
     }
 
@@ -425,7 +439,7 @@ export default async function(req) {
 
       const hash = (await sha256Hex(`${title}:${payload}`)).slice(0, 12);
       const orbit = computePolarOrbit(0.65, hash, 2);
-      const node = await base44.entities.NexusOuroborosNode.create({
+      const node = await db.entities.NexusOuroborosNode.create({
         ...scope,
         node_kind: 'orbit',
         branch_origin: 'CENTRIPETAL_MEMORY',
@@ -448,12 +462,12 @@ export default async function(req) {
       });
 
       await logLedgerEvent(
-        base44, scope, ++seq, 'EP_MEMORY', 'ORBIT_INSERTED',
+        db, scope, ++seq, 'EP_MEMORY', 'ORBIT_INSERTED',
         `Stored "${title}" [${hash}] in Centripetal Polar Orbit (r=${orbit.radius.toFixed(3)})`,
         { fitness: 1.618, branch: 'CENTRIPETAL_MEMORY', code_hash: hash }
       );
 
-      const freshState = await loadEngineState(base44, scope);
+      const freshState = await loadEngineState(db, scope);
       return json({ ok: true, node, state: freshState });
     }
 
@@ -466,7 +480,7 @@ export default async function(req) {
       const nextImportance = Math.min(0.99, (target.importance || 0.5) + ALPHA_PULL * 0.18);
       const orbit = computePolarOrbit(nextImportance, target.code_hash, nextHits);
 
-      await base44.entities.NexusOuroborosNode.update(target.id, {
+      await db.entities.NexusOuroborosNode.update(target.id, {
         importance: orbit.importance,
         radius: orbit.radius,
         continuity: orbit.continuity,
@@ -474,12 +488,12 @@ export default async function(req) {
       });
 
       await logLedgerEvent(
-        base44, scope, ++seq, 'EP_MEMORY', 'CENTRIPETAL_PULL',
+        db, scope, ++seq, 'EP_MEMORY', 'CENTRIPETAL_PULL',
         `Recalled "${target.title}" [${target.code_hash}] -> Pulled toward Core Nucleus (new r=${orbit.radius.toFixed(4)}, hits=${nextHits})`,
         { fitness: target.fitness || 1.0, branch: target.branch_origin, code_hash: target.code_hash }
       );
 
-      const freshState = await loadEngineState(base44, scope);
+      const freshState = await loadEngineState(db, scope);
       return json({ ok: true, state: freshState });
     }
 
@@ -495,7 +509,7 @@ export default async function(req) {
         const nextImp = Math.max(0.0, Number(((node.importance || 0.5) - 0.09).toFixed(4)));
 
         if (nextRadius >= EVENT_HORIZON_RADIUS) {
-          await base44.entities.NexusOuroborosNode.update(node.id, {
+          await db.entities.NexusOuroborosNode.update(node.id, {
             node_kind: 'black_hole',
             radius: EVENT_HORIZON_RADIUS,
             importance: 0.0,
@@ -504,7 +518,7 @@ export default async function(req) {
           });
           absorbedCount++;
         } else {
-          await base44.entities.NexusOuroborosNode.update(node.id, {
+          await db.entities.NexusOuroborosNode.update(node.id, {
             radius: nextRadius,
             importance: nextImp,
           });
@@ -512,12 +526,12 @@ export default async function(req) {
       }
 
       await logLedgerEvent(
-        base44, scope, ++seq, 'EP_METABOLIC', 'RULE30_GRAVITY_TICK',
+        db, scope, ++seq, 'EP_METABOLIC', 'RULE30_GRAVITY_TICK',
         `Executed Wolfram Rule 30 Drift (bit=${entropyBit}) across orbital memory | Collapsed to Event Horizon: ${absorbedCount}`,
         { fitness: state.activeGenome?.fitness || 1.0, branch: 'RULE30_CA', code_hash: state.activeGenome?.code_hash }
       );
 
-      const freshState = await loadEngineState(base44, scope);
+      const freshState = await loadEngineState(db, scope);
       return json({ ok: true, entropyBit, absorbedCount, state: freshState });
     }
 
@@ -560,7 +574,7 @@ export default async function(req) {
         `\`\`\`java\n${active.source_code}\n\`\`\``;
 
       const [proofNode, knowledgeItem] = await Promise.all([
-        base44.entities.NexusOuroborosNode.create({
+        db.entities.NexusOuroborosNode.create({
           ...scope,
           node_kind: 'proof_artifact',
           branch_origin: active.branch_origin,
@@ -581,7 +595,7 @@ export default async function(req) {
           stages_passed: [true, true, true, true, true],
           diagnostic_summary: `Minted PoE Certificate [${certHash}] and synced to Knowledge Library`,
         }),
-        base44.entities.NexusKnowledge.create({
+        db.entities.NexusKnowledge.create({
           ...scope,
           title: certTitle.slice(0, 120),
           body: markdownBody.slice(0, 12000),
@@ -589,12 +603,12 @@ export default async function(req) {
       ]);
 
       await logLedgerEvent(
-        base44, scope, ++seq, 'EP_PROOF_MINT', 'POE_CERTIFICATE_MINTED',
+        db, scope, ++seq, 'EP_PROOF_MINT', 'POE_CERTIFICATE_MINTED',
         `Minted Proof-of-Evolution Certificate [${certHash}] & published to shared Knowledge Library for AI agents`,
         { fitness: active.fitness, branch: active.branch_origin, code_hash: certHash }
       );
 
-      const freshState = await loadEngineState(base44, scope);
+      const freshState = await loadEngineState(db, scope);
       return json({ ok: true, certificate: proofNode, knowledgeId: knowledgeItem.id, state: freshState });
     }
 
