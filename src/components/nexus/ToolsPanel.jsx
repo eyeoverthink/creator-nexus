@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import usePoll from '@/components/nexus/useToolJobPoll';
+import SparkVideoPlayer from '@/components/nexus/spark/SparkVideoPlayer';
 import { Mic2, Video, Loader2, Play, Pause, Download, Trash2, ChevronDown } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
@@ -131,12 +132,12 @@ function RenderTab({workspaceId}) {
 
   const pollResult = usePoll(pendingId, pendingId ? 'render' : null);
   useEffect(() => {
-    if (!pollResult || !pendingId) return;
+    if (!pollResult || !pendingId || !['done', 'failed'].includes(pollResult.status)) return;
     setBusy(false);
     if (pollResult.status === 'done') {
       setRenders(prev => [{
         id: pendingId, narration: narration.slice(0, 80), style,
-        video_url: pollResult.video_url, durations: pollResult.durations,
+        video_url: pollResult.video_url, file_uri: pollResult.file_uri, durations: pollResult.durations,
       }, ...prev]);
     } else {
       setError(pollResult.error ?? 'Render failed');
@@ -213,12 +214,7 @@ function RenderTab({workspaceId}) {
               <p className="text-xs truncate mb-2">{r.narration}</p>
               <div className="flex items-center gap-3">
                 <span className="text-[10px] text-muted-foreground">Style: {r.style}</span>
-                {r.video_url && (
-                  <>
-                    <a href={r.video_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">Watch</a>
-                    <a href={r.video_url} download className="text-muted-foreground hover:text-foreground"><Download size={13} /></a>
-                  </>
-                )}
+                <SparkVideoPlayer fileUri={r.file_uri} videoUrl={r.video_url} title={r.narration} />
               </div>
             </div>
           ))}

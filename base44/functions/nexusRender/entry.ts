@@ -73,37 +73,21 @@ export default async function (req: Request) {
 
     if (b.action === 'status') {
       const eventId = String(b.event_id ?? '');
-      if (!ID_RE.test(eventId)) return json({ error: 'invalid event_id' }, 400);
+      if (!/^[a-f0-9]{24}$/i.test(eventId)) return json({ error: 'invalid event_id' }, 400);
 
-      const done = await events.filter(
-        { kind: { $in: ['job.done', 'job.failed'] } },
-        { sort: '-created_date', limit: 50 }
-      );
-      const match = done.items.find(e => {
-        const body = parseBody(e);
-        return body?.source_event_id === eventId;
-      });
-
-      if (!match) {
-        const claimed = await events.filter(
-          { kind: 'job.claimed' },
-          { sort: '-created_date', limit: 20 }
-        );
-        const isClaimed = claimed.items.some(e => parseBody(e)?.source_event_id === eventId);
-        return json({ status: isClaimed ? 'running' : 'queued' });
+      const source = (await base44.entities.NexusEvent.filter({id: eventId, owner_id: user.id, kind: 'job.queued'}, {limit: 1, fields: ['body', 'workspace_id']})).items[0];
+      if (!source || parseBody(source)?.job_type !== 'render') return json({error: 'Render job not found'}, 404);
+      const related = {owner_id: user.id, workspace_id: source.workspace_id, body: {$regex: '"source_event_id"\\s*:\\s*"' + eventId + '"'}};
+      const page = await base44.entities.NexusEvent.filter({...related, kind: {$in: ['job.video', 'job.done', 'job.failed', 'job.claimed']}}, {sort: '-created_date', limit: 10});
+      const uploaded = page.items.find(e => e.kind === 'job.video');
+      if (uploaded) {
+        const video = parseBody(uploaded);
+        return json({status: 'done', file_uri: video?.file_uri, file_size_bytes: video?.file_size_bytes, uploaded_at: video?.transferred_at});
       }
-
-      const result = parseBody(match);
-      if (match.kind === 'job.done') {
-        return json({
-          status: 'done',
-          video_url: result?.video_url ?? null,
-          durations: result?.durations_s ?? null,
-          style: result?.style ?? null,
-          renderer: result?.renderer ?? 'hyperframes',
-        });
-      }
-      return json({ status: 'failed', error: result?.error ?? 'Render job failed' });
+      const finished = page.items.find(e => e.kind === 'job.done' || e.kind === 'job.failed');
+      if (finished?.kind === 'job.failed') return json({status: 'failed', error: parseBody(finished)?.error || 'Render job failed'});
+      if (finished) return json({status: 'transferring', durations: parseBody(finished)?.durations_s});
+      return json({status: page.items.some(e => e.kind === 'job.claimed') ? 'running' : 'queued'});
     }
 
     return json({ error: 'action must be styles, render, or status' }, 400);

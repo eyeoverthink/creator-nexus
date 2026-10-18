@@ -16,6 +16,7 @@ export default function useToolJobPoll(eventId, type) {
           setResult({...data, event_id: eventId});
           return;
         }
+        if (type === 'render') setResult({...data, event_id: eventId});
         timer = setTimeout(check, 3000);
       } catch (error) {
         if (active) setResult({status: 'failed', event_id: eventId, error: error.message || 'Unable to check job status.'});
