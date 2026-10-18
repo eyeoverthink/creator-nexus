@@ -71,9 +71,9 @@ export default async function (req: Request) {
         message: `TTS: "${text.slice(0, 60)}…" voice=${voice}`,
         body: JSON.stringify({
           job_type: 'tts',
-          text,
+          narration: text,
           voice,
-          speed,
+          format: String(speed),
           lang: VOICES[voice].lang,
         }),
       });

@@ -19,7 +19,7 @@ def main():
     d = f"{JOBS}/{jid}"
     os.makedirs(d, exist_ok=True)
 
-    text = str(job.get("text", "")).strip()
+    text = str(job.get("text", "") or job.get("narration", "")).strip()
     if not text:
         result = {"ok": False, "error": "text required"}
         json.dump(result, open(f"{d}/result.json", "w"))
@@ -27,7 +27,11 @@ def main():
         return 1
 
     voice = str(job.get("voice", "af_heart"))
-    speed = max(0.5, min(2.0, float(job.get("speed", 1.0))))
+    raw_speed = job.get("speed") or job.get("format", "1.0")
+    try:
+        speed = max(0.5, min(2.0, float(raw_speed)))
+    except (ValueError, TypeError):
+        speed = 1.0
     lang = str(job.get("lang", "en-us"))
 
     t0 = time.time()
