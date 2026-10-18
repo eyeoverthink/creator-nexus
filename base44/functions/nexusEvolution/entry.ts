@@ -140,27 +140,54 @@ export default async function(req) {
     const state = await loadEngineState(base44, scope);
     let seq = state.maxSeq;
 
-    const loadSentiment = async (latestLedger, stimulus = null) => {
+    const evaluateBaselineReceipts = async (currentState) => {
+      const active = currentState.activeGenome;
+      const nextGen = (active?.generation || 0) + 1;
+      const baselineNs = active?.baseline_latency_ns || active?.latency_ns || 48200;
+      const blackHoleSet = new Set((currentState.blackHoles || []).map((b) => b.code_hash));
+      const candidates = generateTriTimelineCandidates(active?.source_code || GEN_0_DENSE_KRONECKER_SOURCE, nextGen, `${workspace.id}_${nextGen}`);
+      return await Promise.all([
+        evaluateIn5StageGauntlet({ branchName: candidates.alpha.branchName, candidateSource: candidates.alpha.sourceCode, baselineLatencyNs: baselineNs, blackHoleHashes: blackHoleSet }),
+        evaluateIn5StageGauntlet({ branchName: candidates.beta.branchName, candidateSource: candidates.beta.sourceCode, baselineLatencyNs: baselineNs, blackHoleHashes: blackHoleSet }),
+        evaluateIn5StageGauntlet({ branchName: candidates.gamma.branchName, candidateSource: candidates.gamma.sourceCode, baselineLatencyNs: baselineNs, blackHoleHashes: blackHoleSet }),
+      ]);
+    };
+
+    const loadSentiment = async (currentState, latestReceipts = [], stimulus = null) => {
       const [nexusEvs, chatTurns, learningLogs] = await Promise.all([
         base44.entities.NexusEvent.filter(scope, { sort: '-created_date', limit: 20 }).catch(() => ({ items: [] })),
         base44.entities.NexusChatTurn.filter(scope, { sort: '-created_date', limit: 15 }).catch(() => ({ items: [] })),
         base44.entities.SparkLearningLog.filter(scope, { sort: '-created_date', limit: 15 }).catch(() => ({ items: [] })),
       ]);
       return computeWorkspaceSentimentTelemetry({
-        ledger: latestLedger || state.ledger,
+        ledger: currentState.ledger,
         nexusEvents: nexusEvs.items,
         chatTurns: chatTurns.items,
         learningLogs: learningLogs.items,
+        activeGenome: currentState.activeGenome,
+        orbits: currentState.orbits,
+        fossils: currentState.fossils,
+        blackHoles: currentState.blackHoles,
+        receipts: latestReceipts,
         stimulus,
       });
     };
 
-    if (action === 'state') {
+    if (action === 'state' || action === 'telemetry') {
+      const receipts = await evaluateBaselineReceipts(state);
       const [consciousnessAudit, sentimentTelemetry] = await Promise.all([
         Promise.resolve(runConsciousnessFalsificationSuite()),
-        loadSentiment(state.ledger),
+        loadSentiment(state, receipts),
       ]);
-      return json({ ok: true, state, consciousnessAudit, sentimentTelemetry });
+      return json({
+        ok: true,
+        hydrated: true,
+        streamTimestamp: new Date().toISOString(),
+        state,
+        receipts,
+        consciousnessAudit,
+        sentimentTelemetry,
+      });
     }
 
     if (action === 'inject_sentiment_stimulus') {
@@ -181,8 +208,9 @@ export default async function(req) {
         }
       );
       const freshState = await loadEngineState(base44, scope);
-      const sentimentTelemetry = await loadSentiment(freshState.ledger, stim);
-      return json({ ok: true, state: freshState, sentimentTelemetry });
+      const receipts = await evaluateBaselineReceipts(freshState);
+      const sentimentTelemetry = await loadSentiment(freshState, receipts, stim);
+      return json({ ok: true, hydrated: true, streamTimestamp: new Date().toISOString(), state: freshState, receipts, sentimentTelemetry });
     }
 
     if (action === 'audit_consciousness') {
@@ -359,7 +387,8 @@ export default async function(req) {
       }
 
       const freshState = await loadEngineState(base44, scope);
-      return json({ ok: true, receipts, aiSynthesisNote, state: freshState });
+      const sentimentTelemetry = await loadSentiment(freshState, receipts);
+      return json({ ok: true, hydrated: true, streamTimestamp: new Date().toISOString(), receipts, aiSynthesisNote, state: freshState, sentimentTelemetry });
     }
 
     if (action === 'rollback') {

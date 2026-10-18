@@ -11,9 +11,27 @@ import TriTimelineCards from '@/components/nexus/ouroboros/TriTimelineCards';
 import ProofOfEvolutionPanel from '@/components/nexus/ouroboros/ProofOfEvolutionPanel';
 import ConsciousnessFalsificationPanel from '@/components/nexus/ouroboros/ConsciousnessFalsificationPanel';
 import WorkspaceSentimentPanel from '@/components/nexus/ouroboros/WorkspaceSentimentPanel';
+import SovereignTelemetryDeck from '@/components/nexus/ouroboros/SovereignTelemetryDeck';
 import LinkedInAutoPublisherPanel from '@/components/nexus/spark/LinkedInAutoPublisherPanel';
 import GoogleCalendarSyncPanel from '@/components/nexus/calendar/GoogleCalendarSyncPanel';
 import AssetBrowser from '@/components/nexus/library/AssetBrowser';
+
+function getLedgerBadgeClass(eventType = '') {
+  const t = String(eventType).toUpperCase();
+  if (t.includes('REJECT') || t.includes('SKIP') || t.includes('FALSIFIED')) {
+    return 'bg-destructive/15 border-destructive/40 text-destructive';
+  }
+  if (t.includes('SUPERSEDED') || t.includes('PASSED') || t.includes('PROVEN') || t.includes('ONLINE') || t.includes('MINTED')) {
+    return 'bg-success/15 border-success/40 text-success';
+  }
+  if (t.includes('FOSSIL') || t.includes('ROLLBACK') || t.includes('GRAVITY')) {
+    return 'bg-caution/15 border-caution/40 text-caution';
+  }
+  if (t.includes('ORBIT') || t.includes('PULL') || t.includes('SENTIMENT') || t.includes('CYCLE')) {
+    return 'bg-primary/15 border-primary/40 text-primary';
+  }
+  return 'bg-secondary border-border text-muted-foreground';
+}
 
 export default function ArgonEngine() {
   const origin = useOrigin();
@@ -22,6 +40,9 @@ export default function ArgonEngine() {
   const [receipts, setReceipts] = useState([]);
   const [consciousnessAudit, setConsciousnessAudit] = useState([]);
   const [sentimentTelemetry, setSentimentTelemetry] = useState(null);
+  const [streamConnected, setStreamConnected] = useState(true);
+  const [streamEventsCount, setStreamEventsCount] = useState(0);
+  const [lastHeartbeat, setLastHeartbeat] = useState('');
   const [showLibrary, setShowLibrary] = useState(true);
   const [aiNote, setAiNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -29,7 +50,7 @@ export default function ArgonEngine() {
 
   const callEngine = useCallback(async (action, extra = {}) => {
     if (!workspaceId) return;
-    setBusy(true);
+    if (action !== 'telemetry') setBusy(true);
     setError('');
     try {
       const { data } = await base44.functions.invoke('nexusEvolution', {
@@ -42,6 +63,8 @@ export default function ArgonEngine() {
       if (data?.consciousnessAudit) setConsciousnessAudit(data.consciousnessAudit);
       if (data?.sentimentTelemetry) setSentimentTelemetry(data.sentimentTelemetry);
       if (data?.aiSynthesisNote) setAiNote(data.aiSynthesisNote);
+      setLastHeartbeat(data?.streamTimestamp || new Date().toISOString());
+      setStreamEventsCount((c) => c + 1);
     } catch (err) {
       setError(err?.response?.data?.error || err.message || 'Engine operation failed');
     } finally {
@@ -49,9 +72,30 @@ export default function ArgonEngine() {
     }
   }, [workspaceId]);
 
+  // Prompt 1 fix: Hydrate immediately from real API telemetry on mount instead of zeroed simulation defaults
   useEffect(() => {
-    if (workspaceId) callEngine('state');
+    if (workspaceId) {
+      callEngine('telemetry');
+    }
   }, [workspaceId, callEngine]);
+
+  // Prompt 2: Live SSE / real-time entity stream subscription + heartbeat
+  useEffect(() => {
+    if (!workspaceId || !streamConnected) return;
+    const unsubscribe = base44.entities.NexusOuroborosEvent.subscribe((event) => {
+      if (event?.data?.workspace_id === workspaceId) {
+        setLastHeartbeat(new Date().toISOString());
+        setStreamEventsCount((c) => c + 1);
+      }
+    });
+    const timer = setInterval(() => {
+      callEngine('telemetry');
+    }, 25000);
+    return () => {
+      unsubscribe?.();
+      clearInterval(timer);
+    };
+  }, [workspaceId, streamConnected, callEngine]);
 
   const active = state?.activeGenome;
 
@@ -121,11 +165,20 @@ export default function ArgonEngine() {
         )}
 
         {origin.loading ? (
-          <p className="text-sm text-muted-foreground">Initializing Argon Quantum RSI Engine…</p>
+          <p className="text-sm text-muted-foreground">Hydrating Argon Quantum RSI Telemetry from live workspace…</p>
         ) : !origin.workspace ? (
           <WorkspaceRequired access={origin.workspaceAccess} />
         ) : (
           <>
+            {/* Prompt 2: 6 Sovereign Telemetry Sections (SSE Status Dot, Somatic Marker, Dopamine RPE, Emotion Ring Donut, 7 Steering Dials, α/β/γ Mutation Strategy) */}
+            <SovereignTelemetryDeck
+              sentiment={sentimentTelemetry}
+              streamConnected={streamConnected}
+              streamEventsCount={streamEventsCount}
+              lastHeartbeat={lastHeartbeat}
+              onToggleStream={() => setStreamConnected((v) => !v)}
+            />
+
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
               {/* Left Column: Centripetal Polar Memory & Black Hole Horizon */}
               <div className="lg:col-span-5 p-4 rounded-md border border-border bg-card flex flex-col justify-between space-y-4">
@@ -145,7 +198,7 @@ export default function ArgonEngine() {
                 </div>
               </div>
 
-              {/* Right Column: Tri-Timeline Arena, Source Code & Cognitive Event Ledger */}
+              {/* Right Column: Tri-Timeline Arena, Source Code & Color-Coded Cognitive Event Ledger */}
               <div className="lg:col-span-7 p-4 rounded-md border border-border bg-card flex flex-col space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono border-b border-border pb-2">
                   <span className="font-semibold text-primary">TRI-TIMELINE QUANTUM GAUNTLET ARENA (ALPHA / BETA / GAMMA)</span>
@@ -167,27 +220,45 @@ export default function ArgonEngine() {
                       <span className="text-primary">SHA-256: {active?.code_hash || '—'}</span>
                     </div>
                     <pre className="p-3 rounded bg-background border border-border text-[11px] font-mono text-foreground overflow-auto h-64 leading-relaxed">
-                      {active?.source_code || '// Loading Genesis Kernel...'}
+                      {active?.source_code || '// Hydrating Genesis Kernel...'}
                     </pre>
                   </div>
 
+                  {/* Prompt 1 fix: Color-coded event badges in Cognitive Event Ledger */}
                   <div className="flex flex-col space-y-1.5">
                     <div className="flex items-center justify-between text-xs font-mono">
                       <span className="font-semibold text-muted-foreground">COGNITIVE EVENT LEDGER (EVIDENCE BEFORE THEATER)</span>
                       <span className="text-muted-foreground">{state?.ledger?.length || 0} EVENTS</span>
                     </div>
-                    <div className="p-3 rounded bg-background border border-border text-[11px] font-mono overflow-auto h-64 space-y-2">
+                    <div className="p-3 rounded bg-background border border-border text-[11px] font-mono overflow-auto h-64 space-y-2.5">
                       {(state?.ledger || []).map((ev) => {
-                        const isReject = String(ev.event_type).includes('REJECT') || String(ev.event_type).includes('SKIP');
-                        const isPromote = String(ev.event_type).includes('SUPERSEDED') || String(ev.event_type).includes('ONLINE') || String(ev.event_type).includes('MINTED');
+                        const badgeClass = getLedgerBadgeClass(ev.event_type);
                         return (
                           <div
-                            key={ev.id || ev.seq}
-                            className={`pb-1.5 border-b border-border/50 ${
-                              isReject ? 'text-destructive' : isPromote ? 'text-success' : 'text-foreground'
-                            }`}
+                            key={ev.id || `${ev.seq}-${ev.event_id}`}
+                            className="p-2 rounded bg-secondary/60 border border-border/70 space-y-1"
                           >
-                            <strong>[#{String(ev.seq || 0).padStart(2, '0')} {ev.episode_id}]</strong> {ev.event_type} — {ev.detail}
+                            <div className="flex flex-wrap items-center justify-between gap-1.5">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="px-1.5 py-0.5 rounded bg-card border border-border text-[10px] text-muted-foreground">
+                                  #{String(ev.seq || 0).padStart(2, '0')}
+                                </span>
+                                <span className={`px-1.5 py-0.5 rounded border text-[10px] font-semibold ${badgeClass}`}>
+                                  {ev.event_type}
+                                </span>
+                                {ev.episode_id && (
+                                  <span className="text-[10px] text-muted-foreground">{ev.episode_id}</span>
+                                )}
+                              </div>
+                              {Number(ev.fitness || 0) > 0 && (
+                                <span className="text-[10px] text-primary">
+                                  F={Number(ev.fitness).toFixed(3)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-foreground leading-relaxed break-words">
+                              {ev.detail}
+                            </div>
                           </div>
                         );
                       })}
@@ -196,6 +267,18 @@ export default function ArgonEngine() {
                 </div>
               </div>
             </div>
+
+            <WorkspaceSentimentPanel
+              sentiment={sentimentTelemetry}
+              busy={busy}
+              onInjectStimulus={(stimulus) => callEngine('inject_sentiment_stimulus', { stimulus })}
+            />
+
+            <ConsciousnessFalsificationPanel
+              results={consciousnessAudit}
+              busy={busy}
+              onRunAudit={(opts) => callEngine('audit_consciousness', opts)}
+            />
 
             <LinkedInAutoPublisherPanel workspace={origin.workspace} />
 
@@ -212,18 +295,6 @@ export default function ArgonEngine() {
                 <AssetBrowser workspace={origin.workspace} />
               </div>
             )}
-
-            <WorkspaceSentimentPanel
-              sentiment={sentimentTelemetry}
-              busy={busy}
-              onInjectStimulus={(stimulus) => callEngine('inject_sentiment_stimulus', { stimulus })}
-            />
-
-            <ConsciousnessFalsificationPanel
-              results={consciousnessAudit}
-              busy={busy}
-              onRunAudit={(opts) => callEngine('audit_consciousness', opts)}
-            />
 
             <ProofOfEvolutionPanel
               state={state}
