@@ -1,0 +1,77 @@
+{
+  "name": "LinkedIn Rendered Video Auto-Push",
+  "description": "Automatically queues and dispatches final rendered Video Sparks (job.video events) to LinkedIn at the workspace's optimal posting windows without manual intervention.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "NexusEvent",
+      "events": [
+        "create"
+      ]
+    },
+    "condition": "${ .trigger.data.kind == \"job.video\" }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "linkedin_rendered_video_auto_push",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "enqueue_rendered_video": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "linkedinSparkPublisher",
+            "args": {
+              "action": "auto_enqueue_spark",
+              "workspace_id": "${ .trigger.data.workspace_id }",
+              "event_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "check_if_optimal_now",
+          "x-base44": {
+            "title": "Schedule rendered video for optimal LinkedIn window",
+            "description": "Reads workspace timezone & optimal hours"
+          }
+        }
+      },
+      {
+        "check_if_optimal_now": {
+          "switch": [
+            {
+              "when": "${ .enqueue_rendered_video.publish_now == true }",
+              "then": "dispatch_immediately"
+            },
+            {
+              "when": "${ true }",
+              "then": "end"
+            }
+          ],
+          "x-base44": {
+            "title": "Is optimal window open right now?",
+            "description": "Dispatch now or leave for hourly optimal-window dispatcher"
+          }
+        }
+      },
+      {
+        "dispatch_immediately": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "linkedinSparkPublisher",
+            "args": {
+              "action": "dispatch_due_sparks",
+              "force": true
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Publish final video spark to LinkedIn",
+            "description": "Pushes due video spark to LinkedIn feed"
+          }
+        }
+      }
+    ]
+  }
+}

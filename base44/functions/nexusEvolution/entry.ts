@@ -15,6 +15,7 @@ import {
   generateTriTimelineCandidates,
 } from '../../shared/ouroborosEngine.ts';
 import { runConsciousnessFalsificationSuite } from '../../shared/consciousnessFalsification.ts';
+import { computeWorkspaceSentimentTelemetry } from '../../shared/workspaceSentiment.ts';
 
 const ID_RE = /^[A-Za-z0-9_-]{6,64}$/;
 const json = (obj, status = 200) => Response.json(obj, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -139,9 +140,49 @@ export default async function(req) {
     const state = await loadEngineState(base44, scope);
     let seq = state.maxSeq;
 
+    const loadSentiment = async (latestLedger, stimulus = null) => {
+      const [nexusEvs, chatTurns, learningLogs] = await Promise.all([
+        base44.entities.NexusEvent.filter(scope, { sort: '-created_date', limit: 20 }).catch(() => ({ items: [] })),
+        base44.entities.NexusChatTurn.filter(scope, { sort: '-created_date', limit: 15 }).catch(() => ({ items: [] })),
+        base44.entities.SparkLearningLog.filter(scope, { sort: '-created_date', limit: 15 }).catch(() => ({ items: [] })),
+      ]);
+      return computeWorkspaceSentimentTelemetry({
+        ledger: latestLedger || state.ledger,
+        nexusEvents: nexusEvs.items,
+        chatTurns: chatTurns.items,
+        learningLogs: learningLogs.items,
+        stimulus,
+      });
+    };
+
     if (action === 'state') {
-      const consciousnessAudit = runConsciousnessFalsificationSuite();
-      return json({ ok: true, state, consciousnessAudit });
+      const [consciousnessAudit, sentimentTelemetry] = await Promise.all([
+        Promise.resolve(runConsciousnessFalsificationSuite()),
+        loadSentiment(state.ledger),
+      ]);
+      return json({ ok: true, state, consciousnessAudit, sentimentTelemetry });
+    }
+
+    if (action === 'inject_sentiment_stimulus') {
+      const stim = input.stimulus || {};
+      const label = String(stim.label || 'Workspace Collaboration Pulse').slice(0, 140);
+      await logLedgerEvent(
+        base44,
+        scope,
+        ++seq,
+        'EP_AFFECT_PULSE',
+        'SENTIMENT_TELEMETRY_PULSE',
+        `${label} (agent=${stim.agent || 'argon'}, dReward=${stim.rewardDelta ?? 0}, curiosity=${stim.predictionError ?? 0.5})`,
+        {
+          fitness: Number(stim.successRate || 0.85),
+          branch: String(stim.agent || 'argon').toUpperCase(),
+          code_hash: 'VAD_PULSE',
+          stages: [true, true, true, true, true],
+        }
+      );
+      const freshState = await loadEngineState(base44, scope);
+      const sentimentTelemetry = await loadSentiment(freshState.ledger, stim);
+      return json({ ok: true, state: freshState, sentimentTelemetry });
     }
 
     if (action === 'audit_consciousness') {

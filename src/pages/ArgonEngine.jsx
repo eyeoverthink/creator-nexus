@@ -10,6 +10,9 @@ import CentripetalOrbitCanvas from '@/components/nexus/ouroboros/CentripetalOrbi
 import TriTimelineCards from '@/components/nexus/ouroboros/TriTimelineCards';
 import ProofOfEvolutionPanel from '@/components/nexus/ouroboros/ProofOfEvolutionPanel';
 import ConsciousnessFalsificationPanel from '@/components/nexus/ouroboros/ConsciousnessFalsificationPanel';
+import WorkspaceSentimentPanel from '@/components/nexus/ouroboros/WorkspaceSentimentPanel';
+import LinkedInAutoPublisherPanel from '@/components/nexus/spark/LinkedInAutoPublisherPanel';
+import AssetBrowser from '@/components/nexus/library/AssetBrowser';
 
 export default function ArgonEngine() {
   const origin = useOrigin();
@@ -17,6 +20,8 @@ export default function ArgonEngine() {
   const [state, setState] = useState(null);
   const [receipts, setReceipts] = useState([]);
   const [consciousnessAudit, setConsciousnessAudit] = useState([]);
+  const [sentimentTelemetry, setSentimentTelemetry] = useState(null);
+  const [showLibrary, setShowLibrary] = useState(false);
   const [aiNote, setAiNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -34,6 +39,7 @@ export default function ArgonEngine() {
       if (data?.state) setState(data.state);
       if (data?.receipts) setReceipts(data.receipts);
       if (data?.consciousnessAudit) setConsciousnessAudit(data.consciousnessAudit);
+      if (data?.sentimentTelemetry) setSentimentTelemetry(data.sentimentTelemetry);
       if (data?.aiSynthesisNote) setAiNote(data.aiSynthesisNote);
     } catch (err) {
       setError(err?.response?.data?.error || err.message || 'Engine operation failed');
@@ -94,9 +100,13 @@ export default function ArgonEngine() {
             >
               <RotateCcw size={14} /> Fossil Rollback (.bak)
             </Button>
-            <Link to="/knowledge" className="text-xs text-primary flex items-center gap-1 ml-2">
-              <BookOpen size={14} /> Knowledge Library
-            </Link>
+            <Button
+              size="sm"
+              variant={showLibrary ? 'default' : 'outline'}
+              onClick={() => setShowLibrary((v) => !v)}
+            >
+              <BookOpen size={14} /> {showLibrary ? 'Hide Contents Library' : 'Contents Library'}
+            </Button>
           </div>
         </div>
       </header>
@@ -185,6 +195,26 @@ export default function ArgonEngine() {
                 </div>
               </div>
             </div>
+
+            <LinkedInAutoPublisherPanel workspace={origin.workspace} />
+
+            {showLibrary && (
+              <div className="p-4 rounded-md border border-border bg-card space-y-3">
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <h3 className="font-heading text-sm font-semibold">WORKSPACE CONTENTS & ASSET LIBRARY</h3>
+                  <Link to="/library" className="text-xs text-primary hover:underline">
+                    Open Full Library Page →
+                  </Link>
+                </div>
+                <AssetBrowser workspace={origin.workspace} />
+              </div>
+            )}
+
+            <WorkspaceSentimentPanel
+              sentiment={sentimentTelemetry}
+              busy={busy}
+              onInjectStimulus={(stimulus) => callEngine('inject_sentiment_stimulus', { stimulus })}
+            />
 
             <ConsciousnessFalsificationPanel
               results={consciousnessAudit}
