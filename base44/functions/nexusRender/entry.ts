@@ -82,7 +82,8 @@ export default async function (req: Request) {
       const uploaded = page.items.find(e => e.kind === 'job.video');
       if (uploaded) {
         const video = parseBody(uploaded);
-        return json({status: 'done', file_uri: video?.file_uri, file_size_bytes: video?.file_size_bytes, uploaded_at: video?.transferred_at});
+        const videoUrl = typeof video?.video_url === 'string' && video.video_url.startsWith('https://') ? video.video_url : null;
+        if (video?.file_uri || videoUrl) return json({status: 'done', file_uri: video?.file_uri, video_url: videoUrl, file_size_bytes: video?.file_size_bytes ?? video?.size_bytes, uploaded_at: video?.transferred_at ?? video?.uploaded_at});
       }
       const finished = page.items.find(e => e.kind === 'job.done' || e.kind === 'job.failed');
       if (finished?.kind === 'job.failed') return json({status: 'failed', error: parseBody(finished)?.error || 'Render job failed'});
