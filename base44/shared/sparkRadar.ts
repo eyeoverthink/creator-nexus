@@ -15,8 +15,7 @@ export function buildRadarSearch(profile, today) {
    ...SUBREDDITS.map(name => `site:reddit.com/r/${name}/comments/ (${interests}) after:${from} ${exclusions}`),
    ...topics.flatMap(topic => [
     `site:youtube.com/shorts/ ${topic} after:${from} ${exclusions}`,
-    `site:youtube.com/watch ${topic} explanation demonstration after:${from} ${exclusions}`,
-    `${topic} technical article tutorial release engineering blog after:${from} ${exclusions}`
+    `site:youtube.com/watch ${topic} explanation demonstration after:${from} ${exclusions}`
    ])
   ],
   audience_guidance: 'Adapt query wording and select explanations for the stated audience and posting platforms. Do not require literal age ranges in source titles. Respect the profile time, budget, hates and red lines.'
