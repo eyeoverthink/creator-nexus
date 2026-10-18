@@ -104,9 +104,18 @@ export default async function (req: Request) {
 
       const result = parseBody(match);
       if (match.kind === 'job.done') {
+        let audio_url = result?.audio_url ?? null;
+        if (!audio_url) {
+          const audioEvents = await events.filter(
+            { kind: 'job.audio' },
+            { sort: '-created_date', limit: 20 }
+          );
+          const audioMatch = audioEvents.items.find(e => parseBody(e)?.source_event_id === eventId);
+          if (audioMatch) audio_url = parseBody(audioMatch)?.file_uri ?? null;
+        }
         return json({
-          status: 'done',
-          audio_url: result?.audio_url ?? null,
+          status: audio_url ? 'done' : 'uploading',
+          audio_url,
           duration: result?.duration ?? null,
           voice: result?.voice ?? null,
         });
