@@ -1,31 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import usePoll from '@/components/nexus/useToolJobPoll';
 import { Mic2, Video, Loader2, Play, Pause, Download, Trash2, ChevronDown } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
-const POLL_MS = 3000;
-
-function usePoll(eventId, enabled) {
-  const [result, setResult] = useState(null);
-  const timer = useRef(null);
-  useEffect(() => {
-    if (!eventId || !enabled) return;
-    let active = true;
-    const check = async () => {
-      try {
-        const fn = enabled === 'tts' ? 'nexusTTS' : 'nexusRender';
-        const r = await base44.functions.invoke(fn, { action: 'status', event_id: eventId });
-        if (!active) return;
-        if (r.status === 'done' || r.status === 'failed') { setResult(r); return; }
-        timer.current = setTimeout(check, POLL_MS);
-      } catch { if (active) timer.current = setTimeout(check, POLL_MS); }
-    };
-    check();
-    return () => { active = false; clearTimeout(timer.current); };
-  }, [eventId, enabled]);
-  return result;
-}
-
-function VoiceTab() {
+function VoiceTab({workspaceId}) {
   const [voices, setVoices] = useState([]);
   const [voice, setVoice] = useState('af_heart');
   const [text, setText] = useState('');
@@ -38,8 +16,8 @@ function VoiceTab() {
 
   useEffect(() => {
     base44.functions.invoke('nexusTTS', { action: 'voices' })
-      .then(r => setVoices(r?.voices ?? []))
-      .catch(() => {});
+      .then(({data}) => { if (data.error) throw new Error(data.error); setVoices(data.voices ?? []); })
+      .catch(e => setError(e.message || 'Unable to load voices.'));
   }, []);
 
   const pollResult = usePoll(pendingId, pendingId ? 'tts' : null);
@@ -61,7 +39,7 @@ function VoiceTab() {
     if (!text.trim() || busy) return;
     setBusy(true); setError('');
     try {
-      const r = await base44.functions.invoke('nexusTTS', { action: 'speak', text: text.trim(), voice, speed });
+      const {data: r} = await base44.functions.invoke('nexusTTS', { action: 'speak', text: text.trim(), voice, speed, workspace_id: workspaceId });
       if (r?.error) throw new Error(r.error);
       setPendingId(r.event_id);
     } catch (e) {
@@ -83,7 +61,7 @@ function VoiceTab() {
       <p className="eyebrow flex gap-2 items-center"><Mic2 size={13} /> KOKORO TTS · VPS RUNNER</p>
       <p className="text-xs text-muted-foreground">Text-to-speech via the VPS runner. Free, no API key — runs Kokoro locally on nexus-vps.</p>
 
-      <textarea value={text} onChange={e => setText(e.target.value)} rows={3}
+      <textarea maxLength={1500} disabled={busy} aria-label="Text to speak" value={text} onChange={e => setText(e.target.value)} rows={3}
         placeholder="Type or paste text to speak (max 1500 chars)…"
         className="w-full rounded-lg bg-secondary border border-input px-3 py-2 text-sm resize-none" />
 
@@ -141,7 +119,7 @@ function VoiceTab() {
   );
 }
 
-function RenderTab() {
+function RenderTab({workspaceId}) {
   const [narration, setNarration] = useState('');
   const [style, setStyle] = useState('midnight');
   const [voice, setVoice] = useState('af_heart');
@@ -170,7 +148,7 @@ function RenderTab() {
     if (!narration.trim() || busy) return;
     setBusy(true); setError('');
     try {
-      const r = await base44.functions.invoke('nexusRender', { action: 'render', narration: narration.trim(), style, voice, format });
+      const {data: r} = await base44.functions.invoke('nexusRender', { action: 'render', narration: narration.trim(), style, voice, format, workspace_id: workspaceId });
       if (r?.error) throw new Error(r.error);
       setPendingId(r.event_id);
     } catch (e) {
@@ -183,7 +161,7 @@ function RenderTab() {
       <p className="eyebrow flex gap-2 items-center"><Video size={13} /> HYPERFRAMES · VPS RUNNER</p>
       <p className="text-xs text-muted-foreground">Motion-card video rendering. Writes narration → Kokoro voice → Whisper timings → scene plan → HyperFrames cards → mp4.</p>
 
-      <textarea value={narration} onChange={e => setNarration(e.target.value)} rows={4}
+      <textarea maxLength={1500} disabled={busy} aria-label="Video narration" value={narration} onChange={e => setNarration(e.target.value)} rows={4}
         placeholder="Paste or type the narration script (max 1500 chars)…"
         className="w-full rounded-lg bg-secondary border border-input px-3 py-2 text-sm resize-none" />
 
@@ -250,7 +228,7 @@ function RenderTab() {
   );
 }
 
-export default function ToolsPanel() {
+export default function ToolsPanel({workspaceId}) {
   const [tab, setTab] = useState('voice');
   return (
     <div className="p-5">
@@ -264,7 +242,8 @@ export default function ToolsPanel() {
           <Video size={13} className="inline mr-1.5" />HyperFrames
         </button>
       </div>
-      {tab === 'voice' ? <VoiceTab /> : <RenderTab />}
+      <div hidden={tab !== 'voice'}><VoiceTab workspaceId={workspaceId} /></div>
+      <div hidden={tab !== 'render'}><RenderTab workspaceId={workspaceId} /></div>
     </div>
   );
 }
