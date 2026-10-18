@@ -4,7 +4,8 @@ export function buildRadarSearch(profile, today) {
  const start = new Date(today + 'T00:00:00Z');
  start.setUTCDate(start.getUTCDate() - 14);
  const from = start.toISOString().slice(0, 10);
- const interests = profile.loves.map(value => '"' + String(value).replace(/["\r\n]/g, ' ').slice(0, 120) + '"').join(' OR ');
+ const topics = profile.loves.map(value => String(value).replace(/[^\p{L}\p{N}\s-]/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 120)).filter(Boolean);
+ const interests = topics.join(' OR ');
  const exclusions = '-"market report" -"market research" -"market forecast" -"press release" -site:prnewswire.com -site:businesswire.com -site:globenewswire.com -site:researchandmarkets.com -site:marketsandmarkets.com';
  return JSON.stringify({
   date_window: {from, through: today},
@@ -12,8 +13,10 @@ export function buildRadarSearch(profile, today) {
   interests: profile.loves,
   queries: [
    ...SUBREDDITS.map(name => `site:reddit.com/r/${name}/comments/ (${interests}) after:${from} ${exclusions}`),
-   `site:youtube.com/shorts/ (${interests}) tech creator tutorial demo challenge after:${from} ${exclusions}`,
-   `site:youtube.com/watch (${interests}) tech creator short video breakdown after:${from} ${exclusions}`
+   ...topics.flatMap(topic => [
+    `site:youtube.com/shorts/ ${topic} after:${from} ${exclusions}`,
+    `site:youtube.com/watch ${topic} explanation demonstration after:${from} ${exclusions}`
+   ])
   ],
   audience_guidance: 'Adapt query wording and select explanations for the stated audience and posting platforms. Do not require literal age ranges in source titles. Respect the profile time, budget, hates and red lines.'
  }, null, 2);
