@@ -42,6 +42,9 @@
         "type": "string"
       }
     },
+    "image_url": {
+      "type": "string"
+    },
     "why_it_fits_you": {
       "type": "string"
     },
