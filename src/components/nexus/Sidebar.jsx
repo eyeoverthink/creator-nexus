@@ -4,7 +4,7 @@ import StudioPanelLinks from '@/components/nexus/StudioPanelLinks';
 export {default as agents} from '@/components/nexus/agentProfiles';
 export default function Sidebar({nexus,collapsed=false,onCollapse,originTab,onOriginTab}){
  const location=useLocation(),view=originTab||location.state?.originTab||'sparks';
- const primary=[['Home','/',Home],['Create','/spark',Clapperboard],['Library','/library',FolderOpen],['looseScrew Lab','/loose-screw',FlaskConical],['Brand','/origin',Fingerprint,'dna'],['Publish','/origin',Upload,'runs']];
+ const primary=[['Home','/',Home],['Create','/spark',Clapperboard],['Library','/library',FolderOpen],['looseScrew Lab','/loose-screw',FlaskConical],['AI Workshop OS','/ai-workshop',Layers3],['Brand','/origin',Fingerprint,'dna'],['Publish','/origin',Upload,'runs']];
  const advanced=[['Origin projects','/origin',Clapperboard,'sparks'],['Knowledge & AI chat','/knowledge',BookOpen],['AI employees','/origin',Users,'employees'],['Proof loop','/origin',FlaskConical,'learn'],['Director Lab','/director-lab',FlaskConical],['Argon RSI Brain','/argon',FlaskConical]];
  const active=([,path,,tab])=>location.pathname===path&&(!tab||view===tab);
  const link=item=>{const [label,path,Icon,tab]=item;return <Link key={label} to={path} state={tab?{originTab:tab}:null} onClick={()=>{if(path==='/origin'&&location.pathname===path)onOriginTab?.(tab);}} aria-label={label} title={label} aria-current={active(item)?'page':undefined} className="nexus-nav-link"><Icon size={20} className="shrink-0"/><span className="nexus-nav-label">{label}</span></Link>;};

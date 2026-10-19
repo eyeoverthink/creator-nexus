@@ -1,3 +1,5 @@
+import { AI_WORKSHOP_OS_HTML } from '@/components/nexus/loosescrew/aiWorkshopOsHtml';
+
 export const GITHUB_REPO_URL = 'https://github.com/eyeoverthink/looseScrew';
 
 export function extractYouTubeId(url = '') {
@@ -16,6 +18,21 @@ export function isVideoUrl(url = '', mime = '') {
 }
 
 export const INITIAL_TRANSMISSIONS = [
+  {
+    id: 'code-fraymus-os',
+    channel: 'CODE',
+    title: 'AI WORKSHOP OS & F.R.A.Y.M.U.S. — J.A.R.V.I.S. 538-Node Brain',
+    duration: 'LIVE_OS',
+    screws: 4721,
+    bpm: 137,
+    tags: ['#FRAYMUS', '#JARVIS_OS', '#538_Notes', '#BabelTransmuter', '#Genesis153'],
+    voice_intro: 'AI Workshop OS and canonical F.R.A.Y.M.U.S. vault online. 538 notes, 1,947 synaptic links, Babel Transmuter REPL, and 24-app Tool Armory active.',
+    external_link: 'https://github.com/eyeoverthink/looseScrew',
+    synth_notes: [137.5, 161.8, 220.0, 261.63, 355.96, 432.0],
+    code: `// CANONICAL F.R.A.Y.M.U.S. VERIFICATION SUITE (φ⁷⁵ Seal = 4721424167835376.00)\nconst PHI = 1.6180339887;\nconst PHI_INV = 1 / PHI;\nconst SEAL_75 = 4721424167835376.00;\n// [F] Phi-Enhanced Scott Algorithm\nconst R = v => 1 - Math.abs((v * PHI) % 1);\n// [Y] Yielding Belonging Protocol: Threshold C >= 0.7569 * φ^0.5 = 0.962\nconst belongingThreshold = +(0.7569 * Math.sqrt(PHI)).toFixed(3);\n// [M] CentripetalMem Continuity\nconst continuity = 1.014;\nreturn JSON.stringify({\n  seal: SEAL_75,\n  fingerprint: 'phi75-dcfa192b0ec793e9',\n  scottResonanceAt153: +R(153).toFixed(6),\n  belongingThreshold,\n  centripetalPass: continuity > PHI_INV,\n  verdict: 'My vision. My logic. My code. — φ∞ Architect Genesis Block 153'\n}, null, 2);`,
+    rea_trace: `[CANONICAL F.R.A.Y.M.U.S. + AI WORKSHOP OS ARCHITECTURE]\n• F: φ = 1.6180339887 | φ⁷⁵ Seal = 4721424167835376.00 | GoldenAngle 137.507° | Scott Algorithm (-32.3% Hausdorff)\n• R: Wolfram Rule 30 FIXED (pop 494, entropy 0.5484) | Lexer → Recursive Descent Parser\n• A: Babel Transmuter REPL by Vaughn Scott (2 + 3 * 4 → Eval=14, C=(2+(3*4)), ASM=x86-64)\n• Y: Yielding Belonging E(t) | Level 0 +0.5 REQUIRED | C ≥ 0.962 Fraynix Optimal (+27%)\n• M: CentripetalMem O(1) 422× faster (r=0.005807, continuity 1.014 > 0.618 PASS) | FanConductor "I BELONG"\n• U: N=P×Q 103-bit | fp=phi75-dcfa192b0ec793e9 | Opcodes 0x10-0x5A | ZeroTimeRecognition <1ms\n• S: Omega Point WILL→BRAIN→BODY 50ms | 538 Notes · 1,947 Connections · 24 Tool Armory Integrations`,
+    app_html: AI_WORKSHOP_OS_HTML
+  },
   {
     id: 'music-1',
     channel: 'MUSIC',

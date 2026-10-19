@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
+import {Link} from 'react-router-dom';
 import {useQuery,useQueryClient} from '@tanstack/react-query';
 import {ExternalLink,Flame,Plus,Radio} from 'lucide-react';
 import ProShell from '@/components/nexus/ProShell';
@@ -177,6 +178,7 @@ export default function LooseScrew(){
     <input type="text" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search tracks, video streams, apps..." className="w-56 rounded-md border border-input bg-background px-3 py-1.5 font-mono text-xs"/>
     <Button size="sm" variant="outline" onClick={()=>{setThermalCore(t=>+(t+0.42).toFixed(2));addLog(`Thermal Injection -> ${(thermalCore+0.42).toFixed(2)}°C`);}} className="font-mono text-xs gap-1"><Flame size={13}/>Thermal Inject</Button>
     <Button size="sm" onClick={()=>setIngestOpen(true)} className="font-mono text-xs gap-1"><Plus size={13}/>+ Ingest Real Media / Link</Button>
+    <Link to="/ai-workshop" className="inline-flex h-8 items-center gap-1.5 rounded-md border border-primary bg-selection px-3 font-mono text-xs font-bold text-primary hover:bg-hover">⚛ Full-Screen AI Workshop OS</Link>
     <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" className="inline-flex h-8 items-center gap-1.5 rounded-md border border-primary bg-selection px-3 font-mono text-xs text-primary hover:bg-hover"><ExternalLink size={13}/>github.com/eyeoverthink/looseScrew</a>
    </div>
   </div>
