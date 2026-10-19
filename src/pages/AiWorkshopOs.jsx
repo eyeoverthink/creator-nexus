@@ -14,7 +14,7 @@ export default function AiWorkshopOs(){
    <div className="flex items-center gap-3">
     <Link to="/loose-screw" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"><ArrowLeft size={13}/>looseScrew Lab</Link>
     <span className="text-border">|</span>
-    <strong className="text-primary">AI WORKSHOP OS & F.R.A.Y.M.U.S. — J.A.R.V.I.S. Neural Architecture</strong>
+    <strong className="text-primary">AI WORKSHOP OS — F.R.A.Y.M.U.S. Neural Architecture</strong>
     <span className="hidden md:inline text-muted-foreground">φ⁷⁵ Seal = 4721424167835376.00 · 538 Notes · 1,947 Synapses</span>
    </div>
    <div className="flex items-center gap-2">

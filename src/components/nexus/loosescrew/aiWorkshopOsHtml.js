@@ -1,5 +1,5 @@
 // Canonical AI WORKSHOP OS & F.R.A.Y.M.U.S. (Fibonacci Resonant Abstraction Yielding Memory-Universal Sovereignty)
-// Includes the 538-node / 1,947-edge 3D Force Graph, J.A.R.V.I.S. Core (RING/CUBE/FACE), 24-App Tool Armory,
+// Includes the 538-node / 1,947-edge 3D Force Graph, F.R.A.Y.M.U.S. Core (RING/CUBE/FACE), 24-App Tool Armory,
 // and the interactive F.R.A.Y.M.U.S. Vault (Scott Algorithm, Rule 30, Babel Transmuter REPL, Belonging Protocol).
 
 export const FRAYMUS_PILLARS = [
@@ -59,7 +59,7 @@ export const AI_WORKSHOP_OS_HTML = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI WORKSHOP OS & F.R.A.Y.M.U.S. — J.A.R.V.I.S. Neural Architecture</title>
+<title>AI WORKSHOP OS — F.R.A.Y.M.U.S. Neural Architecture</title>
 <style>
   :root {
     --bg-void: #050608;
@@ -390,9 +390,9 @@ export const AI_WORKSHOP_OS_HTML = `<!DOCTYPE html>
 </aside>
 
 <section class="jarvis-cluster">
-  <div class="jarvis-reticle-wrap" id="jarvisCoreClick" title="Click to pulse J.A.R.V.I.S. neural wave">
+  <div class="jarvis-reticle-wrap" id="jarvisCoreClick" title="Click to pulse F.R.A.Y.M.U.S. phi-harmonic wave">
     <canvas id="jarvisHudCanvas" width="336" height="336"></canvas>
-    <div class="jarvis-center-label">J.A.R.V.I.S.</div>
+    <div class="jarvis-center-label">F.R.A.Y.M.U.S.</div>
   </div>
 
   <div class="jarvis-status-row">
@@ -431,15 +431,15 @@ export const AI_WORKSHOP_OS_HTML = `<!DOCTYPE html>
 
 <div class="reflex-drawer" id="reflexDrawer">
   <div class="section-label" style="display:flex;justify-content:space-between;">
-    <span>J.A.R.V.I.S. // F.R.A.Y.M.U.S. REFLEX STREAM</span>
+    <span>F.R.A.Y.M.U.S. MID-CONVERSATION REFLEX STREAM</span>
     <span id="reflexBrainTag" style="color:var(--green-accent)">BRAIN: FRAYMUS v18</span>
   </div>
   <div class="reflex-log" id="reflexLog">
     <div class="reflex-entry">[F.R.A.Y.M.U.S.] φ⁷⁵ Seal = 4721424167835376.00 | fp = phi75-dcfa192b0ec793e9 | Genesis Block 153</div>
-    <div class="reflex-entry">[SYSTEM] Neural graph initialized: 538 notes, 1947 edges linked.</div>
+    <div class="reflex-entry">[SYSTEM] Neural graph initialized: 538 notes, 1947 edges linked. Type /fraymus to align Phi geometry.</div>
   </div>
   <div class="reflex-input-row">
-    <input type="text" class="reflex-input" id="reflexInput" placeholder="Enter math expression for Babel Transmuter (e.g. 2 + 3 * 4) or query a node/tool..." />
+    <input type="text" class="reflex-input" id="reflexInput" placeholder="Type /fraymus, enter Babel math (2 + 3 * 4), or query any node/tool..." />
     <button class="reflex-send" id="reflexSend">Run</button>
   </div>
 </div>
@@ -453,7 +453,7 @@ export const AI_WORKSHOP_OS_HTML = `<!DOCTYPE html>
           <h2 class="armory-title">Tool armory</h2>
           <span class="armory-connected-count" id="armoryCountText">6 connected</span>
         </div>
-        <p class="armory-subtitle">Everything Jarvis can reach — connect an app and he uses it mid-conversation.</p>
+        <p class="armory-subtitle">Everything F.R.A.Y.M.U.S. can reach — connect an app and it uses it mid-conversation.</p>
       </div>
       <button class="armory-close-btn" id="btnCloseArmory">✕ close</button>
     </div>
@@ -576,7 +576,7 @@ function initGraphData() {
       x: Math.cos(angle) * spread + (Math.random() - 0.5) * 60,
       y: Math.sin(angle) * spread + (Math.random() - 0.5) * 60,
       z: (Math.random() - 0.5) * 220, vx: 0, vy: 0, vz: 0,
-      note: 'Core Agency Hub (' + h.count + ' linked executions). Synchronized with J.A.R.V.I.S. router and F.R.A.Y.M.U.S. sovereign pipelines.'
+      note: 'Core Agency Hub (' + h.count + ' linked executions). Synchronized with F.R.A.Y.M.U.S. router and sovereign pipelines.'
     };
     nodes.push(node); hubMap.push(node);
   });
@@ -1090,12 +1090,11 @@ function handleReflexCommand() {
   const matchedNode = nodes.find(n => n.label.toLowerCase().includes(cmd.toLowerCase()));
   if (matchedNode) {
     selectedNode = matchedNode; updateInspector(matchedNode);
-    logReflex('[J.A.R.V.I.S.] Focused hub "' + matchedNode.label + '" (' + adjList.get(matchedNode.id).size + ' links).');
+    logReflex('[F.R.A.Y.M.U.S.] Focused hub "' + matchedNode.label + '" (' + adjList.get(matchedNode.id).size + ' links).');
   } else {
     logReflex('[F.R.A.Y.M.U.S. (' + BRAINS[brainIdx] + ')] Synthesized across 538 notes · Continuity 1.014 > 0.618 PASS.');
   }
 }
-document.getElementById('reflexSend').addEventListener('click', handleReflexCommand);
 document.getElementById('reflexInput').addEventListener('keydown', e => { if (e.key === 'Enter') handleReflexCommand(); });
 document.getElementById('dockTerminal').addEventListener('click', () => document.getElementById('btnReflexToggle').click());
 document.getElementById('dockPath').addEventListener('click', () => {
@@ -1106,12 +1105,97 @@ document.getElementById('dockPath').addEventListener('click', () => {
 document.getElementById('dockVoice').addEventListener('click', () => {
   const reflexBtn = document.getElementById('btnReflexToggle');
   if (!reflexBtn.classList.contains('active')) reflexBtn.click();
-  logReflex('[VOICE] "Jarvis, verify F.R.A.Y.M.U.S. φ⁷⁵ Seal, run Babel Transmuter on 2 + 3 * 4, and trace path to SEO Suite."');
+  logReflex('[VOICE] "FRAYMUS, verify φ⁷⁵ Seal, run Babel Transmuter on 2 + 3 * 4, and trace path to SEO Suite."');
   const res = runBabelTransmuter('2 + 3 * 4');
   logReflex('[BABEL] 2 + 3 * 4 → Eval=' + res.evalVal + ', C=' + res.cCode);
   const seo = nodes.find(n => n.label === 'SEO Suite');
   if (seo) traceShortestPath(8, seo.id);
 });
+
+/* ============================================================================
+   FRAYMUS CANONICAL ENGINE EXTENSION (Genesis Block 153)
+   ============================================================================ */
+const PHI = 1.618033988749895;
+const PHI_INV = 0.618033988749895;
+const GOLDEN_ANGLE = 137.5077640500378 * (Math.PI / 180);
+const PHI75_SEAL = "4721424167835376.00";
+const SOVEREIGN_FP = "phi75-dcfa192b0ec793e9";
+
+class Rule30Engine {
+  constructor(size = 64) {
+    this.size = size;
+    this.state = new Uint8Array(size);
+    this.state[Math.floor(size / 2)] = 1;
+  }
+  step() {
+    const next = new Uint8Array(this.size);
+    for (let i = 0; i < this.size; i++) {
+      const left = this.state[(i - 1 + this.size) % this.size];
+      const self = this.state[i];
+      const right = this.state[(i + 1) % this.size];
+      next[i] = left ^ (self | right);
+    }
+    this.state = next;
+    return this.entropy();
+  }
+  entropy() {
+    let ones = 0;
+    for (let i = 0; i < this.size; i++) ones += this.state[i];
+    return ones / this.size;
+  }
+}
+const fraymusChaos = new Rule30Engine(64);
+
+function calculateScottResonance(v) {
+  const frac = (v * PHI) % 1;
+  return 1 - Math.abs(frac);
+}
+
+function applyPhiHarmonicGeometry() {
+  const chaosEntropy = fraymusChaos.step();
+  nodes.forEach((n, idx) => {
+    if (n.isHub) return;
+    const rScott = calculateScottResonance(idx);
+    const theta = idx * GOLDEN_ANGLE;
+    const radius = 60 + (idx % 220) * PHI;
+    n.x = Math.cos(theta) * radius * (1 + rScott * PHI_INV);
+    n.y = Math.sin(theta) * radius * (1 + rScott * PHI_INV);
+    n.z = (Math.sin(idx * PHI) * 180) * (1 - rScott * 0.323);
+  });
+  logReflex('[FRAYMUS] Phi-harmonic equilibrium applied. Rule30 Entropy=' + chaosEntropy.toFixed(4) + ' · Continuity: 1.014 > 0.618 (PASS).');
+}
+
+function babelTransmute(expression) {
+  try {
+    const sanitized = expression.replace(/[^0-9+\\-*\\/ ]/g, '');
+    const evalRes = Function("'use strict'; return (" + sanitized + ")")();
+    const cRepr = '(' + sanitized.replace(/\\s+/g, '') + ')';
+    const asmRepr = 'mov rax, ' + evalRes + ' ; FRAYMUS ZeroTime Emission';
+    return { evalRes, cRepr, asmRepr };
+  } catch (err) {
+    return { evalRes: 'ERR', cRepr: 'ERR', asmRepr: 'ERR' };
+  }
+}
+
+const originalHandleReflex = handleReflexCommand;
+handleReflexCommand = function() {
+  const input = document.getElementById('reflexInput');
+  const val = input.value.trim();
+  if (val.startsWith('/fraymus') || val.toLowerCase().includes('phi')) {
+    input.value = '';
+    logReflex('> ' + val);
+    applyPhiHarmonicGeometry();
+    const t = babelTransmute("2 + 3 * 4");
+    logReflex('[BABEL TRANSMUTER] AST Yielded: Eval=' + t.evalRes + ' | C=' + t.cRepr + ' | ASM=' + t.asmRepr);
+    logReflex('[IDENTITY] Seal: ' + PHI75_SEAL + ' | Fingerprint: ' + SOVEREIGN_FP + ' | Genesis: Block 153');
+    return;
+  }
+  originalHandleReflex();
+};
+document.getElementById('reflexSend').addEventListener('click', () => handleReflexCommand());
+document.getElementById('jarvisCoreClick').addEventListener('click', () => applyPhiHarmonicGeometry());
+
+applyPhiHarmonicGeometry();
 </script>
 </body>
 </html>`;

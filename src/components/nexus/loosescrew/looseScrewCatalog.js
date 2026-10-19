@@ -21,11 +21,11 @@ export const INITIAL_TRANSMISSIONS = [
   {
     id: 'code-fraymus-os',
     channel: 'CODE',
-    title: 'AI WORKSHOP OS & F.R.A.Y.M.U.S. — J.A.R.V.I.S. 538-Node Brain',
+    title: 'AI WORKSHOP OS — F.R.A.Y.M.U.S. 538-Node Sovereign Brain',
     duration: 'LIVE_OS',
     screws: 4721,
     bpm: 137,
-    tags: ['#FRAYMUS', '#JARVIS_OS', '#538_Notes', '#BabelTransmuter', '#Genesis153'],
+    tags: ['#FRAYMUS', '#Phi75Seal', '#538_Notes', '#BabelTransmuter', '#Genesis153'],
     voice_intro: 'AI Workshop OS and canonical F.R.A.Y.M.U.S. vault online. 538 notes, 1,947 synaptic links, Babel Transmuter REPL, and 24-app Tool Armory active.',
     external_link: 'https://github.com/eyeoverthink/looseScrew',
     synth_notes: [137.5, 161.8, 220.0, 261.63, 355.96, 432.0],
