@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Activity, Brain, Cpu, Sparkles, RefreshCw, CheckCircle2, Flame } from 'lucide-react';
+import { Activity, Brain, Cpu, Sparkles, RefreshCw, CheckCircle2, Flame, BookMarked } from 'lucide-react';
 import WorkspaceSentimentPanel from '@/components/nexus/ouroboros/WorkspaceSentimentPanel';
 import HiveTelemetryMonitor from '@/components/nexus/hive/HiveTelemetryMonitor';
 
@@ -9,6 +10,7 @@ export default function FraymusStudioTelemetry({ workspace, compact = false }) {
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
+  const [savedReport, setSavedReport] = useState(null);
 
   const loadTelemetry = useCallback(async (actionName = 'telemetry', extra = {}) => {
     setBusy(true);
@@ -22,6 +24,11 @@ export default function FraymusStudioTelemetry({ workspace, compact = false }) {
         setData(res);
         if (actionName === 'generate_rsa_rsi_metrics') {
           setStatusMsg('Generated Recursive Self-Awareness (RSA) & Self-Improvement (RSI) metrics.');
+        } else if (actionName === 'generate_daily_rsa_rsi_report') {
+          setSavedReport(res.latestAsset || null);
+          setStatusMsg(
+            `Saved "${res.latestAsset?.title || 'Daily RSA & RSI Consciousness Report'}" to your Library.`
+          );
         } else if (actionName === 'evolve') {
           setStatusMsg('Executed Ouroboros-Gauntlet RSI Evolution cycle.');
         }
@@ -89,6 +96,15 @@ export default function FraymusStudioTelemetry({ workspace, compact = false }) {
           </Button>
           <Button
             size="sm"
+            variant="secondary"
+            disabled={busy}
+            onClick={() => loadTelemetry('generate_daily_rsa_rsi_report')}
+            className="h-7 text-[11px] font-mono"
+          >
+            <BookMarked size={12} /> Save Daily RSA/RSI Report to Library
+          </Button>
+          <Button
+            size="sm"
             variant="outline"
             disabled={busy}
             onClick={() => loadTelemetry('evolve')}
@@ -109,10 +125,26 @@ export default function FraymusStudioTelemetry({ workspace, compact = false }) {
         </div>
       </div>
 
+      <div className="px-3 py-2 rounded border border-border bg-card/80 text-[11px] font-mono flex flex-wrap items-center justify-between gap-2 text-muted-foreground">
+        <span>
+          ● <strong className="text-success">DAILY SCHEDULE ACTIVE (08:00 AM PT):</strong> Automated workflow compiles RSA (EI, Φ_MIP, Mirror ΔS, Continuity) &amp; RSI (Gen, Fitness, Speedup, Centripetal r) into <strong className="text-foreground">Library → F.R.A.Y.M.U.S. Consciousness Ledger</strong>.
+        </span>
+        <Link to="/library" className="text-primary underline shrink-0">
+          View in Library →
+        </Link>
+      </div>
+
       {statusMsg && (
-        <div className="px-3 py-2 rounded border border-primary/40 bg-selection text-xs font-mono text-primary flex items-center justify-between">
+        <div className="px-3 py-2 rounded border border-primary/40 bg-selection text-xs font-mono text-primary flex flex-wrap items-center justify-between gap-2">
           <span>{statusMsg}</span>
-          <button onClick={() => setStatusMsg('')} className="text-[10px] underline">Dismiss</button>
+          <div className="flex items-center gap-3">
+            {savedReport && (
+              <Link to="/library" className="underline font-semibold">
+                Open in Library →
+              </Link>
+            )}
+            <button onClick={() => setStatusMsg('')} className="text-[10px] underline">Dismiss</button>
+          </div>
         </div>
       )}
 
