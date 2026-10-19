@@ -45,6 +45,12 @@
     "image_url": {
       "type": "string"
     },
+    "scene_images": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
     "why_it_fits_you": {
       "type": "string"
     },
