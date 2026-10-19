@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { base44 } from '@/api/base44Client';
+import { appParams } from '@/lib/app-params';
 import { Button } from '@/components/ui/button';
-import { Activity, Sparkles, Flame, Compass, ShieldAlert } from 'lucide-react';
+import { Activity, Sparkles, Flame, Compass, ShieldAlert, RefreshCw } from 'lucide-react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -72,10 +74,90 @@ const STIMULUS_PRESETS = [
   },
 ];
 
-export default function WorkspaceSentimentPanel({ sentiment, busy, onInjectStimulus }) {
-  const [viewMode, setViewMode] = useState('collaboration');
+async function invokeSentimentBackend(payload) {
+  try {
+    const { data } = await base44.functions.invoke('nexusEvolution', payload);
+    return data;
+  } catch (err) {
+    const headers = { 'Content-Type': 'application/json', 'X-App-Id': String(appParams.appId || '') };
+    if (appParams.functionsVersion) headers['Base44-Functions-Version'] = String(appParams.functionsVersion);
+    const res = await fetch(`/api/apps/${appParams.appId}/functions/nexusEvolution`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || data.error) {
+      throw new Error(data?.error || err?.message || 'Sentiment telemetry request failed');
+    }
+    return data;
+  }
+}
 
-  if (!sentiment) return null;
+export default function WorkspaceSentimentPanel({ sentiment: propSentiment, workspace, busy: propBusy, onInjectStimulus }) {
+  const [viewMode, setViewMode] = useState('collaboration');
+  const [localSentiment, setLocalSentiment] = useState(null);
+  const [localBusy, setLocalBusy] = useState(false);
+
+  const fetchStandaloneSentiment = useCallback(async () => {
+    if (propSentiment) return;
+    setLocalBusy(true);
+    try {
+      const data = await invokeSentimentBackend({
+        action: 'telemetry',
+        ...(workspace?.id ? { workspace_id: workspace.id } : {}),
+      });
+      if (data?.sentimentTelemetry) {
+        setLocalSentiment(data.sentimentTelemetry);
+      }
+    } catch {
+      // Ignore background telemetry error
+    } finally {
+      setLocalBusy(false);
+    }
+  }, [propSentiment, workspace?.id]);
+
+  useEffect(() => {
+    if (!propSentiment) {
+      fetchStandaloneSentiment();
+    }
+  }, [propSentiment, fetchStandaloneSentiment]);
+
+  const handleStimulus = async (stimulusPayload) => {
+    if (onInjectStimulus) {
+      onInjectStimulus(stimulusPayload);
+      return;
+    }
+    setLocalBusy(true);
+    try {
+      const data = await invokeSentimentBackend({
+        action: 'inject_sentiment_stimulus',
+        ...(workspace?.id ? { workspace_id: workspace.id } : {}),
+        stimulus: stimulusPayload,
+      });
+      if (data?.sentimentTelemetry) {
+        setLocalSentiment(data.sentimentTelemetry);
+      }
+    } catch {
+      // Ignore error
+    } finally {
+      setLocalBusy(false);
+    }
+  };
+
+  const sentiment = propSentiment || localSentiment;
+  const busy = propBusy || localBusy;
+
+  if (!sentiment) {
+    return (
+      <section className="p-4 rounded-md border border-border bg-card flex items-center justify-between text-xs font-mono text-muted-foreground">
+        <span className="flex items-center gap-2">
+          <Activity size={14} className="text-primary animate-pulse" />
+          Loading Workspace Sentiment & Agent Engagement Telemetry…
+        </span>
+      </section>
+    );
+  }
 
   const current = sentiment.current || {};
   const mods = sentiment.modulators || {};
@@ -109,12 +191,23 @@ export default function WorkspaceSentimentPanel({ sentiment, busy, onInjectStimu
                 size="sm"
                 variant="outline"
                 disabled={busy}
-                onClick={() => onInjectStimulus?.(preset.payload)}
+                onClick={() => handleStimulus(preset.payload)}
               >
                 <Icon size={12} /> {preset.label}
               </Button>
             );
           })}
+          {!propSentiment && (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={busy}
+              onClick={fetchStandaloneSentiment}
+              title="Refresh workspace sentiment telemetry"
+            >
+              <RefreshCw size={12} className={busy ? 'animate-spin' : ''} />
+            </Button>
+          )}
         </div>
       </div>
 

@@ -1,10 +1,30 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { appParams } from '@/lib/app-params';
 import ProShell from '@/components/nexus/ProShell';
 import useOrigin from '@/components/nexus/origin/useOrigin';
-import { invokeNexusEvolution } from '@/components/nexus/useWorkspaceAccess';
 import WorkspaceRequired from '@/components/nexus/WorkspaceRequired';
+
+async function invokeNexusEvolution(payload) {
+  try {
+    const { data } = await base44.functions.invoke('nexusEvolution', payload);
+    return data;
+  } catch (err) {
+    const headers = { 'Content-Type': 'application/json', 'X-App-Id': String(appParams.appId || '') };
+    if (appParams.functionsVersion) headers['Base44-Functions-Version'] = String(appParams.functionsVersion);
+    const res = await fetch(`/api/apps/${appParams.appId}/functions/nexusEvolution`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || data.error) {
+      throw new Error(data?.error || err?.response?.data?.error || err?.message || 'nexusEvolution call failed');
+    }
+    return data;
+  }
+}
 import { Button } from '@/components/ui/button';
 import { Zap, RotateCcw, ArrowLeft, Cpu, BookOpen, Sparkles } from 'lucide-react';
 import CentripetalOrbitCanvas from '@/components/nexus/ouroboros/CentripetalOrbitCanvas';

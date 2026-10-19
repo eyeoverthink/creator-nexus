@@ -240,6 +240,12 @@ export default async function(req) {
 
         if (rawState && !rawState.error) {
           const ws = await resolveDefaultWorkspace();
+          const wsScope = { owner_id: String(ws.owner_id || user?.id || ''), workspace_id: String(ws.id) };
+          const [nexusEvs, chatTurns, learningLogs] = await Promise.all([
+            db.entities.NexusEvent.filter(wsScope, { sort: '-created_date', limit: 20 }).catch(() => ({ items: [] })),
+            db.entities.NexusChatTurn.filter(wsScope, { sort: '-created_date', limit: 15 }).catch(() => ({ items: [] })),
+            db.entities.SparkLearningLog.filter(wsScope, { sort: '-created_date', limit: 15 }).catch(() => ({ items: [] })),
+          ]);
           const normalized = normalizeUpstreamState(rawState, rawEmotion);
           const emotionObj = normalized?.emotionState || rawEmotion || null;
           const steeringObj =
@@ -254,6 +260,9 @@ export default async function(req) {
           const consciousnessAudit = runConsciousnessFalsificationSuite();
           const sentimentTelemetry = computeWorkspaceSentimentTelemetry({
             ledger: normalized?.ledger || [],
+            nexusEvents: nexusEvs.items || [],
+            chatTurns: chatTurns.items || [],
+            learningLogs: learningLogs.items || [],
             activeGenome: normalized?.activeGenome,
             orbits: normalized?.orbits || [],
             fossils: normalized?.fossils || [],
@@ -296,24 +305,65 @@ export default async function(req) {
       }
     }
 
-    let workspace = null;
-    if (input.workspace_id && ID_RE.test(String(input.workspace_id))) {
-      const page = await db.entities.NexusWorkspace.filter({ id: String(input.workspace_id) }, { limit: 1 });
-      workspace = page.items?.[0] || null;
-    }
-    if (!workspace && user?.id) {
-      const page = await db.entities.NexusWorkspace.filter({ owner_id: String(user.id) }, { sort: 'created_date', limit: 1 });
-      workspace = page.items?.[0] || null;
-    }
-    if (!workspace) {
-      const page = await db.entities.NexusWorkspace.list('created_date', 1);
-      workspace = (Array.isArray(page) ? page[0] : page?.items?.[0]) || null;
-    }
-    if (!workspace) {
-      return json({ error: 'Workspace not found' }, 404);
+    const workspace = await resolveDefaultWorkspace();
+    const scope = { owner_id: String(workspace.owner_id || user?.id || 'ouroboros'), workspace_id: String(workspace.id || 'ouroboros_live_ws') };
+
+    if (action === 'inject_sentiment_stimulus') {
+      const stim = input.stimulus || {};
+      const label = String(stim.label || 'Workspace Collaboration Pulse').slice(0, 140);
+      let liveEmotion = null;
+      let rawState = null;
+      if (baseUrl && token) {
+        const evType = Number(stim.rewardDelta ?? 0) < 0 ? 'build_fail' : 'breakthrough';
+        const [emRes, stRes] = await Promise.all([
+          fetch(`${baseUrl}/api/emotion/event`, {
+            method: 'POST',
+            headers: relayHeaders,
+            body: JSON.stringify({ event_type: evType, intensity: Math.abs(Number(stim.rewardDelta || 0.75)), context: label }),
+            signal: AbortSignal.timeout(8000),
+          }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+          fetch(`${baseUrl}/api/state`, { headers: relayHeaders, signal: AbortSignal.timeout(8000) }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        ]);
+        liveEmotion = emRes;
+        rawState = stRes;
+      }
+      const [nexusEvs, chatTurns, learningLogs] = await Promise.all([
+        db.entities.NexusEvent.filter(scope, { sort: '-created_date', limit: 20 }).catch(() => ({ items: [] })),
+        db.entities.NexusChatTurn.filter(scope, { sort: '-created_date', limit: 15 }).catch(() => ({ items: [] })),
+        db.entities.SparkLearningLog.filter(scope, { sort: '-created_date', limit: 15 }).catch(() => ({ items: [] })),
+      ]);
+      const normalized = rawState ? normalizeUpstreamState(rawState, liveEmotion) : null;
+      const sentimentTelemetry = computeWorkspaceSentimentTelemetry({
+        ledger: normalized?.ledger || [],
+        nexusEvents: nexusEvs.items || [],
+        chatTurns: chatTurns.items || [],
+        learningLogs: learningLogs.items || [],
+        activeGenome: normalized?.activeGenome,
+        orbits: normalized?.orbits || [],
+        fossils: normalized?.fossils || [],
+        blackHoles: normalized?.blackHoles || [],
+        receipts: normalized?.receipts || [],
+        stimulus: stim,
+      });
+      return json({
+        ok: true,
+        hydrated: true,
+        streamTimestamp: new Date().toISOString(),
+        sentimentTelemetry,
+        ...(liveEmotion ? { emotion: liveEmotion, emotionState: liveEmotion } : {}),
+      });
     }
 
-    const scope = { owner_id: String(workspace.owner_id || user?.id || ''), workspace_id: workspace.id };
+    if (action === 'audit_consciousness') {
+      const mirrorOverride = input.mirror_override !== false;
+      const counterfactualOverride = input.counterfactual_override !== false;
+      const consciousnessAudit = runConsciousnessFalsificationSuite({
+        mirrorOverride,
+        counterfactualOverride,
+      });
+      return json({ ok: true, consciousnessAudit });
+    }
+
     const state = await loadEngineState(db, scope);
     let seq = state.maxSeq;
 
@@ -385,10 +435,26 @@ export default async function(req) {
           stages: [true, true, true, true, true],
         }
       );
+      let liveEmotion = null;
+      if (baseUrl && token) {
+        const evType = Number(stim.rewardDelta ?? 0) < 0 ? 'build_fail' : 'breakthrough';
+        liveEmotion = await fetch(`${baseUrl}/api/emotion/event`, {
+          method: 'POST',
+          headers: relayHeaders,
+          body: JSON.stringify({ event_type: evType, intensity: Math.abs(Number(stim.rewardDelta || 0.75)), context: label }),
+          signal: AbortSignal.timeout(8000),
+        }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      }
       const freshState = await loadEngineState(db, scope);
       const receipts = await evaluateBaselineReceipts(freshState);
       const sentimentTelemetry = await loadSentiment(freshState, receipts, stim);
-      return json({ ok: true, hydrated: true, streamTimestamp: new Date().toISOString(), state: freshState, receipts, sentimentTelemetry });
+      return json({
+        ok: true,
+        hydrated: true,
+        streamTimestamp: new Date().toISOString(),
+        sentimentTelemetry,
+        ...(liveEmotion ? { emotion: liveEmotion, emotionState: liveEmotion } : {}),
+      });
     }
 
     if (action === 'audit_consciousness') {
@@ -413,8 +479,7 @@ export default async function(req) {
           stages: [...coreResult.proofsPassed, coreResult.provenIntegratedCore],
         }
       );
-      const freshState = await loadEngineState(db, scope);
-      return json({ ok: true, state: freshState, consciousnessAudit });
+      return json({ ok: true, consciousnessAudit });
     }
 
     if (action === 'evolve') {
