@@ -1,0 +1,129 @@
+{
+  "name": "LooseScrewItem",
+  "type": "object",
+  "description": "Persistent transmission, real music/video media item, external link, or autonomous code/app build in looseScrew Studio.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "MUSIC",
+        "VIDEO",
+        "CODE"
+      ],
+      "default": "CODE"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "duration": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "screws": {
+      "type": "integer",
+      "default": 1
+    },
+    "bpm": {
+      "type": "integer",
+      "default": 120
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "voice_intro": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "media_url": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "file_uri": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "mime_type": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "external_link": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "synth_notes": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "code": {
+      "type": "string",
+      "maxLength": 20000
+    },
+    "app_html": {
+      "type": "string",
+      "maxLength": 20000
+    },
+    "rea_trace": {
+      "type": "string",
+      "maxLength": 10000
+    },
+    "github_path": {
+      "type": "string",
+      "maxLength": 500
+    }
+  },
+  "required": [
+    "owner_id",
+    "channel",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
