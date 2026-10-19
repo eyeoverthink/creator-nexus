@@ -2,11 +2,11 @@ import {useState} from 'react';
 import {useQuery,useQueryClient} from '@tanstack/react-query';
 import {base44} from '@/api/base44Client';
 import {initialLayout} from '@/components/nexus/useNexus';
-export const WORKSPACE_QUERY_KEY=['nexus-workspace'];
+export const WORKSPACE_QUERY_KEY=['origin','workspace'];
 async function readWorkspace(){
  const user=await base44.auth.me();
  const page=await base44.entities.NexusWorkspace.filter({owner_id:user.id},{sort:'created_date',limit:1});
- return {user,workspace:page.items[0]||null};
+ return page.items[0]||null;
 }
 export default function useWorkspaceAccess(){
  const qc=useQueryClient();
@@ -17,9 +17,10 @@ export default function useWorkspaceAccess(){
   setCreating(true);
   setCreateError('');
   try{
-   const user=boot.data?.user||await base44.auth.me();
-   const workspace=await base44.entities.NexusWorkspace.create({owner_id:user.id,name:'My creative space',room_id:`room_${user.id}_${Date.now()}`,layout:initialLayout});
-   qc.setQueryData(WORKSPACE_QUERY_KEY,{user,workspace});
+   const user=await base44.auth.me();
+   const existing=await base44.entities.NexusWorkspace.filter({owner_id:user.id},{sort:'created_date',limit:1});
+   const workspace=existing.items[0]||await base44.entities.NexusWorkspace.create({owner_id:user.id,name:'My creative space',room_id:`room_${user.id}_${Date.now()}`,layout:initialLayout,agent_roster_version:1});
+   qc.setQueryData(WORKSPACE_QUERY_KEY,workspace);
    return workspace;
   }catch(err){
    setCreateError(err.message||'Could not create your workspace.');
@@ -28,5 +29,5 @@ export default function useWorkspaceAccess(){
    setCreating(false);
   }
  };
- return {boot,user:boot.data?.user||null,workspace:boot.data?.workspace||null,creating,createError,createWorkspace};
+ return {boot,workspace:boot.data||null,creating,createError,createWorkspace};
 }
