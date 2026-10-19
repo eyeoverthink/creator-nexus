@@ -14,8 +14,8 @@ export default function AiWorkshopOs(){
    <div className="flex items-center gap-3">
     <Link to="/loose-screw" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"><ArrowLeft size={13}/>looseScrew Lab</Link>
     <span className="text-border">|</span>
-    <strong className="text-primary">AI WORKSHOP OS — F.R.A.Y.M.U.S. Neural Architecture</strong>
-    <span className="hidden md:inline text-muted-foreground">φ⁷⁵ Seal = 4721424167835376.00 · 538 Notes · 1,947 Synapses</span>
+    <strong className="text-primary">F.R.A.Y.M.U.S. // Tycho dream.srv — 3D Monolith &amp; Neural Architecture</strong>
+    <span className="hidden md:inline text-muted-foreground">igloo.inc 3D Shell · φ⁷⁵ Seal · fx-0601 Custody · 538 Notes</span>
    </div>
    <div className="flex items-center gap-2">
     <Button size="sm" variant="outline" onClick={popOut} className="h-7 font-mono text-[11px] gap-1"><Maximize2 size={11}/>Pop Out Native Window</Button>
