@@ -28,6 +28,8 @@ import {
   CartesianGrid,
   Cell,
 } from 'recharts';
+import HiveLiveTimelineChart from '@/components/nexus/hive/HiveLiveTimelineChart';
+import WebScrapeEvolveLoop from '@/components/nexus/hive/WebScrapeEvolveLoop';
 
 const EXPANSION_TEMPLATES = [
   {
@@ -395,6 +397,16 @@ export default function HiveTelemetryMonitor({ workspace, sentiment, emotionStat
         </div>
       </div>
 
+      {/* Live Rolling Time-Series Chart: Hive Node Expansion, Agent Activity, Energy Distribution & Workflow Optimization */}
+      <HiveLiveTimelineChart
+        tick={tick}
+        snapshot={snapshot}
+        expansionCount={expansionNodes.length}
+        layoutOptimized={layoutOptimized}
+        workflowOptimized={workflowOptimized}
+        pipelineLatencyMs={totalPipelineLatency}
+      />
+
       {/* Main Middle Row: Left = 2D Polar Node Layout & Expansion Visualizer | Right = Real-Time Energy Distribution Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         {/* Left: Interactive Hive Node Layout & Expansion Canvas */}
@@ -603,6 +615,24 @@ export default function HiveTelemetryMonitor({ workspace, sentiment, emotionStat
           </div>
         </div>
       </div>
+
+      {/* Autonomous Web Scraper -> Thought & Idea Processor -> Code & Design Synthesis -> Save & Evolve Loop */}
+      <WebScrapeEvolveLoop
+        workspace={workspace}
+        onEvolved={(res) => {
+          setActivityFeed((prev) => [
+            {
+              id: `web-ev-${Date.now()}`,
+              time: new Date().toLocaleTimeString(),
+              agent: 'Fraymus + Kepler',
+              action: `WEB_EVOLVE_#${res.iteration}`,
+              detail: `Learned from "${res.scrape?.title}" → Synthesized code & UI design → Saved to Library (${res.saved?.assetTitle})`,
+              color: '#34d399',
+            },
+            ...prev.slice(0, 11),
+          ]);
+        }}
+      />
     </section>
   );
 }
