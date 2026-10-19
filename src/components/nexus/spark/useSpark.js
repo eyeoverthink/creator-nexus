@@ -73,6 +73,7 @@ export default function useSpark(){
     }
    }
    await Promise.all([
+    cache.invalidateQueries({queryKey:['spark','cards']}),
     cache.invalidateQueries({queryKey:['spark','batches']}),
     cache.invalidateQueries({queryKey:['spark','latest']}),
     cache.invalidateQueries({queryKey:['origin']}),
