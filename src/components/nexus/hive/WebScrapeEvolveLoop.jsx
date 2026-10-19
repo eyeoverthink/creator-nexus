@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
+import ScrapeTargetsManager from '@/components/nexus/hive/ScrapeTargetsManager';
 import {
   Brain,
   Code2,
@@ -46,7 +47,7 @@ export default function WebScrapeEvolveLoop({ workspace, nexus, onEvolved }) {
     'Extract φ-harmonic layout principles, process into 3 actionable ideas, synthesize runnable React + HTML design, save to Library, and evolve.'
   );
   const [applyToDraft, setApplyToDraft] = useState(true);
-  const [useLlm, setUseLlm] = useState(false);
+  const [useLlm, setUseLlm] = useState(true);
   const [autoRepeat, setAutoRepeat] = useState(false);
   const [busy, setBusy] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -54,6 +55,8 @@ export default function WebScrapeEvolveLoop({ workspace, nexus, onEvolved }) {
   const [history, setHistory] = useState([]);
   const [error, setError] = useState('');
 
+  const [visited, setVisited] = useState([]);
+  const visitedRef = useRef([]);
   const iterationRef = useRef(0);
   const seedRef = useRef(thoughtSeed);
   seedRef.current = thoughtSeed;
@@ -76,6 +79,17 @@ export default function WebScrapeEvolveLoop({ workspace, nexus, onEvolved }) {
 
         if (data?.ok) {
           iterationRef.current = nextIter;
+          // Recursive step: follow an unvisited link from this page that best matches the evolving seed
+          const seen = new Set([...visitedRef.current, url.trim()]);
+          visitedRef.current = [...seen];
+          setVisited([...seen]);
+          const words = (data.nextSeedPrompt || seedRef.current).toLowerCase().split(/\W+/).filter((w) => w.length > 3);
+          const next = (data.scrape?.links || [])
+            .filter((l) => !seen.has(l.url))
+            .map((l) => ({ ...l, score: words.filter((w) => l.label.toLowerCase().includes(w)).length }))
+            .sort((a, b) => b.score - a.score)[0];
+          if (next) setUrl(next.url);
+          else setAutoRepeat(false);
           setCurrentResult(data);
           setHistory((prev) => [data, ...prev.slice(0, 9)]);
           if (data.nextSeedPrompt) {
@@ -172,23 +186,15 @@ export default function WebScrapeEvolveLoop({ workspace, nexus, onEvolved }) {
         </div>
       </div>
 
-      {/* Preset Web Targets */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-[10px] text-muted-foreground mr-1">Quick Scrape Targets:</span>
-        {PRESET_WEB_TARGETS.map((preset) => (
-          <button
-            key={preset.label}
-            type="button"
-            onClick={() => {
-              setUrl(preset.url);
-              setThoughtSeed(preset.seed);
-            }}
-            className="px-2 py-0.5 rounded bg-secondary hover:bg-hover border border-border text-[10px] text-foreground"
-          >
-            {preset.label}
-          </button>
-        ))}
-      </div>
+      <ScrapeTargetsManager
+        history={history.map((h) => h.scrape?.title).filter(Boolean)}
+        onPick={(t) => { setUrl(t.url); if (t.reason) setThoughtSeed(t.reason); }}
+      />
+      {visited.length > 0 && (
+        <p className="text-[10px] text-muted-foreground">
+          Crawl path ({visited.length} pages, never repeats): {visited.slice(-4).join(' → ')}
+        </p>
+      )}
 
       {/* URL & Thought Seed Inputs */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">

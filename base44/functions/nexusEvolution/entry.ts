@@ -638,6 +638,7 @@ export default async function(req) {
       let scrapedTitle = '';
       let scrapedDescription = '';
       let scrapedHeadings: string[] = [];
+      let scrapedLinks: { label: string; url: string }[] = [];
       let scrapedSnippet = '';
       let scrapeStatus = 'synthetic_seed';
 
@@ -672,6 +673,16 @@ export default async function(req) {
             .replace(/\s+/g, ' ')
             .trim();
           scrapedSnippet = cleanText.slice(0, 1800);
+          const seenLinks = new Set<string>();
+          for (const m of html.matchAll(/<a[^>]+href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+            let abs = '';
+            try { abs = new URL(m[1], rawUrl).href; } catch { continue; }
+            const label = m[2].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+            if (!/^https?:/.test(abs) || label.length < 12 || label.length > 140 || seenLinks.has(abs) || abs === rawUrl) continue;
+            seenLinks.add(abs);
+            scrapedLinks.push({ label, url: abs });
+            if (scrapedLinks.length >= 40) break;
+          }
           scrapeStatus = pageRes.ok ? 'scraped_live' : `http_${pageRes.status}_fallback`;
         } catch (err) {
           scrapedTitle = rawUrl;
@@ -966,6 +977,7 @@ export default function EvolvedSynthesizedModule() {
           description: scrapedDescription,
           headings: scrapedHeadings,
           snippet: scrapedSnippet,
+          links: scrapedLinks,
         },
         processedThought,
         generatedIdeas,
