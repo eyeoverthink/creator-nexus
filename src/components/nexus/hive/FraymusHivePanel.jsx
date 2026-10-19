@@ -18,6 +18,7 @@ import {
   Volume2,
   Zap,
 } from 'lucide-react';
+import HiveTelemetryMonitor from '@/components/nexus/hive/HiveTelemetryMonitor';
 
 export default function FraymusHivePanel({ nexus, compact = false }) {
   const [tierFilter, setTierFilter] = useState('all');
@@ -379,6 +380,9 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
           </div>
         </section>
       </div>
+
+      {/* Connected Hive Telemetry, Energy Distribution, Layout & Workflow Optimizer */}
+      <HiveTelemetryMonitor workspace={nexus?.workspace} />
     </div>
   );
 }

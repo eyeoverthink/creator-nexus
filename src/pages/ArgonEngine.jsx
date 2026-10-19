@@ -34,6 +34,7 @@ import ConsciousnessFalsificationPanel from '@/components/nexus/ouroboros/Consci
 import WorkspaceSentimentPanel from '@/components/nexus/ouroboros/WorkspaceSentimentPanel';
 import StrategyGenomeEvolutionPanel from '@/components/nexus/ouroboros/StrategyGenomeEvolutionPanel';
 import SovereignTelemetryDeck, { EMOTION_COLORS } from '@/components/nexus/ouroboros/SovereignTelemetryDeck';
+import HiveTelemetryMonitor from '@/components/nexus/hive/HiveTelemetryMonitor';
 import LinkedInAutoPublisherPanel from '@/components/nexus/spark/LinkedInAutoPublisherPanel';
 import GoogleCalendarSyncPanel from '@/components/nexus/calendar/GoogleCalendarSyncPanel';
 import AssetBrowser from '@/components/nexus/library/AssetBrowser';
@@ -591,6 +592,12 @@ export default function ArgonEngine() {
                 </div>
               </div>
             </div>
+
+            <HiveTelemetryMonitor
+              workspace={activeWorkspace}
+              sentiment={sentimentTelemetry}
+              emotionState={emotionState}
+            />
 
             <WorkspaceSentimentPanel
               sentiment={sentimentTelemetry}

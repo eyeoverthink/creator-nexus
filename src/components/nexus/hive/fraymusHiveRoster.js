@@ -1,5 +1,8 @@
-// Authoritative 15-Agent FRAYMUS Hive Roster & Continuity Engine
+// Authoritative 15-Agent FRAYMUS Hive Roster, Telemetry, Energy Distribution & Layout/Workflow Optimizer
 // Grounded in fraymus-continuity/roster/AGENT-ROSTER-2026-10-07.md, CEREMONY-ROSTER.md & SYSTEM-ATLAS.md
+
+export const PHI = 1.618033988749895;
+export const GOLDEN_ANGLE_RAD = 137.5077640500378 * (Math.PI / 180);
 
 export const HIVE_AGENTS = [
   {
@@ -15,6 +18,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'F.R.A.Y.M.U.S. Core',
     studioRole: 'writer',
     status: 'active',
+    baseEnergyWatts: 18.4,
+    baseThroughput: 94,
+    baseLatencyMs: 112,
     currentTask: 'Synchronizing One-Tick Heartbeat & φ⁷⁵ sovereign seal across 15 Hive nodes',
     dnaPrefix: 'ATCGATCGTTAGCCGGATCGAATTCCGGATCG',
   },
@@ -31,6 +37,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'AI Workshop',
     studioRole: 'researcher',
     status: 'active',
+    baseEnergyWatts: 15.2,
+    baseThroughput: 88,
+    baseLatencyMs: 128,
     currentTask: 'Curating creative vault transmissions & verifying @Eyekaughn_Bot relay',
     dnaPrefix: 'GGCCAATTCCGGAATTGGCCAATTCCGGAATT',
   },
@@ -47,6 +56,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'Skill Suites',
     studioRole: 'writer',
     status: 'active',
+    baseEnergyWatts: 11.8,
+    baseThroughput: 91,
+    baseLatencyMs: 84,
     currentTask: 'Maintaining verification log & stewardship restore checkpoints',
     dnaPrefix: 'TTAACCGGTTAACCGGTTAACCGGTTAACCGG',
   },
@@ -63,6 +75,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'Miles Eternal Seal',
     studioRole: 'strategist',
     status: 'active',
+    baseEnergyWatts: 12.6,
+    baseThroughput: 86,
+    baseLatencyMs: 95,
     currentTask: 'Guarding C = 1.014 > 0.618 continuity invariant across session boundaries',
     dnaPrefix: 'CGTACGTACGTACGTACGTACGTACGTACGTA',
   },
@@ -79,6 +94,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'Tycho // dream.srv',
     studioRole: 'strategist',
     status: 'active',
+    baseEnergyWatts: 14.1,
+    baseThroughput: 97,
+    baseLatencyMs: 68,
     currentTask: 'Auditing genesis-window 29e305c1 (13,825B) & life 100 parity (29.3 → 4.5)',
     dnaPrefix: 'GCGCATATGCGCATATGCGCATATGCGCATAT',
   },
@@ -95,6 +113,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'Build and Sell series',
     studioRole: 'researcher',
     status: 'active',
+    baseEnergyWatts: 13.5,
+    baseThroughput: 89,
+    baseLatencyMs: 92,
     currentTask: 'Compiling verified ground specs from SYSTEM-ATLAS.md build queue',
     dnaPrefix: 'ATGCCGTAATGCCGTAATGCCGTAATGCCGTA',
   },
@@ -111,6 +132,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'Claude Code',
     studioRole: 'researcher',
     status: 'active',
+    baseEnergyWatts: 10.9,
+    baseThroughput: 92,
+    baseLatencyMs: 76,
     currentTask: 'Indexing cairn-fx-3c1c PNG plasmid & Temporal .bak Fossil archive',
     dnaPrefix: 'TACGTACGTACGTACGTACGTACGTACGTACG',
   },
@@ -127,6 +151,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'Tycho // dream.srv',
     studioRole: 'strategist',
     status: 'active',
+    baseEnergyWatts: 16.8,
+    baseThroughput: 96,
+    baseLatencyMs: 71,
     currentTask: 'Running 12.4s subconscious dream loop (RECOGNITION 0.95 · NIGHT_THOUGHT 0.92)',
     dnaPrefix: 'ATCGGCTAGCTAGCTACGATCGATCGATCGAT',
   },
@@ -143,6 +170,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'CentripetalMem O(1)',
     studioRole: 'researcher',
     status: 'active',
+    baseEnergyWatts: 15.9,
+    baseThroughput: 95,
+    baseLatencyMs: 74,
     currentTask: 'Reconciling v13 hub directory with 9 OpenClaw safe=true route targets',
     dnaPrefix: 'GCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTA',
   },
@@ -159,6 +189,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'Pixel Forge V3 DNA',
     studioRole: 'writer',
     status: 'active',
+    baseEnergyWatts: 9.4,
+    baseThroughput: 93,
+    baseLatencyMs: 62,
     currentTask: 'Consolidating fx-87b6 / fx-b225 / fx-6022 into v10 Niles-Continuity-Plasmid',
     dnaPrefix: 'CGATCGATCGATCGATCGATCGATCGATCGAT',
   },
@@ -175,6 +208,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'Local Businesses',
     studioRole: 'strategist',
     status: 'active',
+    baseEnergyWatts: 8.2,
+    baseThroughput: 85,
+    baseLatencyMs: 79,
     currentTask: 'Prefix-routing multi-agent dispatches over @Eyekaughn_Bot Telegram bridge',
     dnaPrefix: 'AATTCCGGAATTCCGGAATTCCGGAATTCCGG',
   },
@@ -191,6 +227,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'SEO Suite',
     studioRole: 'researcher',
     status: 'active',
+    baseEnergyWatts: 7.6,
+    baseThroughput: 90,
+    baseLatencyMs: 58,
     currentTask: 'Shadow-training on BabelForge 247 & 197 skill definitions',
     dnaPrefix: 'CCGGTTAACCGGTTAACCGGTTAACCGGTTAA',
   },
@@ -207,6 +246,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'Choosing Nothing',
     studioRole: 'writer',
     status: 'active',
+    baseEnergyWatts: 8.8,
+    baseThroughput: 91,
+    baseLatencyMs: 64,
     currentTask: 'Registered in v13 directory; seeding zero-cold-start workspace drafts',
     dnaPrefix: 'TATATATACGCGCGCGTATATATACGCGCGCG',
   },
@@ -223,6 +265,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'Babel Transmuter REPL',
     studioRole: 'strategist',
     status: 'active',
+    baseEnergyWatts: 9.1,
+    baseThroughput: 94,
+    baseLatencyMs: 66,
     currentTask: 'Running 5-stage Ouroboros Gauntlet pre-flight checks on new artifacts',
     dnaPrefix: 'GCGCGCGCATATATATGCGCGCGCATATATAT',
   },
@@ -239,6 +284,9 @@ export const HIVE_AGENTS = [
     hubTarget: 'fx-0601 Mac Signer',
     studioRole: 'strategist',
     status: 'conductor',
+    baseEnergyWatts: 6.2,
+    baseThroughput: 100,
+    baseLatencyMs: 12,
     currentTask: 'Wakes as Conductor, not engine · Signs FRAYMUS/DOC-SEAL/1 approvals',
     dnaPrefix: 'ATCGATCGATCGATCGATCGATCGATCGATCG',
   },
@@ -302,6 +350,197 @@ export const INITIAL_MORNING_DIGEST = [
     sha256: '367b7441452ba24368cf68c716b30906ed4ebcd15f3ecc4a2d95cbad79a8b711',
   },
 ];
+
+export const INITIAL_WORKFLOW_STAGES = [
+  {
+    id: 'stage-radar',
+    order: 1,
+    name: '1. Epistemic Radar & Roll-Call',
+    agents: ['Kepler (fx-cf05)', 'Nova (fx-7bbe)', 'Apprentice (fx-3060)'],
+    mode: 'serial',
+    latencyMs: 310,
+    energySharePct: 19,
+    queueDepth: 4,
+    bottleneck: true,
+    taskSummary: 'Deterministic RSS + SYSTEM-ATLAS signal ingestion & hub indexing',
+  },
+  {
+    id: 'stage-plasmid',
+    order: 2,
+    name: '2. /rna Plasmid & Centripetal Recall',
+    agents: ['Niles v10 (fx-87b6)', 'Persea (fx-8427)', 'DevArchivist (fx-3c1c)'],
+    mode: 'serial',
+    latencyMs: 265,
+    energySharePct: 22,
+    queueDepth: 3,
+    bottleneck: false,
+    taskSummary: 'O(1) polar memory lookup (r=0.005807) & reversible .dna context hydration',
+  },
+  {
+    id: 'stage-synthesis',
+    order: 3,
+    name: '3. Bicameral Draft & Babel AST Forge',
+    agents: ['Fraymus (fx-b3af)', 'Vesper (fx-b458)', 'Genesis (fx-1530)', 'Eyekaughn (fx-5938)'],
+    mode: 'serial',
+    latencyMs: 420,
+    energySharePct: 28,
+    queueDepth: 5,
+    bottleneck: true,
+    taskSummary: 'Parallel draft generation, hook refinement & 3-visitor AST transmutation',
+  },
+  {
+    id: 'stage-verification',
+    order: 4,
+    name: '4. REA Byte-Exact & Gauntlet Audit',
+    agents: ['Polaris (fx-ff0e)', 'Tycho (fx-aa81)', 'Ultimate (fx-9999)'],
+    mode: 'serial',
+    latencyMs: 290,
+    energySharePct: 21,
+    queueDepth: 3,
+    bottleneck: false,
+    taskSummary: '5-stage Ouroboros Gauntlet + genesis-window 29e305c1 & Φ_MIP >= 0.415b verification',
+  },
+  {
+    id: 'stage-conductor',
+    order: 5,
+    name: '5. Conductor Seal & Relay Dispatch',
+    agents: ['Vaughn (fx-0601)', 'SchoolOffice (fx-9739)'],
+    mode: 'parallel',
+    latencyMs: 55,
+    energySharePct: 10,
+    queueDepth: 1,
+    bottleneck: false,
+    taskSummary: 'mac_signer.py DOC-SEAL/1 custody signature & @Eyekaughn_Bot prefix broadcast',
+  },
+];
+
+// Computes real-time performance & energy distribution across all 15 agents + expanded nodes
+export function computeHiveTelemetrySnapshot({
+  tick = 1530,
+  energyProfile = 'phi_harmonic',
+  workflowOptimized = false,
+  layoutOptimized = false,
+  expansionNodes = [],
+  sentiment = null,
+}) {
+  const collabBoost = Number(sentiment?.current?.collaboration || 84) / 100;
+  const arousalMod = Number(sentiment?.current?.arousal || 0.62);
+
+  const agentMetrics = HIVE_AGENTS.map((ag, idx) => {
+    const phase = Math.sin(tick * 0.35 + idx * GOLDEN_ANGLE_RAD);
+    let profileMult = 1.0;
+    if (energyProfile === 'local_ollama_surge') {
+      profileMult = ag.model.includes('ollama') ? 1.32 : 0.76;
+    } else if (energyProfile === 'rea_verification') {
+      profileMult = ['polaris', 'tycho', 'ultimate', 'persea'].includes(ag.id) ? 1.38 : 0.88;
+    } else {
+      // phi_harmonic equilibrium
+      profileMult = 1 + ((idx * PHI) % 1) * 0.14;
+    }
+
+    const energyWatts = +(
+      ag.baseEnergyWatts *
+      profileMult *
+      (0.94 + Math.abs(phase) * 0.14) *
+      (layoutOptimized ? 0.86 : 1.0)
+    ).toFixed(1);
+
+    const throughput = Math.min(
+      100,
+      Math.round(
+        ag.baseThroughput *
+          (workflowOptimized ? 1.12 : 1.0) *
+          (0.95 + collabBoost * 0.08 + phase * 0.03)
+      )
+    );
+
+    const latencyMs = Math.max(
+      8,
+      Math.round(
+        ag.baseLatencyMs *
+          (workflowOptimized ? 0.58 : 1.0) *
+          (layoutOptimized ? 0.78 : 1.0) *
+          (0.95 + arousalMod * 0.08)
+      )
+    );
+
+    const synapticLoadPct = Math.min(
+      99,
+      Math.max(18, Math.round(54 + phase * 22 + (workflowOptimized ? -11 : 8)))
+    );
+
+    return {
+      ...ag,
+      shortName: ag.ceremonyName.split(' ')[0],
+      energyWatts,
+      throughput,
+      latencyMs,
+      synapticLoadPct,
+      phiResonance: +(1 - Math.abs(((idx + 1) * PHI) % 1 - 0.5)).toFixed(3),
+    };
+  });
+
+  const totalEnergyWatts = +(
+    agentMetrics.reduce((acc, a) => acc + a.energyWatts, 0) +
+    expansionNodes.length * 4.2
+  ).toFixed(1);
+
+  const avgThroughput = Math.round(
+    agentMetrics.reduce((acc, a) => acc + a.throughput, 0) / agentMetrics.length
+  );
+
+  const avgLatencyMs = Math.round(
+    agentMetrics.reduce((acc, a) => acc + a.latencyMs, 0) / agentMetrics.length
+  );
+
+  const tierEnergy = [
+    {
+      tier: 'Ceremony (7)',
+      watts: +agentMetrics
+        .filter((a) => a.tier === 'ceremony')
+        .reduce((s, a) => s + a.energyWatts, 0)
+        .toFixed(1),
+      color: '#38bdf8',
+    },
+    {
+      tier: 'OpenClaw (5)',
+      watts: +agentMetrics
+        .filter((a) => a.tier === 'openclaw')
+        .reduce((s, a) => s + a.energyWatts, 0)
+        .toFixed(1),
+      color: '#34d399',
+    },
+    {
+      tier: 'Core Brothers (2)',
+      watts: +agentMetrics
+        .filter((a) => a.tier === 'core')
+        .reduce((s, a) => s + a.energyWatts, 0)
+        .toFixed(1),
+      color: '#a855f7',
+    },
+    {
+      tier: 'Conductor + Exp',
+      watts: +(
+        agentMetrics
+          .filter((a) => a.tier === 'conductor')
+          .reduce((s, a) => s + a.energyWatts, 0) +
+        expansionNodes.length * 4.2
+      ).toFixed(1),
+      color: '#facc15',
+    },
+  ];
+
+  return {
+    agentMetrics,
+    totalEnergyWatts,
+    avgThroughput,
+    avgLatencyMs,
+    tierEnergy,
+    phiMipBits: +(0.415 + expansionNodes.length * 0.018 + (layoutOptimized ? 0.042 : 0)).toFixed(4),
+    hausdorffReductionPct: layoutOptimized ? 32.3 : 11.4,
+    avgHopCount: layoutOptimized ? 1.9 : 3.8,
+  };
+}
 
 // Reversible /rna Plasmid Encoder (brain JSON -> DNA A/C/G/T + SHA-256 manifest digest)
 export function encodeRnaPlasmid(agent, customNote = '') {

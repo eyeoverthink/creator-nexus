@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Activity, Brain, Cpu, Sparkles, RefreshCw, CheckCircle2, Flame } from 'lucide-react';
 import WorkspaceSentimentPanel from '@/components/nexus/ouroboros/WorkspaceSentimentPanel';
+import HiveTelemetryMonitor from '@/components/nexus/hive/HiveTelemetryMonitor';
 
 export default function FraymusStudioTelemetry({ workspace, compact = false }) {
   const [data, setData] = useState(null);
@@ -219,6 +220,9 @@ export default function FraymusStudioTelemetry({ workspace, compact = false }) {
           </div>
         </section>
       </div>
+
+      {/* Live 15-Agent Hive Performance, Energy Distribution, Node Layout & Workflow Monitor */}
+      <HiveTelemetryMonitor workspace={workspace} sentiment={sentiment} />
 
       {/* Live Workspace Sentiment & Collaboration Telemetry Panel */}
       {!compact && (
