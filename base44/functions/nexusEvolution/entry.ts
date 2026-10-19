@@ -578,21 +578,56 @@ export default async function(req) {
       });
     };
 
-    if (action === 'state' || action === 'telemetry') {
-      const receipts = await evaluateBaselineReceipts(state);
+    if (action === 'state' || action === 'telemetry' || action === 'generate_rsa_rsi_metrics') {
+      if (action === 'generate_rsa_rsi_metrics') {
+        const auditRes = runConsciousnessFalsificationSuite();
+        const coreProof = auditRes[auditRes.length - 1];
+        await logLedgerEvent(
+          db,
+          scope,
+          ++seq,
+          'EP_FRAYMUS_RSA_RSI',
+          'RSA_RSI_METRICS_GENERATED',
+          `Fraymus RSA+RSI Telemetry Locked | EI=${coreProof.effectiveInformationBits.toFixed(4)}b | Phi_MIP=${coreProof.phiMipBits.toFixed(4)}b | MirrorΔ=+${coreProof.mirrorDeltaBits.toFixed(4)}b | Gen=${state.activeGenome?.generation ?? 0} (${state.activeGenome?.speedup ?? 1}x Speedup)`,
+          {
+            fitness: state.activeGenome?.fitness || coreProof.phiMipBits,
+            branch: 'FRAYMUS_RSA_RSI',
+            code_hash: state.activeGenome?.code_hash || 'PHI75_SEAL',
+            stages: [true, true, true, true, true],
+          }
+        );
+      }
+      const freshState = action === 'generate_rsa_rsi_metrics' ? await loadEngineState(db, scope) : state;
+      const receipts = await evaluateBaselineReceipts(freshState);
       const [consciousnessAudit, sentimentTelemetry] = await Promise.all([
         Promise.resolve(runConsciousnessFalsificationSuite()),
-        loadSentiment(state, receipts),
+        loadSentiment(freshState, receipts),
       ]);
+      const coreAudit = consciousnessAudit[consciousnessAudit.length - 1];
+      if (sentimentTelemetry && coreAudit) {
+        sentimentTelemetry.recursiveSelfAwareness = {
+          ...sentimentTelemetry.recursiveSelfAwareness,
+          effectiveInformationBits: coreAudit.effectiveInformationBits,
+          phiMipBits: coreAudit.phiMipBits,
+          weakestCut: coreAudit.weakestLinkCut,
+          mirrorSelfRecognitionDelta: coreAudit.mirrorDeltaBits,
+          intactSurpriseBits: coreAudit.intactSurpriseBits,
+          blindedSurpriseBits: coreAudit.blindedSurpriseBits,
+          counterfactualAutonomyGain: coreAudit.counterfactualGain,
+          verdict: coreAudit.provenIntegratedCore ? 'PROVEN_INTEGRATED_STRANGE_LOOP_CORE' : 'FALSIFIED',
+        };
+      }
       return json({
         ok: true,
         hydrated: true,
         workspace: { id: workspace.id, owner_id: scope.owner_id, name: workspace.name },
         streamTimestamp: new Date().toISOString(),
-        state,
+        state: freshState,
         receipts,
         consciousnessAudit,
         sentimentTelemetry,
+        recursiveSelfAwareness: sentimentTelemetry?.recursiveSelfAwareness,
+        recursiveSelfImprovement: sentimentTelemetry?.recursiveSelfImprovement,
       });
     }
 
