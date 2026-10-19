@@ -14,7 +14,7 @@ export function videoRecord(event,card,completion){
   title:card?.hook_title||card?.title||'Untitled video '+jobId,description:card?.narration||card?.one_line_pitch||'',
   videoUrl:httpsVideoUrl(body.video_url),fileUri:typeof body.file_uri==='string'?body.file_uri:null,
   sizeBytes:body.size_bytes??body.file_size_bytes,uploadedAt:body.uploaded_at||body.transferred_at||event.created_date,
-  waiting:event.kind==='job.done',production:videoProduction(body,completion)};
+  waiting:event.kind==='job.done',production:videoProduction(body,completion),sparkCard:card||null};
 }
 export const videoPath=video=>'/watch/'+encodeURIComponent(video.jobId);
 export const videoSize=bytes=>typeof bytes==='number'&&Number.isFinite(bytes)?(bytes/(1024*1024)).toFixed(2)+' MB':'Size unavailable';

@@ -32,6 +32,7 @@ import TriTimelineCards from '@/components/nexus/ouroboros/TriTimelineCards';
 import ProofOfEvolutionPanel from '@/components/nexus/ouroboros/ProofOfEvolutionPanel';
 import ConsciousnessFalsificationPanel from '@/components/nexus/ouroboros/ConsciousnessFalsificationPanel';
 import WorkspaceSentimentPanel from '@/components/nexus/ouroboros/WorkspaceSentimentPanel';
+import StrategyGenomeEvolutionPanel from '@/components/nexus/ouroboros/StrategyGenomeEvolutionPanel';
 import SovereignTelemetryDeck, { EMOTION_COLORS } from '@/components/nexus/ouroboros/SovereignTelemetryDeck';
 import LinkedInAutoPublisherPanel from '@/components/nexus/spark/LinkedInAutoPublisherPanel';
 import GoogleCalendarSyncPanel from '@/components/nexus/calendar/GoogleCalendarSyncPanel';
@@ -596,6 +597,13 @@ export default function ArgonEngine() {
               busy={busy}
               onInjectStimulus={(stimulus) => callEngine('inject_sentiment_stimulus', { stimulus })}
             />
+
+            {activeWorkspace && (
+              <StrategyGenomeEvolutionPanel
+                workspace={activeWorkspace}
+                onEvolved={() => callEngine('telemetry')}
+              />
+            )}
 
             <ConsciousnessFalsificationPanel
               results={consciousnessAudit}

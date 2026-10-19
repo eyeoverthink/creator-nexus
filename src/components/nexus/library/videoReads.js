@@ -20,7 +20,7 @@ export async function canonicalVideoEvents(scope,ids){
 export async function cardsForJobs(scope,ids){
  const cards=new Map();let remaining=[...new Set(ids)];
  while(remaining.length){
-  const page=await base44.entities.SparkCard.filter({...scope,job_event_id:{$in:remaining}},{sort:'created_date',limit:50,fields:['job_event_id','hook_title','narration','one_line_pitch']});
+  const page=await base44.entities.SparkCard.filter({...scope,job_event_id:{$in:remaining}},{sort:'created_date',limit:50,fields:['id','job_event_id','card_id','hook_title','narration','one_line_pitch','format','topic_tags','signature_twist','why_now','safe_by_default','signal_snapshot','director_score','director_parts']});
   for(const card of page.items)if(!cards.has(card.job_event_id))cards.set(card.job_event_id,card);
   const next=remaining.filter(id=>!cards.has(id));if(!page.has_more||next.length===remaining.length)break;remaining=next;
  }
