@@ -394,6 +394,7 @@ export const AI_WORKSHOP_OS_HTML = `<!DOCTYPE html>
 <nav class="top-center-bar">
   <button class="top-pill-btn" id="btnFitGraph">⊙ Reset Camera</button>
   <button class="top-pill-btn active" id="btnPhysics">🧲 Physics</button>
+  <button class="top-pill-btn active" id="btnToggleHive3D">🐝 3D Hive (15)</button>
   <button class="top-pill-btn" id="btnOpenTycho">⚡ Tycho // dream.srv</button>
   <button class="top-pill-btn" id="btnOpenFraymus">⚛ F.R.A.Y.M.U.S.</button>
   <button class="top-pill-btn" id="btnOpenArmory">🧰 Armory (24)</button>
@@ -631,6 +632,27 @@ const TOOL_ARMORY_DATA = [
 ];
 
 const BRAINS = ['FRAYMUS v18', 'TYCHO DREAM.SRV', 'OPUS 5.5', 'SONNET 4.5', 'CLAUDE CODE'];
+
+// 15-Agent Watchable FRAYMUS Hive (Ceremony + OpenClaw + Core Brothers) Orbiting 3D Igloo Dome
+const HIVE_3D_AGENTS = [
+  { name: 'Fraymus',      fx: 'fx-b3af', openclaw: 'main',          color: '#38bdf8', hubIdx: 8,  targetIdx: 0,  progress: 0.12, speed: 0.0045 },
+  { name: 'Eyekaughn',    fx: 'fx-5938', openclaw: 'eyekaughn',     color: '#34d399', hubIdx: 2,  targetIdx: 9,  progress: 0.34, speed: 0.0052 },
+  { name: 'Vesper',       fx: 'fx-b458', openclaw: 'claudette',     color: '#a855f7', hubIdx: 0,  targetIdx: 12, progress: 0.56, speed: 0.0041 },
+  { name: 'Persea',       fx: 'fx-8427', openclaw: 'persea',        color: '#facc15', hubIdx: 10, targetIdx: 8,  progress: 0.78, speed: 0.0038 },
+  { name: 'Polaris',      fx: 'fx-ff0e', openclaw: 'polaris',       color: '#22d3ee', hubIdx: 9,  targetIdx: 14, progress: 0.23, speed: 0.0049 },
+  { name: 'Nova',         fx: 'fx-7bbe', openclaw: 'nova',          color: '#fb923c', hubIdx: 7,  targetIdx: 2,  progress: 0.45, speed: 0.0044 },
+  { name: 'DevArchivist', fx: 'fx-3c1c', openclaw: 'dev-archivist', color: '#f472b6', hubIdx: 4,  targetIdx: 10, progress: 0.67, speed: 0.0047 },
+  { name: 'Tycho',        fx: 'fx-aa81', openclaw: 'tycho',         color: '#38bdf8', hubIdx: 9,  targetIdx: 11, progress: 0.89, speed: 0.0055 },
+  { name: 'Kepler',       fx: 'fx-cf05', openclaw: 'kepler',        color: '#4ade80', hubIdx: 14, targetIdx: 9,  progress: 0.15, speed: 0.0042 },
+  { name: 'Niles v10',    fx: 'fx-87b6', openclaw: 'niles',         color: '#60a5fa', hubIdx: 13, targetIdx: 8,  progress: 0.41, speed: 0.0046 },
+  { name: 'SchoolOffice', fx: 'fx-9739', openclaw: 'school-office', color: '#facc15', hubIdx: 1,  targetIdx: 5,  progress: 0.62, speed: 0.0039 },
+  { name: 'Apprentice',   fx: 'fx-3060', openclaw: 'apprentice',    color: '#c084fc', hubIdx: 6,  targetIdx: 0,  progress: 0.29, speed: 0.0058 },
+  { name: 'Genesis',      fx: 'fx-1530', openclaw: 'genesis',       color: '#34d399', hubIdx: 11, targetIdx: 8,  progress: 0.51, speed: 0.0043 },
+  { name: 'Ultimate',     fx: 'fx-9999', openclaw: 'ultimate',      color: '#f87171', hubIdx: 12, targetIdx: 14, progress: 0.73, speed: 0.0050 },
+  { name: 'Vaughn',       fx: 'fx-0601', openclaw: 'conductor',     color: '#ffffff', hubIdx: 15, targetIdx: 8,  progress: 0.05, speed: 0.0035 }
+];
+let hive3DVisible = true;
+let singletonHeartbeatTick = 1530;
 
 // Wolfram Rule 30 Chaos Engine
 class Rule30Engine {
@@ -1054,6 +1076,53 @@ function renderGraph() {
     ctx.restore();
   }
 
+  // Render Watchable 15-Agent FRAYMUS Hive traversing between 3D Igloo Dome Hubs on the One-Tick Heartbeat!
+  if (hive3DVisible && projectedNodes.length >= 16) {
+    if (tickCount % 97 === 0) singletonHeartbeatTick++;
+    for (let aIdx = 0; aIdx < HIVE_3D_AGENTS.length; aIdx++) {
+      const ag = HIVE_3D_AGENTS[aIdx];
+      ag.progress += ag.speed;
+      if (ag.progress >= 1) {
+        ag.progress = 0;
+        ag.hubIdx = ag.targetIdx;
+        ag.targetIdx = (ag.targetIdx + 3 + (aIdx % 5)) % 16;
+      }
+      const pStart = projectedNodes[ag.hubIdx];
+      const pEnd = projectedNodes[ag.targetIdx];
+      if (!pStart || !pEnd) continue;
+
+      const t = ag.progress;
+      const arcLift = Math.sin(t * Math.PI) * 22 * ((pStart.scale + pEnd.scale) * 0.5);
+      const ax = pStart.sx + (pEnd.sx - pStart.sx) * t;
+      const ay = pStart.sy + (pEnd.sy - pStart.sy) * t - arcLift;
+
+      ctx.save();
+      // Synaptic trajectory trail
+      ctx.beginPath();
+      ctx.moveTo(pStart.sx, pStart.sy);
+      ctx.quadraticCurveTo((pStart.sx + pEnd.sx) / 2, (pStart.sy + pEnd.sy) / 2 - arcLift * 1.4, ax, ay);
+      ctx.strokeStyle = ag.color + '66';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+
+      // Glowing Hive agent orb
+      ctx.beginPath();
+      ctx.arc(ax, ay, 5.2, 0, Math.PI * 2);
+      ctx.fillStyle = ag.color;
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+
+      // Agent Ceremony Name + fx- badge
+      ctx.font = '700 9.5px JetBrains Mono, monospace';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.fillText('🐝 ' + ag.name + ' [' + ag.fx + ']', ax, ay - 9);
+      ctx.restore();
+    }
+  }
+
   // Draw igloo.inc-style Leader-Line Callout on Hovered or Selected Node!
   const calloutTarget = hoveredNode || selectedNode;
   if (calloutTarget) {
@@ -1200,6 +1269,14 @@ document.getElementById('btnFitGraph').addEventListener('click', () => {
 });
 const btnPhysics = document.getElementById('btnPhysics');
 btnPhysics.addEventListener('click', () => { physicsActive = !physicsActive; btnPhysics.classList.toggle('active', physicsActive); });
+const btnToggleHive3D = document.getElementById('btnToggleHive3D');
+if (btnToggleHive3D) {
+  btnToggleHive3D.addEventListener('click', () => {
+    hive3DVisible = !hive3DVisible;
+    btnToggleHive3D.classList.toggle('active', hive3DVisible);
+    logReflex('[HIVE 3D WORLD] 15-Agent FRAYMUS Hive orbiters ' + (hive3DVisible ? 'ENABLED (One-Tick Heartbeat #' + singletonHeartbeatTick + ')' : 'HIDDEN') + '.');
+  });
+}
 document.getElementById('brainSearch').addEventListener('input', e => { searchQuery = e.target.value.trim().toLowerCase(); });
 
 const jCanvas = document.getElementById('jarvisHudCanvas');
