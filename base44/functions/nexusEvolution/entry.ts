@@ -578,6 +578,55 @@ export default async function(req) {
       });
     };
 
+    if (action === 'bicameral_twin') {
+      if (!user) return json({ error: 'Unauthorized' }, 401);
+      const prompt = String(input.prompt || '').trim().slice(0, 1500);
+      const agentName = String(input.agent || 'Fraymus').slice(0, 60);
+      const mode = String(input.mode || 'yin_yang').slice(0, 30);
+      if (!prompt) return json({ error: 'Prompt required' }, 400);
+      const poles: Record<string, [string, string]> = {
+        yin_yang: ['Yin (receptive, intuitive, cautious)', 'Yang (assertive, bold, action-first)'],
+        left_right: ['Left Brain (analytical, logical, structured)', 'Right Brain (creative, holistic, visual)'],
+        critic_creator: ['Critic (skeptical, risk-finding)', 'Creator (generative, optimistic)'],
+      };
+      const [a, b] = poles[mode] || poles.yin_yang;
+      const out = await db.integrations.Core.InvokeLLM({
+        prompt:
+          `Agent "${agentName}" has duplicated itself into two opposing twins.\nTwin A: ${a}\nTwin B: ${b}\n` +
+          `Task: ${prompt}\n\nEach twin gives 4 short thought steps and a final opinion with one concrete idea. ` +
+          `Then a neutral synthesizer merges them into a combined plan with 3-5 implementation steps and an optional short code or design snippet.`,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            twin_a: { type: 'object', properties: { thoughts: { type: 'array', items: { type: 'string' } }, opinion: { type: 'string' }, idea: { type: 'string' } } },
+            twin_b: { type: 'object', properties: { thoughts: { type: 'array', items: { type: 'string' } }, opinion: { type: 'string' }, idea: { type: 'string' } } },
+            synthesis: { type: 'string' },
+            implementation: { type: 'array', items: { type: 'string' } },
+            snippet: { type: 'string' },
+          },
+        },
+      });
+      const body =
+        `# ${agentName} Twin Debate (${a.split(' (')[0]} vs ${b.split(' (')[0]})\n\n**Task:** ${prompt}\n\n` +
+        `## ${a}\n${(out.twin_a?.thoughts || []).map((t: string) => `- ${t}`).join('\n')}\n\n**Opinion:** ${out.twin_a?.opinion}\n**Idea:** ${out.twin_a?.idea}\n\n` +
+        `## ${b}\n${(out.twin_b?.thoughts || []).map((t: string) => `- ${t}`).join('\n')}\n\n**Opinion:** ${out.twin_b?.opinion}\n**Idea:** ${out.twin_b?.idea}\n\n` +
+        `## Synthesis\n${out.synthesis}\n\n## Implementation\n${(out.implementation || []).map((s: string, i: number) => `${i + 1}. ${s}`).join('\n')}\n\n` +
+        (out.snippet ? `\`\`\`\n${out.snippet}\n\`\`\`` : '');
+      let asset = null;
+      if (input.save) {
+        asset = await db.entities.NexusAsset.create({
+          owner_id: scope.owner_id,
+          workspace_id: scope.workspace_id,
+          title: `[Twin] ${agentName}: ${prompt.slice(0, 100)}`,
+          body: body.slice(0, 19500),
+          kind: 'generated',
+          project: 'Bicameral Twin Debates',
+          agent_ids: ['researcher', 'writer', 'strategist', 'director'],
+        });
+      }
+      return json({ ok: true, poles: [a, b], ...out, savedAssetId: asset?.id || null });
+    }
+
     if (action === 'scrape_synthesize_evolve') {
       if (!user) return json({ error: 'Unauthorized' }, 401);
 

@@ -30,6 +30,7 @@ import {
 } from 'recharts';
 import HiveLiveTimelineChart from '@/components/nexus/hive/HiveLiveTimelineChart';
 import WebScrapeEvolveLoop from '@/components/nexus/hive/WebScrapeEvolveLoop';
+import BicameralTwinLab from '@/components/nexus/hive/BicameralTwinLab';
 
 const EXPANSION_TEMPLATES = [
   {
@@ -615,6 +616,8 @@ export default function HiveTelemetryMonitor({ workspace, sentiment, emotionStat
           </div>
         </div>
       </div>
+
+      <BicameralTwinLab workspace={workspace} />
 
       {/* Autonomous Web Scraper -> Thought & Idea Processor -> Code & Design Synthesis -> Save & Evolve Loop */}
       <WebScrapeEvolveLoop
