@@ -16,10 +16,12 @@
                 "dispatch_task",
                 "opeg_verify",
                 "absorb_all_continuity",
+                "orifice_spec",
                 "orifice_ping",
                 "orifice_absorb",
                 "orifice_tx_queue",
-                "orifice_peer_bridge"
+                "orifice_peer_bridge",
+                "orifice_github_sync"
               ],
               "description": "Gateway operation to run: status, dispatch_task, opeg_verify, absorb_all_continuity, or Synaptic Orifice TX/RX actions (orifice_ping, orifice_absorb, orifice_tx_queue, orifice_peer_bridge)."
             },

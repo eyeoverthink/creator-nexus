@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -171,6 +172,11 @@ export default function SynapticOrificeBridgePanel({ workspaceId, onBridgeComple
           >
             {busy === 'ping' ? <Loader2 size={12} className="animate-spin" /> : <Radio size={12} />}
             Test ORIFICE-TXRX Ping/Pong
+          </Button>
+          <Button size="sm" variant="outline" asChild className="h-7 text-[10.5px] px-2.5 gap-1">
+            <Link to="/orifice-relay">
+              <Radio size={11} /> Full Ping-Pong Relay (/orifice-relay)
+            </Link>
           </Button>
           <a
             href="https://fraymus-transmuter.base44.app"
