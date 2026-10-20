@@ -22,7 +22,10 @@ import {
   runCounterfactualPreflight,
   evolveDirectorStrategyGenome,
 } from '../../shared/frontierIntelligence.ts';
-import { runRecursiveWebOuroborosCycle } from '../../shared/webScrapeOuroboros.ts';
+import {
+  runRecursiveWebOuroborosCycle,
+  syncWorkspaceEntitiesToOrbit,
+} from '../../shared/webScrapeOuroboros.ts';
 
 const ID_RE = /^[A-Za-z0-9_-]{6,64}$/;
 const json = (obj, status = 200) => Response.json(obj, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -64,8 +67,11 @@ async function loadEngineState(base44, scope) {
   let nodes = nodesPage.items;
   let events = eventsPage.items;
 
-  // Bootstrap Genesis Gen 0 if no nucleus node exists yet
-  let activeGenome = nodes.find(n => n.node_kind === 'nucleus');
+  // Pick highest-generation nucleus node if multiple exist
+  const nucleusNodes = nodes
+    .filter(n => n.node_kind === 'nucleus')
+    .sort((a, b) => (b.generation || 0) - (a.generation || 0));
+  let activeGenome = nucleusNodes[0] || null;
   if (!activeGenome) {
     const genesisReceipt = await evaluateIn5StageGauntlet({
       branchName: 'GENESIS_DENSE_KRONECKER',
@@ -109,7 +115,27 @@ async function loadEngineState(base44, scope) {
     events = [ev2, ev1, ...events];
   }
 
-  const orbits = nodes.filter(n => n.node_kind === 'nucleus' || n.node_kind === 'orbit');
+  const seenOrbitHashes = new Set();
+  const rawOrbits = nodes.filter(n => n.node_kind === 'orbit');
+  const dedupedOrbits = [];
+  for (let i = 0; i < rawOrbits.length; i++) {
+    const n = rawOrbits[i];
+    const key = `${n.code_hash || n.id}:${n.title || ''}`;
+    if (seenOrbitHashes.has(key)) continue;
+    seenOrbitHashes.add(key);
+    // Ensure orbit nodes have distinct non-zero orbital radius (r >= 0.35) so they never stack on the core nucleus
+    const safeRadius = Math.max(0.38, Number(n.radius || 1.2));
+    const safeTheta = Number(
+      ((Number(n.theta || 0) + (safeRadius < 0.45 ? i * GOLDEN_ANGLE : 0)) % (2 * Math.PI)).toFixed(4)
+    );
+    dedupedOrbits.push({
+      ...n,
+      radius: safeRadius,
+      theta: safeTheta,
+    });
+  }
+
+  const orbits = activeGenome ? [{ ...activeGenome, radius: 0 }, ...dedupedOrbits] : dedupedOrbits;
   const fossils = nodes.filter(n => n.node_kind === 'fossil').sort((a, b) => (b.generation || 0) - (a.generation || 0));
   const blackHoles = nodes.filter(n => n.node_kind === 'black_hole');
   const proofArtifacts = nodes.filter(n => n.node_kind === 'proof_artifact');
@@ -119,7 +145,9 @@ async function loadEngineState(base44, scope) {
     activeGenome,
     orbits,
     fossils,
+    fossilCount: fossils.length,
     blackHoles,
+    blackHoleCount: blackHoles.length,
     proofArtifacts,
     ledger: events.sort((a, b) => (b.seq || 0) - (a.seq || 0)),
     maxSeq,
@@ -247,12 +275,33 @@ export default async function(req) {
         if (rawState && !rawState.error) {
           const ws = await resolveDefaultWorkspace();
           const wsScope = { owner_id: String(ws.owner_id || user?.id || ''), workspace_id: String(ws.id) };
-          const [nexusEvs, chatTurns, learningLogs] = await Promise.all([
+          const [nexusEvs, chatTurns, learningLogs, localDbState] = await Promise.all([
             db.entities.NexusEvent.filter(wsScope, { sort: '-created_date', limit: 20 }).catch(() => ({ items: [] })),
             db.entities.NexusChatTurn.filter(wsScope, { sort: '-created_date', limit: 15 }).catch(() => ({ items: [] })),
             db.entities.SparkLearningLog.filter(wsScope, { sort: '-created_date', limit: 15 }).catch(() => ({ items: [] })),
+            loadEngineState(db, wsScope).catch(() => null),
           ]);
           const normalized = normalizeUpstreamState(rawState, rawEmotion);
+          if (normalized && localDbState) {
+            const upstreamOrbitHashes = new Set((normalized.orbits || []).map((o: any) => o.code_hash));
+            const extraOrbits = (localDbState.orbits || []).filter(
+              (o: any) => o.node_kind === 'orbit' && !upstreamOrbitHashes.has(o.code_hash)
+            );
+            normalized.orbits = [...(normalized.orbits || []), ...extraOrbits];
+            const upstreamFossilHashes = new Set((normalized.fossils || []).map((f: any) => f.code_hash));
+            normalized.fossils = [
+              ...(normalized.fossils || []),
+              ...(localDbState.fossils || []).filter((f: any) => !upstreamFossilHashes.has(f.code_hash)),
+            ];
+            normalized.fossilCount = normalized.fossils.length;
+            const upstreamBhHashes = new Set((normalized.blackHoles || []).map((b: any) => b.code_hash));
+            normalized.blackHoles = [
+              ...(normalized.blackHoles || []),
+              ...(localDbState.blackHoles || []).filter((b: any) => !upstreamBhHashes.has(b.code_hash)),
+            ];
+            normalized.blackHoleCount = normalized.blackHoles.length;
+            normalized.proofArtifacts = localDbState.proofArtifacts || [];
+          }
           const emotionObj = normalized?.emotionState || rawEmotion || null;
           const steeringObj =
             normalized?.emotionSteering ||
@@ -1147,26 +1196,137 @@ export default async function(req) {
 
     if (action === 'recall_memory') {
       const nodeId = input.node_id;
-      const target = state.orbits.find(n => n.id === nodeId);
+      const target =
+        state.orbits.find(n => n.id === nodeId) ||
+        state.fossils.find(n => n.id === nodeId);
       if (!target) return json({ error: 'Memory node not found in active orbit.' }, 404);
 
       const nextHits = (target.access_count || 1) + 3;
-      const nextImportance = Math.min(0.99, (target.importance || 0.5) + ALPHA_PULL * 0.18);
+      const nextImportance = Math.min(0.89, (target.importance || 0.5) + ALPHA_PULL * 0.18);
       const orbit = computePolarOrbit(nextImportance, target.code_hash, nextHits);
+      const nextRadius = Math.max(0.35, orbit.radius);
 
       await db.entities.NexusOuroborosNode.update(target.id, {
+        node_kind: target.node_kind === 'fossil' ? 'orbit' : target.node_kind,
         importance: orbit.importance,
-        radius: orbit.radius,
+        radius: nextRadius,
         continuity: orbit.continuity,
         access_count: nextHits,
       });
 
       await logLedgerEvent(
         db, scope, ++seq, 'EP_MEMORY', 'CENTRIPETAL_PULL',
-        `Recalled "${target.title}" [${target.code_hash}] -> Pulled toward Core Nucleus (new r=${orbit.radius.toFixed(4)}, hits=${nextHits})`,
+        `Recalled "${target.title}" [${target.code_hash}] -> Pulled toward Core Nucleus (new r=${nextRadius.toFixed(4)}, hits=${nextHits}, C=${orbit.continuity.toFixed(3)})`,
         { fitness: target.fitness || 1.0, branch: target.branch_origin, code_hash: target.code_hash }
       );
 
+      const freshState = await loadEngineState(db, scope);
+      return json({ ok: true, state: freshState });
+    }
+
+    if (action === 'sync_workspace_memory') {
+      const syncStats = await syncWorkspaceEntitiesToOrbit({
+        db,
+        scope,
+        activeGeneration: state.activeGenome?.generation || 1,
+        logLedgerEvent,
+        maxSeq: seq,
+      });
+      const freshState = await loadEngineState(db, scope);
+      return json({ ok: true, syncStats, state: freshState });
+    }
+
+    if (action === 'promote_orbit_to_nucleus') {
+      const nodeId = input.node_id;
+      const target =
+        state.orbits.find(n => n.id === nodeId) ||
+        state.fossils.find(n => n.id === nodeId);
+      if (!target) return json({ error: 'Target node not found.' }, 404);
+
+      const prevActive = state.activeGenome;
+      if (prevActive && prevActive.id !== target.id) {
+        const fossilOrbit = computePolarOrbit(0.48, prevActive.code_hash, prevActive.access_count || 2);
+        await db.entities.NexusOuroborosNode.update(prevActive.id, {
+          node_kind: 'fossil',
+          title: `${String(prevActive.title || 'Kernel').replace(' (.bak Fossil)', '')} (.bak Fossil)`,
+          radius: Math.max(2.2, fossilOrbit.radius),
+        });
+      }
+
+      const nextGen = Math.max((prevActive?.generation || 0) + 1, target.generation || 1);
+      const nextHits = (target.access_count || 1) + 5;
+      const coreOrbit = computePolarOrbit(0.96, target.code_hash, nextHits);
+
+      await db.entities.NexusOuroborosNode.update(target.id, {
+        node_kind: 'nucleus',
+        generation: nextGen,
+        title: String(target.title || '').replace(' (.bak Fossil)', ''),
+        importance: 0.98,
+        radius: 0.0,
+        continuity: coreOrbit.continuity,
+        access_count: nextHits,
+      });
+
+      await logLedgerEvent(
+        db, scope, ++seq, `EP_PROMOTE_${nextGen}`, 'NUCLEUS_SUPERSEDED',
+        `Promoted "${target.title}" [${target.code_hash}] to Core Nucleus (Gen #${nextGen}, F=${Number(target.fitness || 1).toFixed(4)})`,
+        { fitness: target.fitness || 1.0, branch: target.branch_origin, code_hash: target.code_hash }
+      );
+
+      const freshState = await loadEngineState(db, scope);
+      return json({ ok: true, state: freshState });
+    }
+
+    if (action === 'archive_orbit_to_fossil') {
+      const nodeId = input.node_id;
+      const target = state.orbits.find(n => n.id === nodeId && n.node_kind !== 'nucleus');
+      if (!target) return json({ error: 'Orbit node not found.' }, 404);
+
+      await db.entities.NexusOuroborosNode.update(target.id, {
+        node_kind: 'fossil',
+        title: `${String(target.title || '').replace(' (.bak Fossil)', '')} (.bak Fossil)`,
+        radius: Math.max(2.4, Number(target.radius || 2.8)),
+      });
+
+      await logLedgerEvent(
+        db, scope, ++seq, 'EP_MEMORY', 'FOSSIL_ARCHIVED',
+        `Archived "${target.title}" [${target.code_hash}] to .bak Temporal Fossil Ring`,
+        { fitness: target.fitness || 1.0, branch: target.branch_origin, code_hash: target.code_hash }
+      );
+
+      const freshState = await loadEngineState(db, scope);
+      return json({ ok: true, state: freshState });
+    }
+
+    if (action === 'collapse_orbit_to_black_hole') {
+      const nodeId = input.node_id;
+      const target =
+        state.orbits.find(n => n.id === nodeId && n.node_kind !== 'nucleus') ||
+        state.fossils.find(n => n.id === nodeId);
+      if (!target) return json({ error: 'Node not found.' }, 404);
+
+      await db.entities.NexusOuroborosNode.update(target.id, {
+        node_kind: 'black_hole',
+        radius: EVENT_HORIZON_RADIUS,
+        importance: 0.0,
+        fitness: 0.0,
+        diagnostic_summary: `Pruned to Digital Black Hole Event Horizon (r=${EVENT_HORIZON_RADIUS}) — SHA-256 [${target.code_hash}] blocked in O(1)`,
+      });
+
+      await logLedgerEvent(
+        db, scope, ++seq, 'EP_BLACK_HOLE', 'GAUNTLET_REJECTED',
+        `Collapsed "${target.title}" [${target.code_hash}] into Digital Black Hole Horizon (O(1) hash filter active)`,
+        { fitness: 0.0, branch: target.branch_origin, code_hash: target.code_hash }
+      );
+
+      const freshState = await loadEngineState(db, scope);
+      return json({ ok: true, state: freshState });
+    }
+
+    if (action === 'delete_orbit_node') {
+      const nodeId = input.node_id;
+      if (!nodeId) return json({ error: 'node_id required' }, 400);
+      await db.entities.NexusOuroborosNode.delete(nodeId);
       const freshState = await loadEngineState(db, scope);
       return json({ ok: true, state: freshState });
     }

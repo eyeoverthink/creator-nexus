@@ -483,7 +483,18 @@ export default function ArgonEngine() {
                   </span>
                 </div>
 
-                <CentripetalOrbitCanvas state={state} />
+                <CentripetalOrbitCanvas
+                  state={state}
+                  busy={busy}
+                  onRecallMemory={(nodeId) => callEngine('recall_memory', { node_id: nodeId })}
+                  onStoreMemory={(title, payload) => callEngine('store_memory', { title, payload })}
+                  onMemoryCycle={() => callEngine('memory_cycle')}
+                  onSyncWorkspace={() => callEngine('sync_workspace_memory')}
+                  onPromoteNucleus={(nodeId) => callEngine('promote_orbit_to_nucleus', { node_id: nodeId })}
+                  onArchiveFossil={(nodeId) => callEngine('archive_orbit_to_fossil', { node_id: nodeId })}
+                  onCollapseBlackHole={(nodeId) => callEngine('collapse_orbit_to_black_hole', { node_id: nodeId })}
+                  onDeleteNode={(nodeId) => callEngine('delete_orbit_node', { node_id: nodeId })}
+                />
 
                 <div className="text-[11px] font-mono text-muted-foreground space-y-1 border-t border-border pt-3">
                   <div>

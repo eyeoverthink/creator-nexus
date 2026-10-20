@@ -543,9 +543,10 @@ export async function runRecursiveWebOuroborosCycle({
   });
 
   const seedHash = (await sha256Hex(`${targetUrl}:${generatedCode}`)).slice(0, 12);
+  // Keep orbit nodes in visible orbital bands [0.42, 0.86] -> r in [0.58, 4.15] so only the Core Nucleus sits at r -> 0
   const importanceScore = Math.min(
-    0.99,
-    Math.max(0.25, (benchmark.passedCount / 5) * 0.65 + Math.min(0.34, benchmark.fitness / 6.0))
+    0.86,
+    Math.max(0.42, (benchmark.passedCount / 5) * 0.52 + Math.min(0.34, benchmark.fitness / 8.0))
   );
   const accessCount = (Number(parentNode?.access_count || 1)) + 1;
   const orbit = computePolarOrbit(importanceScore, seedHash, accessCount);
@@ -802,4 +803,160 @@ export async function runRecursiveWebOuroborosCycle({
     nextTarget: validNextLink,
     nextSeedPrompt: String(llmRes?.nextSeedPrompt || '').trim(),
   };
+}
+
+export async function syncWorkspaceEntitiesToOrbit({
+  db,
+  scope,
+  activeGeneration = 1,
+  logLedgerEvent,
+  maxSeq = 0,
+}) {
+  const [knowPage, assetPage, draftPage, sparkPage, expPage, existingNodesPage] = await Promise.all([
+    db.entities.NexusKnowledge.filter(scope, { sort: '-updated_date', limit: 10 }).catch(() => ({ items: [] })),
+    db.entities.NexusAsset.filter(scope, { sort: '-updated_date', limit: 10 }).catch(() => ({ items: [] })),
+    db.entities.NexusDraft.filter(scope, { sort: '-updated_date', limit: 6 }).catch(() => ({ items: [] })),
+    db.entities.SparkCard.filter(scope, { sort: '-created_date', limit: 8 }).catch(() => ({ items: [] })),
+    db.entities.NexusExperiment.filter(scope, { sort: '-created_date', limit: 6 }).catch(() => ({ items: [] })),
+    db.entities.NexusOuroborosNode.filter(scope, { sort: '-updated_date', limit: 150 }).catch(() => ({ items: [] })),
+  ]);
+
+  const existingByHash = new Map();
+  for (const n of existingNodesPage.items || []) {
+    if (n.code_hash) existingByHash.set(String(n.code_hash), n);
+  }
+
+  const candidates = [];
+
+  for (const k of knowPage.items || []) {
+    if (!k.title) continue;
+    candidates.push({
+      sourceKind: 'KNOWLEDGE',
+      sourceId: k.id,
+      title: `[Knowledge] ${k.title}`.slice(0, 150),
+      payload: String(k.body || k.title).slice(0, 12000),
+      importance: 0.72,
+      hits: 4,
+      fitness: 1.68,
+      summary: `Synced from Knowledge Library (${k.title})`,
+    });
+  }
+
+  for (const d of draftPage.items || []) {
+    if (!d.title && !d.body) continue;
+    const rev = Number(d.revision || 1);
+    candidates.push({
+      sourceKind: 'DRAFT',
+      sourceId: d.id,
+      title: `[Studio Draft v${rev}] ${d.title || 'Untitled Draft'}`.slice(0, 150),
+      payload: String(d.body || d.title || '').slice(0, 12000),
+      importance: Math.min(0.85, 0.58 + rev * 0.04),
+      hits: Math.max(2, rev + 1),
+      fitness: Number((1.35 + rev * 0.08).toFixed(3)),
+      summary: `Live Studio Draft revision #${rev}`,
+    });
+  }
+
+  for (const a of assetPage.items || []) {
+    if (!a.title || a.source_entity === 'NexusOuroborosNode') continue;
+    const ver = Number(a.version || 1);
+    candidates.push({
+      sourceKind: 'ASSET',
+      sourceId: a.id,
+      title: `[Asset] ${a.title}`.slice(0, 150),
+      payload: String(a.body || a.file_name || a.title).slice(0, 12000),
+      importance: a.favorite ? 0.82 : Math.min(0.76, 0.52 + ver * 0.04),
+      hits: a.favorite ? 6 : ver + 1,
+      fitness: a.favorite ? 1.92 : 1.44,
+      summary: `Workspace Library Asset (${a.project || a.kind || 'document'})`,
+    });
+  }
+
+  for (const s of sparkPage.items || []) {
+    if (!s.hook_title) continue;
+    const score = Number(s.director_score || s.taste_fit || 3.5);
+    candidates.push({
+      sourceKind: 'SPARK',
+      sourceId: s.id,
+      title: `[Spark] ${s.hook_title}`.slice(0, 150),
+      payload: `${s.hook_title}\n\nPitch: ${s.one_line_pitch || ''}\nTwist: ${s.signature_twist || ''}\nNarration:\n${s.narration || ''}`.slice(0, 10000),
+      importance: Math.min(0.84, Math.max(0.42, score / 6.0)),
+      hits: s.is_pick ? 5 : 2,
+      fitness: Number((1.15 + score * 0.18).toFixed(3)),
+      summary: `Spark Card (${s.status || 'proposed'}, format: ${s.format || 'explainer'})`,
+    });
+  }
+
+  for (const ex of expPage.items || []) {
+    if (!ex.title) continue;
+    candidates.push({
+      sourceKind: 'EXPERIMENT',
+      sourceId: ex.id,
+      title: `[Experiment] ${ex.title}`.slice(0, 150),
+      payload: `Hypothesis: ${ex.hypothesis}\nMetric: ${ex.metric} (Target: ${ex.target}, Observed: ${ex.observed_value ?? 0})\nOutcome: ${ex.outcome || ex.status}`,
+      importance: ex.outcome === 'win' ? 0.86 : 0.60,
+      hits: 3,
+      fitness: ex.outcome === 'win' ? 2.15 : 1.32,
+      summary: `Workspace Experiment (${ex.status} / ${ex.outcome || 'pending'})`,
+    });
+  }
+
+  let createdCount = 0;
+  let updatedCount = 0;
+
+  for (let i = 0; i < Math.min(18, candidates.length); i++) {
+    const c = candidates[i];
+    const hash = (await sha256Hex(`${c.sourceKind}:${c.sourceId}`)).slice(0, 12);
+    const orbit = computePolarOrbit(c.importance, `${hash}_${i}`, c.hits);
+    const entropy = calculateStructuralEntropy(c.payload);
+    const existing = existingByHash.get(hash);
+
+    if (existing) {
+      await db.entities.NexusOuroborosNode.update(existing.id, {
+        title: c.title,
+        source_code: c.payload,
+        fitness: c.fitness,
+        structural_entropy: entropy,
+        diagnostic_summary: c.summary,
+      }).catch(() => null);
+      updatedCount++;
+    } else {
+      await db.entities.NexusOuroborosNode.create({
+        ...scope,
+        node_kind: 'orbit',
+        branch_origin: `SYNC_${c.sourceKind}`,
+        code_hash: hash,
+        generation: activeGeneration,
+        title: c.title,
+        source_code: c.payload,
+        fitness: c.fitness,
+        baseline_latency_ns: 0,
+        latency_ns: 0,
+        speedup: 1.0,
+        structural_entropy: entropy,
+        importance: orbit.importance,
+        radius: orbit.radius,
+        theta: orbit.theta,
+        continuity: orbit.continuity,
+        access_count: c.hits,
+        stages_passed: [true, true, true, true, true],
+        diagnostic_summary: c.summary,
+      }).catch(() => null);
+      createdCount++;
+    }
+  }
+
+  if (createdCount > 0 || updatedCount > 0) {
+    await logLedgerEvent(
+      db,
+      scope,
+      maxSeq + 1,
+      'EP_MEMORY_SYNC',
+      'WORKSPACE_ORBITS_SYNCHRONIZED',
+      `Registered ${createdCount} new & updated ${updatedCount} real workspace records (Knowledge, Drafts, Assets, Sparks, Experiments) in Centripetal Polar Orbit`,
+      { fitness: 1.618, branch: 'WORKSPACE_MEMORY_SYNC', code_hash: 'ORBIT_SYNC', stages: [true, true, true, true, true] }
+    ).catch(() => null);
+  }
+
+  return { createdCount, updatedCount, totalScanned: candidates.length };
 }
