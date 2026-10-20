@@ -26,6 +26,10 @@ import {
   runRecursiveWebOuroborosCycle,
   syncWorkspaceEntitiesToOrbit,
 } from '../../shared/webScrapeOuroboros.ts';
+import {
+  listSovereignSystems,
+  spawnOrEvolveSovereignSystem,
+} from '../../shared/sovereignOsEvolution.ts';
 
 const ID_RE = /^[A-Za-z0-9_-]{6,64}$/;
 const json = (obj, status = 200) => Response.json(obj, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -675,6 +679,23 @@ export default async function(req) {
         });
       }
       return json({ ok: true, poles: [a, b], ...out, savedAssetId: asset?.id || null });
+    }
+
+    if (action === 'list_sovereign_os') {
+      const systems = await listSovereignSystems(db, scope);
+      return json({ ok: true, systems });
+    }
+
+    if (action === 'evolve_sovereign_os') {
+      if (!user) return json({ error: 'Unauthorized' }, 401);
+      const res = await spawnOrEvolveSovereignSystem({
+        db,
+        scope,
+        input,
+        state,
+        logLedgerEvent,
+      });
+      return json(res);
     }
 
     if (action === 'scrape_synthesize_evolve') {
