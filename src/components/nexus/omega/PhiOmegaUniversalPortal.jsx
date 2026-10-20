@@ -12,10 +12,12 @@ import {
   FRAYMUS_OMEGA_PORTAL_HTML,
 } from '@/components/nexus/omega/fraymusOmegaSource';
 import { runOmegaCognitiveCycle } from '@/components/nexus/omega/fraymusOmegaEngine';
+import AffectivePartnerTunerPanel from '@/components/nexus/omega/AffectivePartnerTunerPanel';
 import {
   Eye,
   Ear,
   Hand,
+  Heart,
   Sparkles,
   Send,
   Database,
@@ -281,6 +283,14 @@ export default function PhiOmegaUniversalPortal({ onSyncToMonolith }) {
           </Button>
           <Button
             size="sm"
+            variant={viewMode === 'partner' ? 'default' : 'outline'}
+            onClick={() => setViewMode('partner')}
+            className="h-7 text-[10px] px-2.5 gap-1"
+          >
+            <Heart size={11} /> Companion &amp; Affective Tuner
+          </Button>
+          <Button
+            size="sm"
             variant={viewMode === 'portal' ? 'default' : 'outline'}
             onClick={() => setViewMode('portal')}
             className="h-7 text-[10px] px-2.5"
@@ -535,8 +545,13 @@ export default function PhiOmegaUniversalPortal({ onSyncToMonolith }) {
         </div>
       )}
 
-      {/* Embedded Interactive FraymusOmegaPortal.html Workbench or Java Source View */}
-      {viewMode === 'java' ? (
+      {/* Embedded Companion & Affective Model-Tuning Suite, Interactive Portal, or Java Source View */}
+      {viewMode === 'partner' ? (
+        <AffectivePartnerTunerPanel
+          onEmotionUpdate={(txt) => setEmotionInput(txt)}
+          onStatusBanner={(msg) => setStatusBanner(msg)}
+        />
+      ) : viewMode === 'java' ? (
         <pre className="p-3 rounded-lg border border-border bg-card text-[11px] leading-4 overflow-x-auto max-h-[42vh]">
           {FRAYMUS_UNIFIED_OMEGA_JAVA}
         </pre>
