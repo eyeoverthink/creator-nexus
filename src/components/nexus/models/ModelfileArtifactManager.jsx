@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 import TernaryWeightMatrixEditor from '@/components/nexus/models/TernaryWeightMatrixEditor';
-import { ollamaRequest } from '@/components/nexus/models/ollamaClient';
-import { createModelOnOllamaBackend } from '@/components/nexus/models/ollamaCreateModel';
 import {
   Upload,
   Sparkles,
@@ -14,8 +13,6 @@ import {
   Loader2,
   CheckCircle2,
   Plus,
-  Server,
-  RefreshCw,
 } from 'lucide-react';
 
 const KIND_LABELS = {
@@ -26,11 +23,21 @@ const KIND_LABELS = {
   fine_tune_dataset: 'Fine-Tune JSONL Dataset',
 };
 
+function toFraymusKebabName(title) {
+  const slug = String(title || 'model')
+    .toLowerCase()
+    .replace(/\.modelfile$/i, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return slug.startsWith('fraymus-') ? slug : `fraymus-${slug || 'model'}`;
+}
+
 export default function ModelfileArtifactManager({
   artifacts = [],
   onArtifactsChange,
   onSelectForTest,
 }) {
+  const { toast } = useToast();
   const [selectedId, setSelectedId] = useState(artifacts[0]?.id || '');
   const selected = artifacts.find((a) => a.id === selectedId) || artifacts[0] || null;
 
@@ -46,69 +53,22 @@ export default function ModelfileArtifactManager({
   const [fileUri, setFileUri] = useState('');
   const [fileName, setFileName] = useState('');
 
-  const [ollamaSettings, setOllamaSettings] = useState(() => {
-    try {
-      const keys = Object.keys(localStorage).filter((k) => k.startsWith('nexus-model:'));
-      if (keys.length > 0) {
-        const parsed = JSON.parse(localStorage.getItem(keys[0]) || 'null');
-        if (parsed?.endpoint) return parsed;
-      }
-    } catch {}
-    return {
-      provider: 'ollama',
-      connection: 'local',
-      endpoint: 'http://localhost:11434',
-      model: '',
-    };
-  });
-  const [ollamaToken, setOllamaToken] = useState('');
-  const [installedOllamaModels, setInstalledOllamaModels] = useState([]);
-  const [checkingOllama, setCheckingOllama] = useState(false);
-
   const [busy, setBusy] = useState(false);
+  const [fineTuningId, setFineTuningId] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [fineTuneReport, setFineTuneReport] = useState(null);
   const [statusMsg, setStatusMsg] = useState('');
   const [error, setError] = useState('');
-
-  const fetchInstalledOllamaModels = async (silent = false) => {
-    if (!silent) {
-      setCheckingOllama(true);
-      setError('');
-    }
-    try {
-      const data = await ollamaRequest(ollamaSettings, ollamaToken, '/api/tags');
-      const names = (data?.models || []).map((m) => m.name).filter(Boolean);
-      setInstalledOllamaModels(names);
-      if (names.length && !baseModel) {
-        setBaseModel(names[0]);
-      }
-      if (!silent) {
-        setStatusMsg(`Connected to Ollama (${ollamaSettings.endpoint}): ${names.length} model(s) available.`);
-      }
-      return names;
-    } catch (err) {
-      if (!silent) setError(err.message || 'Could not reach Ollama /api/tags');
-      return [];
-    } finally {
-      if (!silent) setCheckingOllama(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchInstalledOllamaModels(true);
-  }, []);
 
   const loadIntoEditor = (art) => {
     if (!art) return;
     setSelectedId(art.id);
     setKind(art.artifact_kind || 'modelfile');
     setName(art.name || '');
-    setBaseModel(art.base_model || 'llama3.2:3b-instruct');
+    setBaseModel(art.base_model || art.base || 'llama3.2:3b-instruct');
     setSystemPrompt(art.system_prompt || '');
     setContent(art.content || '');
     setTernaryState(Number(art.ternary_state ?? 1));
-    setWeight(Number(art.weight ?? 1.0));
+    setWeight(Number(art.weight ?? art.ternaryWeight ?? 1.0));
     setTernaryMatrix(
       Array.isArray(art.ternary_matrix) && art.ternary_matrix.length === 8
         ? art.ternary_matrix
@@ -175,7 +135,11 @@ export default function ModelfileArtifactManager({
       }
       if (data?.artifact) {
         loadIntoEditor(data.artifact);
-        setStatusMsg(`Saved ${data.artifact.name} [Ternary ${data.artifact.ternary_state > 0 ? '+1' : data.artifact.ternary_state} · Weight ${data.artifact.weight}x].`);
+        setStatusMsg(
+          `Saved ${data.artifact.name} [Ternary ${
+            data.artifact.ternary_state > 0 ? '+1' : data.artifact.ternary_state
+          } · Weight ${data.artifact.weight}x].`
+        );
       }
     } catch (err) {
       setError(err.message || 'Save failed');
@@ -233,79 +197,74 @@ export default function ModelfileArtifactManager({
     }
   };
 
-  const handleFineTune = async (artId) => {
-    setBusy(true);
+  const handleFineTune = async (art) => {
+    const card = art || selected;
+    const targetKey = card?.id || 'editor';
+    setFineTuningId(targetKey);
     setError('');
-    setStatusMsg('');
     try {
-      const targetArtifact =
-        artifacts.find((a) => a.id === (artId || selected?.id)) ||
-        selected || {
-          id: artId,
-          name: name || 'fraymus-ternary-director',
-          base_model: baseModel,
-          content,
-          system_prompt: systemPrompt,
-          weight,
-          ternary_state: ternaryState,
-          ternary_matrix: ternaryMatrix,
-          evolution_generation: 1,
-        };
+      const cardTitle = card?.name || name || 'custom-model';
+      const generatedModelName = toFraymusKebabName(cardTitle);
+      const cardBaseModel = (card?.base_model || card?.base || baseModel || 'llama3.2:3b-instruct').trim();
+      const cardTernaryState = Number(card?.ternary_state ?? ternaryState ?? 1);
+      const cardWeight = Number(card?.weight ?? card?.ternaryWeight ?? weight ?? 1.0);
+      const cardMatrix = Array.isArray(card?.ternary_matrix) ? card.ternary_matrix : ternaryMatrix;
+      const effectiveTernaryWeight = Number((cardTernaryState * cardWeight).toFixed(2));
+      const promptBody = (card?.content || card?.system_prompt || content || systemPrompt || '').trim();
 
-      // Step 1: Compile ternary {-1, 0, +1} directive & workspace few-shot messages
-      const { data: prepData } = await base44.functions.invoke('nexusEvolution', {
-        action: 'fine_tune_ternary_model',
-        artifact_id: targetArtifact.id,
-      });
-      if (prepData?.error) throw new Error(prepData.error);
+      const builtSystemPrompt = [
+        promptBody,
+        `[Ternary State: ${cardTernaryState > 0 ? '+1' : cardTernaryState} | Weight: ${cardWeight}x | Effective Ternary Weight: ${effectiveTernaryWeight} | Gate Vector: [${(cardMatrix || []).join(', ')}]]`,
+      ]
+        .filter(Boolean)
+        .join('\n\n');
 
-      // Step 2: Actually create the fine-tuned model on the user's Ollama backend via POST /api/create
-      const ollamaCreated = await createModelOnOllamaBackend({
-        settings: ollamaSettings,
-        token: ollamaToken,
-        artifact: {
-          ...targetArtifact,
-          base_model: baseModel || targetArtifact.base_model,
-          content: content || targetArtifact.content,
-          system_prompt: systemPrompt || targetArtifact.system_prompt,
-        },
-        fewShotMessages: prepData?.fewShotMessages || [],
-        ternaryDirective: prepData?.ternaryDirective || '',
+      const response = await base44.functions.invoke('createOllamaModel', {
+        name: generatedModelName,
+        baseModel: cardBaseModel,
+        systemPrompt: builtSystemPrompt,
       });
 
-      if (Array.isArray(ollamaCreated.installedModels)) {
-        setInstalledOllamaModels(ollamaCreated.installedModels);
+      if (response.data?.error) {
+        throw new Error(response.data.error);
       }
 
-      // Step 3: Persist Ollama creation receipt & compiled Modelfile back to the artifact record
-      const { data: finalData } = await base44.functions.invoke('nexusEvolution', {
-        action: 'fine_tune_ternary_model',
-        artifact_id: targetArtifact.id,
-        ollama_result: ollamaCreated,
+      const createdAt = new Date().toISOString();
+      const createdEntity = await base44.entities.NexusModelArtifact.create({
+        owner_id: card?.owner_id || undefined,
+        workspace_id: card?.workspace_id || 'ouroboros_live_ws',
+        artifact_kind: 'model',
+        name: generatedModelName,
+        base: cardBaseModel,
+        base_model: cardBaseModel,
+        status: 'created',
+        fine_tune_status: 'created',
+        ternaryWeight: effectiveTernaryWeight,
+        weight: cardWeight,
+        ternary_state: cardTernaryState,
+        ternary_matrix: cardMatrix,
+        createdAt,
+        system_prompt: builtSystemPrompt,
+        content: promptBody,
       });
 
-      if (Array.isArray(finalData?.artifacts)) {
-        onArtifactsChange?.(finalData.artifacts);
-      }
-      if (finalData?.artifact) {
-        loadIntoEditor(finalData.artifact);
-      }
-      if (finalData?.fineTuneReport) {
-        setFineTuneReport({
-          ...finalData.fineTuneReport,
-          ollamaModelTag: ollamaCreated.createdModelTag,
-          ollamaBaseModel: ollamaCreated.resolvedBaseModel,
-          ollamaDigest: ollamaCreated.digest,
-          ollamaElapsedMs: ollamaCreated.elapsedMs,
-        });
-      }
-      setStatusMsg(
-        `Created model "${ollamaCreated.createdModelTag}" (FROM ${ollamaCreated.resolvedBaseModel}) on Ollama (${ollamaSettings.endpoint}) in ${ollamaCreated.elapsedMs}ms.`
-      );
+      onArtifactsChange?.([createdEntity, ...artifacts]);
+      setStatusMsg(`Created Ollama model "${generatedModelName}" from ${cardBaseModel}.`);
+      toast({
+        title: 'Ollama Model Created',
+        description: `Successfully created ${generatedModelName} (from ${cardBaseModel}).`,
+      });
     } catch (err) {
-      setError(err.message || 'Ollama model creation failed');
+      const errMsg =
+        err?.response?.data?.error || err?.message || 'Failed to create model on Ollama backend';
+      setError(errMsg);
+      toast({
+        variant: 'destructive',
+        title: 'Fine-Tune Failed',
+        description: errMsg,
+      });
     } finally {
-      setBusy(false);
+      setFineTuningId(null);
     }
   };
 
@@ -354,59 +313,6 @@ export default function ModelfileArtifactManager({
 
   return (
     <div className="space-y-3 font-mono text-xs">
-      {/* Live Ollama Backend Connection Bar for /api/create */}
-      <div className="p-2.5 rounded-lg border border-border bg-card flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Server size={13} className="text-primary" />
-          <span className="font-semibold text-[11px] text-foreground">
-            OLLAMA BACKEND TARGET (POST /api/create):
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5 flex-1 max-w-3xl">
-          <select
-            value={ollamaSettings.connection || 'local'}
-            onChange={(e) =>
-              setOllamaSettings((s) => ({ ...s, connection: e.target.value }))
-            }
-            className="h-7 rounded bg-background border border-input px-2 text-[11px]"
-          >
-            <option value="local">Local (localhost)</option>
-            <option value="network">Network / Tailscale</option>
-            <option value="https">HTTPS Tunnel</option>
-          </select>
-          <input
-            type="url"
-            value={ollamaSettings.endpoint}
-            onChange={(e) =>
-              setOllamaSettings((s) => ({ ...s, endpoint: e.target.value }))
-            }
-            placeholder="http://localhost:11434"
-            className="flex-1 min-w-[180px] h-7 rounded bg-background border border-input px-2 text-[11px]"
-          />
-          <input
-            type="password"
-            value={ollamaToken}
-            onChange={(e) => setOllamaToken(e.target.value)}
-            placeholder="Bearer token (optional)"
-            className="w-36 h-7 rounded bg-background border border-input px-2 text-[11px]"
-          />
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={checkingOllama}
-            onClick={() => fetchInstalledOllamaModels(false)}
-            className="h-7 px-2.5 text-[10.5px] font-mono gap-1"
-          >
-            {checkingOllama ? (
-              <Loader2 size={11} className="animate-spin" />
-            ) : (
-              <RefreshCw size={11} />
-            )}
-            Check /api/tags ({installedOllamaModels.length})
-          </Button>
-        </div>
-      </div>
-
       {/* Automated AI Prompt / Modelfile Generator + Private Upload Bar */}
       <div className="p-3 rounded-lg border border-border bg-card space-y-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -474,6 +380,7 @@ export default function ModelfileArtifactManager({
           {artifacts.map((art) => {
             const isSel = selected?.id === art.id;
             const tState = Number(art.ternary_state ?? 1);
+            const isCardFineTuning = fineTuningId === art.id;
             return (
               <div
                 key={art.id}
@@ -493,19 +400,18 @@ export default function ModelfileArtifactManager({
                         : 'bg-secondary border-border text-muted-foreground'
                     }`}
                   >
-                    {tState === 1 ? '+1 EXCITATORY' : tState === -1 ? '-1 INHIBITORY' : '0 NEUTRAL'} · {art.weight}x
+                    {tState === 1 ? '+1 EXCITATORY' : tState === -1 ? '-1 INHIBITORY' : '0 NEUTRAL'} ·{' '}
+                    {art.weight ?? art.ternaryWeight ?? 1}x
                   </span>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
                   <span className="px-1.5 py-0.5 rounded bg-secondary text-foreground">
-                    {KIND_LABELS[art.artifact_kind] || art.artifact_kind}
+                    {KIND_LABELS[art.artifact_kind] || art.artifact_kind || 'model'}
                   </span>
-                  <span>Base: {art.base_model || 'llama3.2'}</span>
+                  <span>Base: {art.base_model || art.base || 'llama3.2'}</span>
+                  {art.status && <span className="text-success">· {art.status}</span>}
                   <span>· Gen {art.evolution_generation || 1}</span>
-                  {art.preflight_score && (
-                    <span className="text-primary">· Pre-Flight: {art.preflight_score}%</span>
-                  )}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-1 pt-1">
@@ -529,13 +435,19 @@ export default function ModelfileArtifactManager({
                   <Button
                     size="sm"
                     variant="outline"
+                    disabled={isCardFineTuning}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleFineTune(art.id);
+                      handleFineTune(art);
                     }}
                     className="h-6 px-2 text-[9.5px] ml-auto gap-1"
                   >
-                    <Sliders size={10} /> Fine-Tune
+                    {isCardFineTuning ? (
+                      <Loader2 size={10} className="animate-spin" />
+                    ) : (
+                      <Sliders size={10} />
+                    )}
+                    Fine-Tune
                   </Button>
                   {onSelectForTest && (
                     <Button
@@ -567,7 +479,7 @@ export default function ModelfileArtifactManager({
           })}
         </div>
 
-        {/* Right Editor + Ternary Matrix + Fine-Tune Telemetry */}
+        {/* Right Editor + Ternary Matrix */}
         <div className="lg:col-span-7 p-3 rounded-lg border border-border bg-card space-y-2.5">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <input
@@ -636,11 +548,16 @@ export default function ModelfileArtifactManager({
               <Button
                 size="sm"
                 variant="outline"
-                disabled={busy}
-                onClick={() => handleFineTune(selected?.id)}
+                disabled={Boolean(fineTuningId)}
+                onClick={() => handleFineTune(selected)}
                 className="h-7 text-[10.5px] font-mono gap-1"
               >
-                <Sliders size={11} /> Run Ternary Fine-Tune
+                {fineTuningId ? (
+                  <Loader2 size={11} className="animate-spin" />
+                ) : (
+                  <Sliders size={11} />
+                )}
+                Fine-Tune
               </Button>
               <Button
                 size="sm"
@@ -652,31 +569,6 @@ export default function ModelfileArtifactManager({
               </Button>
             </div>
           </div>
-
-          {fineTuneReport && (
-            <div className="p-2.5 rounded border border-primary/40 bg-selection space-y-1.5 text-[10.5px]">
-              <div className="flex flex-wrap items-center justify-between gap-2 font-semibold text-primary">
-                <span>
-                  ⚡ OLLAMA /api/create &amp; TERNARY FINE-TUNE REPORT: {fineTuneReport.artifactName} (Gen{' '}
-                  {fineTuneReport.generation})
-                </span>
-                {fineTuneReport.ollamaModelTag && (
-                  <span className="px-2 py-0.5 rounded bg-success/20 text-success border border-success/40">
-                    Ollama Tag: {fineTuneReport.ollamaModelTag} (FROM {fineTuneReport.ollamaBaseModel}) · {fineTuneReport.ollamaElapsedMs}ms
-                  </span>
-                )}
-              </div>
-              <div className="grid grid-cols-4 gap-2">
-                {fineTuneReport.epochs.map((ep) => (
-                  <div key={ep.epoch} className="p-1.5 rounded bg-background border border-border">
-                    <div className="text-muted-foreground">Epoch {ep.epoch}</div>
-                    <div className="font-bold text-foreground">Loss: {ep.loss}</div>
-                    <div className="text-success">Ret: {ep.retentionProjection}%</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

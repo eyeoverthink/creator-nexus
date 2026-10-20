@@ -24,9 +24,23 @@
       "type": "string",
       "maxLength": 160
     },
+    "base": {
+      "type": "string",
+      "maxLength": 120
+    },
     "base_model": {
       "type": "string",
       "maxLength": 120
+    },
+    "status": {
+      "type": "string",
+      "maxLength": 60
+    },
+    "ternaryWeight": {
+      "type": "number"
+    },
+    "createdAt": {
+      "type": "string"
     },
     "content": {
       "type": "string",
@@ -82,7 +96,8 @@
         "ready",
         "calibrating",
         "fine_tuned",
-        "evolved"
+        "evolved",
+        "created"
       ],
       "default": "ready"
     },
@@ -94,14 +109,23 @@
     }
   },
   "required": [
-    "owner_id",
-    "workspace_id",
-    "artifact_kind",
     "name"
   ],
   "rls": {
     "create": {
-      "data.owner_id": "{{user.id}}"
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     },
     "read": {
       "$or": [
