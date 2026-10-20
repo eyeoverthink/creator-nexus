@@ -20,10 +20,41 @@ export default class NexusRoom extends Actor {
     if(msg.type==='initialize' && typeof msg.workspace_id==='string' && typeof msg.draft_id==='string') {
       await initializeNexusRoom(this,conn,msg);
     } else if(msg.type==='context') {
-      if(Array.isArray(msg.panels))this.state.context.panels=msg.panels.filter(p=>['feed','draft','activity','preview','context','performance'].includes(p)).slice(0,10);
-      if(['feed','draft','activity','preview','context','performance'].includes(msg.active))this.state.context.active=msg.active;
-      if(msg.selection && Number.isInteger(msg.selection.start)&&Number.isInteger(msg.selection.end))this.state.context.selection={start:Math.max(0,msg.selection.start),end:Math.max(0,msg.selection.end),text:String(msg.selection.text||'').slice(0,2000)};
+      if(Array.isArray(msg.panels))this.state.context.panels=msg.panels.filter(p=>['feed','draft','activity','preview','context','performance','learning','tools','hive'].includes(p)).slice(0,12);
+      if(['feed','draft','activity','preview','context','performance','learning','tools','hive'].includes(msg.active))this.state.context.active=msg.active;
+      if(msg.selection && typeof msg.selection==='object'){
+        this.state.context.selection={
+          start:Math.max(0,Number(msg.selection.start)||0),
+          end:Math.max(0,Number(msg.selection.end)||0),
+          text:String(msg.selection.text||'').slice(0,2000),
+          route:String(msg.selection.route||'').slice(0,120),
+          pageTitle:String(msg.selection.pageTitle||'').slice(0,120),
+          field:String(msg.selection.field||'').slice(0,80),
+          windowId:String(msg.selection.windowId||'').slice(0,40),
+          updatedAt:Date.now(),
+        };
+      }
+      if(msg.liveEdit && typeof msg.liveEdit==='object'){
+        this.state.context.liveEdit={
+          title:String(msg.liveEdit.title||'').slice(0,160),
+          excerpt:String(msg.liveEdit.excerpt||msg.liveEdit.body||'').slice(0,1000),
+          field:String(msg.liveEdit.field||'').slice(0,80),
+          route:String(msg.liveEdit.route||'').slice(0,120),
+          pageTitle:String(msg.liveEdit.pageTitle||'').slice(0,120),
+          windowId:String(msg.liveEdit.windowId||'').slice(0,40),
+          updatedAt:Date.now(),
+        };
+      }
+      if(Array.isArray(msg.windows)){
+        this.state.context.windows=msg.windows.slice(0,12).map(w=>({
+          windowId:String(w?.windowId||'').slice(0,40),
+          route:String(w?.route||'').slice(0,120),
+          pageTitle:String(w?.pageTitle||'').slice(0,120),
+          activePanel:String(w?.activePanel||'').slice(0,40),
+        }));
+      }
       if(typeof msg.viewed==='string')this.state.context.viewed=msg.viewed.slice(0,160);
+      await this.storage.put('state',this.state);
       this.broadcast({type:'state',state:this.state});
     } else if(msg.type==='edit' && this.state.draft) {
       if(msg.baseRevision!==this.state.revision){conn.send({type:'conflict',state:this.state});return;}

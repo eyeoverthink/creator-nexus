@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Copy, Loader2 } from 'lucide-react';
 import TwinThoughtColumn from '@/components/nexus/hive/TwinThoughtColumn';
+import { readCrossTabMemory } from '@/lib/crossTabMemory';
 
 const MODES = [['yin_yang', 'Yin / Yang'], ['left_right', 'Left / Right Brain'], ['critic_creator', 'Critic / Creator']];
 const AGENTS = ['Fraymus', 'Vesper', 'Kepler', 'Polaris', 'Tycho', 'Niles'];
@@ -20,9 +21,13 @@ export default function BicameralTwinLab({ workspace }) {
 
   const spawn = async () => {
     setBusy(true); setError('');
+    const cross = readCrossTabMemory();
+    const ctxAdd =
+      (cross.selection?.text ? `\n[Shared Selection in ${cross.selection.pageTitle}]: "${cross.selection.text.slice(0, 400)}"` : '') +
+      (cross.liveEdit?.excerpt ? `\n[Live Edit in ${cross.liveEdit.pageTitle}]: "${cross.liveEdit.excerpt.slice(0, 400)}"` : '');
     try {
       const { data } = await base44.functions.invoke('nexusEvolution', {
-        action: 'bicameral_twin', agent, mode, prompt, save,
+        action: 'bicameral_twin', agent, mode, prompt: `${prompt}${ctxAdd}`, save,
         ...(workspace?.id ? { workspace_id: workspace.id } : {}),
       });
       if (!data?.ok) throw new Error(data?.error || 'Twin run failed');

@@ -3,6 +3,7 @@ import {useQueryClient} from '@tanstack/react-query';
 import {base44} from '@/api/base44Client';
 import useLearningRecords from '@/components/nexus/learning/useLearningRecords';
 import {ollamaRequest} from '@/components/nexus/models/ollamaClient';
+import {buildAgentCrossTabContext} from '@/lib/crossTabMemory';
 export default function useKnowledgeChat(workspace,models){
  const cache=useQueryClient(),lock=useRef(false);
  const [agent,setAgent]=useState('researcher'),[question,setQuestion]=useState(''),[useLibrary,setUseLibrary]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(''),[approval,setApproval]=useState(null),[pendingTurn,setPendingTurn]=useState(null);
@@ -13,7 +14,7 @@ export default function useKnowledgeChat(workspace,models){
   try{
    const local=request.settings.provider==='ollama';
    if(local&&!request.settings.model.trim())throw new Error('Choose an Ollama model in the Models tab first.');
-   const {data}=await base44.functions.invoke('nexusKnowledge',{operation:local?'prepare_ollama':'chat',workspace_id:workspace.id,agent:request.agent,question:request.question,use_library:request.useLibrary,consent:!local});
+   const {data}=await base44.functions.invoke('nexusKnowledge',{operation:local?'prepare_ollama':'chat',workspace_id:workspace.id,agent:request.agent,question:request.question,use_library:request.useLibrary,cross_tab_context:buildAgentCrossTabContext(),consent:!local});
    if(data.error)throw new Error(data.error);
    let result=data;
    if(local){

@@ -1220,7 +1220,14 @@ canvas.addEventListener('click', e => {
   const hit = findNodeAt(e.clientX, e.clientY);
   if (hit) {
     if (e.shiftKey && selectedNode && selectedNode.id !== hit.id) traceShortestPath(selectedNode.id, hit.id);
-    else { pathNodes.clear(); pathEdgeKeys.clear(); selectedNode = hit; updateInspector(hit); }
+    else {
+      pathNodes.clear(); pathEdgeKeys.clear(); selectedNode = hit; updateInspector(hit);
+      try {
+        const msg = { type: 'NEXUS_CHILD_SELECTION', text: hit.label + ' — ' + hit.note, field: '3D Igloo Node #' + hit.id };
+        if (window.parent && window.parent !== window) window.parent.postMessage(msg, '*');
+        if (window.opener) window.opener.postMessage(msg, '*');
+      } catch (err) {}
+    }
   }
 });
 
@@ -1649,6 +1656,27 @@ document.getElementById('jarvisCoreClick').addEventListener('click', () => {
   explodeFactor = explodeFactor > 0.4 ? 0.12 : 0.65;
   sliderExplode.value = Math.round(explodeFactor * 100);
   document.getElementById('scrollExplodeLabel').textContent = 'SCROLL = 3D BLOCK ASSEMBLY (' + Math.round(explodeFactor * 100) + '%)';
+});
+
+// Cross-Tab & Pop-Out Window Synapse Bridge
+window.addEventListener('mouseup', () => {
+  try {
+    const sel = String(window.getSelection ? window.getSelection().toString() : '').trim();
+    if (sel.length >= 2) {
+      const msg = { type: 'NEXUS_CHILD_SELECTION', text: sel, field: 'AI Workshop OS' };
+      if (window.parent && window.parent !== window) window.parent.postMessage(msg, '*');
+      if (window.opener) window.opener.postMessage(msg, '*');
+    }
+  } catch (err) {}
+});
+window.addEventListener('input', (e) => {
+  try {
+    if (e.target && e.target.value) {
+      const msg = { type: 'NEXUS_CHILD_EDIT', title: e.target.id || '3D Monolith Input', body: e.target.value, field: 'AI Workshop OS' };
+      if (window.parent && window.parent !== window) window.parent.postMessage(msg, '*');
+      if (window.opener) window.opener.postMessage(msg, '*');
+    }
+  } catch (err) {}
 });
 </script>
 </body>

@@ -5,6 +5,7 @@ import {Button} from '@/components/ui/button';
 import {AI_WORKSHOP_OS_HTML} from '@/components/nexus/loosescrew/aiWorkshopOsHtml';
 import FraymusStudioTelemetry from '@/components/nexus/FraymusStudioTelemetry';
 import FraymusHivePanel from '@/components/nexus/hive/FraymusHivePanel';
+import CrossTabMemoryBar from '@/components/nexus/CrossTabMemoryBar';
 
 export default function AiWorkshopOs(){
  const [showTelemetry,setShowTelemetry]=useState(false);
@@ -30,6 +31,7 @@ export default function AiWorkshopOs(){
     <a href="https://github.com/eyeoverthink/looseScrew" target="_blank" rel="noopener noreferrer" className="inline-flex h-7 items-center gap-1 rounded border border-primary/50 bg-selection px-2.5 text-[11px] text-primary"><ExternalLink size={11}/>GitHub</a>
    </div>
   </header>
+  <CrossTabMemoryBar/>
   {showHive&&<div className="max-h-[58vh] overflow-y-auto border-b border-border bg-background/95 z-20"><FraymusHivePanel/></div>}
   {showTelemetry&&<div className="max-h-[54vh] overflow-y-auto border-b border-border bg-background/95 p-4 z-20"><FraymusStudioTelemetry/></div>}
   <iframe title="AI WORKSHOP OS & F.R.A.Y.M.U.S." srcDoc={AI_WORKSHOP_OS_HTML} className="flex-1 w-full border-0"/>

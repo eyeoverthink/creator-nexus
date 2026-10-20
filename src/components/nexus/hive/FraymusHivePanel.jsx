@@ -19,6 +19,7 @@ import {
   Zap,
 } from 'lucide-react';
 import HiveTelemetryMonitor from '@/components/nexus/hive/HiveTelemetryMonitor';
+import { readCrossTabMemory } from '@/lib/crossTabMemory';
 
 export default function FraymusHivePanel({ nexus, compact = false }) {
   const [tierFilter, setTierFilter] = useState('all');
@@ -59,9 +60,13 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
   };
 
   const handleDispatchAgent = (agent) => {
+    const crossSnap = readCrossTabMemory();
+    const liveSel = crossSnap.selection?.text ? ` | Selection (${crossSnap.selection.pageTitle}): "${crossSnap.selection.text.slice(0, 240)}"` : '';
+    const liveEd = crossSnap.liveEdit?.excerpt ? ` | Edit (${crossSnap.liveEdit.pageTitle}): "${crossSnap.liveEdit.excerpt.slice(0, 200)}"` : '';
     const customTask =
-      taskPrompt.trim() ||
-      `[${agent.ceremonyName} · ${agent.fx}] ${agent.currentTask}`;
+      (taskPrompt.trim() || `[${agent.ceremonyName} · ${agent.fx}] ${agent.currentTask}`) +
+      liveSel +
+      liveEd;
     const logLine = `[HIVE /dispatch → ${agent.openclawName} (${agent.fx})] ${customTask}`;
     setDispatchLog((prev) => [logLine, ...prev].slice(0, 14));
     setPlasmidOut(encodeRnaPlasmid(agent, customTask));
