@@ -43,7 +43,10 @@ export default function PhiOmegaUniversalPortal({ onSyncToMonolith }) {
   const { memory } = useCrossTabMemory({ activePanel: 'Phi-Omega Universal Nexus' });
   const portalIframeRef = useRef(null);
 
-  const [viewMode, setViewMode] = useState('split'); // 'split' | 'portal' | 'java'
+  const [viewMode, setViewMode] = useState(() => {
+    const q = new URLSearchParams(window.location.search).get('view');
+    return q && ['phi75', 'partner', 'split', 'portal', 'java'].includes(q) ? q : 'phi75';
+  });
   const [generation, setGeneration] = useState(1);
   const [consciousness, setConsciousness] = useState(500.0);
   const [mass, setMass] = useState(15);

@@ -29,20 +29,28 @@ export default function Phi75TernaryTransmuterPanel({
   const [presetId, setPresetId] = useState(TENSOR_PRESETS[0].id);
   const [seedOffset, setSeedOffset] = useState(1);
   const [exponentShift, setExponentShift] = useState(0);
+  const [customWeightsInput, setCustomWeightsInput] = useState('');
   const [busy, setBusy] = useState(false);
 
   const activePreset =
     TENSOR_PRESETS.find((p) => p.id === presetId) || TENSOR_PRESETS[0];
 
-  const rawWeights = useMemo(
-    () =>
-      generateRealisticTensorWeights(
-        activePreset.dim,
-        activePreset.seedScale * Math.pow(1.6180339887, exponentShift * 0.35),
-        seedOffset
-      ),
-    [activePreset, seedOffset, exponentShift]
-  );
+  const rawWeights = useMemo(() => {
+    if (customWeightsInput.trim()) {
+      const parsed = customWeightsInput
+        .split(/[\s,]+/)
+        .map((v) => Number(v))
+        .filter((v) => Number.isFinite(v));
+      if (parsed.length >= 8) {
+        return parsed;
+      }
+    }
+    return generateRealisticTensorWeights(
+      activePreset.dim,
+      activePreset.seedScale * Math.pow(1.6180339887, exponentShift * 0.35),
+      seedOffset
+    );
+  }, [activePreset, seedOffset, exponentShift, customWeightsInput]);
 
   const compressed = useMemo(
     () => compressWeightsToPhi75Ternary(rawWeights, 32),
@@ -221,6 +229,30 @@ ${systemPrompt}
             <Download size={11} /> Export .phit + GGUF Q8_0
           </Button>
         </div>
+      </div>
+
+      {/* Custom Tensor Weights Input Bar */}
+      <div className="p-2 rounded-lg border border-border bg-card flex flex-wrap items-center gap-2">
+        <span className="text-[10px] font-semibold text-muted-foreground">
+          CUSTOM FLOAT WEIGHTS (OPTIONAL):
+        </span>
+        <input
+          type="text"
+          value={customWeightsInput}
+          onChange={(e) => setCustomWeightsInput(e.target.value)}
+          placeholder="Paste comma/space-separated float weights (e.g. 0.042, -0.091, 0.002, 0.118...) or leave blank for preset tensor..."
+          className="flex-1 min-w-[220px] h-7 rounded bg-background border border-input px-2 text-[10.5px]"
+        />
+        {customWeightsInput && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setCustomWeightsInput('')}
+            className="h-7 text-[10px] px-2"
+          >
+            Reset to Preset
+          </Button>
+        )}
       </div>
 
       {/* 4 Metric Cards */}
