@@ -30,6 +30,14 @@ import {
   listSovereignSystems,
   spawnOrEvolveSovereignSystem,
 } from '../../shared/sovereignOsEvolution.ts';
+import {
+  listModelArtifacts,
+  saveModelArtifact,
+  updateTernaryWeights,
+  generateAutomatedArtifactOrPrompt,
+  runCounterfactualEvolutionLoop,
+  runTernaryFineTuneJob,
+} from '../../shared/counterfactualModelLab.ts';
 
 const ID_RE = /^[A-Za-z0-9_-]{6,64}$/;
 const json = (obj, status = 200) => Response.json(obj, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -679,6 +687,54 @@ export default async function(req) {
         });
       }
       return json({ ok: true, poles: [a, b], ...out, savedAssetId: asset?.id || null });
+    }
+
+    if (action === 'list_model_artifacts') {
+      const artifacts = await listModelArtifacts(db, scope);
+      return json({ ok: true, artifacts });
+    }
+
+    if (action === 'save_model_artifact') {
+      if (!user) return json({ error: 'Unauthorized' }, 401);
+      const res = await saveModelArtifact(db, scope, input);
+      return json(res);
+    }
+
+    if (action === 'delete_model_artifact') {
+      if (!user) return json({ error: 'Unauthorized' }, 401);
+      if (!input.id) return json({ error: 'id required' }, 400);
+      await db.entities.NexusModelArtifact.delete(String(input.id));
+      const artifacts = await listModelArtifacts(db, scope);
+      return json({ ok: true, artifacts });
+    }
+
+    if (action === 'update_ternary_weights') {
+      if (!user) return json({ error: 'Unauthorized' }, 401);
+      const res = await updateTernaryWeights(db, scope, input);
+      return json(res);
+    }
+
+    if (action === 'ai_generate_artifact_or_prompt') {
+      if (!user) return json({ error: 'Unauthorized' }, 401);
+      const res = await generateAutomatedArtifactOrPrompt(db, scope, input);
+      return json(res);
+    }
+
+    if (action === 'run_counterfactual_evolution_loop') {
+      const res = await runCounterfactualEvolutionLoop({
+        db,
+        scope,
+        input,
+        state,
+        logLedgerEvent,
+      });
+      return json(res);
+    }
+
+    if (action === 'fine_tune_ternary_model') {
+      if (!user) return json({ error: 'Unauthorized' }, 401);
+      const res = await runTernaryFineTuneJob(db, scope, input);
+      return json(res);
     }
 
     if (action === 'list_sovereign_os') {

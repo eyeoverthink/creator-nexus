@@ -12,6 +12,38 @@ export default function CounterfactualPreflightPanel({
 }) {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [evolving, setEvolving] = useState(false);
+  const [evolutionBanner, setEvolutionBanner] = useState('');
+
+  const runAiModelEvolution = async () => {
+    const clean = String(narration || '').trim();
+    if (!clean || evolving) return;
+    setEvolving(true);
+    try {
+      const { data } = await base44.functions.invoke('nexusEvolution', {
+        action: 'run_counterfactual_evolution_loop',
+        narration: clean,
+        hook_title: hookTitle,
+        signature_twist: signatureTwist,
+        spoken_disclosure: spokenDisclosure,
+        evolve_ai: true,
+        use_llm: true,
+      });
+      if (data?.evolvedPreflight) {
+        setReport(data.evolvedPreflight);
+      }
+      if (data?.evolvedNarration && typeof onApplyRewrite === 'function') {
+        onApplyRewrite(data.evolvedNarration);
+      }
+      if (data?.aiEvolutionNote) {
+        setEvolutionBanner(data.aiEvolutionNote);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setEvolving(false);
+    }
+  };
 
   const runSimulation = useCallback(async () => {
     const clean = String(narration || '').trim();
@@ -73,9 +105,24 @@ export default function CounterfactualPreflightPanel({
             <span className="px-2 py-0.5 rounded bg-secondary border border-border text-muted-foreground">
               Hook Velocity: {report.hookVelocity}%
             </span>
+            <Button
+              size="sm"
+              variant="default"
+              disabled={evolving}
+              onClick={runAiModelEvolution}
+              className="h-6 px-2.5 text-[10.5px] font-mono gap-1"
+            >
+              <Sparkles size={11} />
+              {evolving ? 'Evolving AI & Script…' : '⚡ Evolve Script & Ternary AI'}
+            </Button>
           </div>
         )}
       </div>
+      {evolutionBanner && (
+        <div className="px-2.5 py-1.5 rounded bg-success/15 border border-success/40 text-success font-mono text-[11px]">
+          {evolutionBanner}
+        </div>
+      )}
 
       {loading && !report ? (
         <p className="text-muted-foreground font-mono text-[11px]">
