@@ -11,8 +11,8 @@
           "properties": {
             "action": {
               "type": "string",
-              "enum": ["status", "dispatch_task", "opeg_verify"],
-              "description": "Gateway operation to run: status, dispatch_task, or opeg_verify."
+              "enum": ["status", "dispatch_task", "opeg_verify", "absorb_all_continuity"],
+              "description": "Gateway operation to run: status, dispatch_task, opeg_verify, or absorb_all_continuity."
             },
             "workspace_id": {
               "type": "string",
