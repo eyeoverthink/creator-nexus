@@ -1,9 +1,19 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
-import { secrets } from 'base44:runtime';
 import {
   loadSavedScrapeContinuity,
   saveScrapeContinuity,
 } from '../../shared/webScrapeOuroboros.ts';
+
+function buildCleanServiceClient(req: Request) {
+  const cleanHeaders = new Headers();
+  for (const [k, v] of req.headers.entries()) {
+    const lower = k.toLowerCase();
+    if (lower === 'authorization' || lower === 'cookie' || lower.includes('user')) continue;
+    cleanHeaders.set(k, v);
+  }
+  const cleanReq = new Request(req.url, { method: req.method, headers: cleanHeaders });
+  return createClientFromRequest(cleanReq);
+}
 
 const UA = { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) CreatorNexus/2.0' };
 const get = (url, timeout = 8000) => fetch(url, { headers: UA, signal: AbortSignal.timeout(timeout) });
@@ -231,9 +241,10 @@ export default async function (req) {
     if (req.method !== 'POST') {
       return Response.json({ error: 'Method not allowed' }, { status: 405 });
     }
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    const rawClient = createClientFromRequest(req.clone());
+    const user = await rawClient.auth.me().catch(() => null);
     if (!user) return Response.json({ error: 'Sign in required.' }, { status: 401 });
+    const db = buildCleanServiceClient(req).asServiceRole;
 
     const input = await req.json().catch(() => ({}));
     const action = String(input.action || 'suggest');
@@ -241,20 +252,20 @@ export default async function (req) {
     // Resolve workspace scope
     let workspaceId = String(input.workspace_id || '').trim();
     if (!workspaceId) {
-      const wsPage = await base44.entities.NexusWorkspace.filter(
-        { owner_id: user.id },
+      const wsPage = await db.entities.NexusWorkspace.filter(
+        { owner_id: String(user.id) },
         { sort: 'created_date', limit: 1 }
       ).catch(() => ({ items: [] }));
       workspaceId = wsPage.items?.[0]?.id || 'ouroboros_live_ws';
     }
     const scope = { owner_id: String(user.id), workspace_id: workspaceId };
     const vpsConfig = {
-      baseUrl: String(secrets.get('NEXUS_EVOLUTION_URL') || '').replace(/\/+$/, ''),
-      token: String(secrets.get('NEXUS_EVOLUTION_TOKEN') || ''),
+      baseUrl: String(Deno.env.get('NEXUS_EVOLUTION_URL') || '').replace(/\/+$/, ''),
+      token: String(Deno.env.get('NEXUS_EVOLUTION_TOKEN') || ''),
     };
 
     if (action === 'load') {
-      const continuity = await loadSavedScrapeContinuity(base44, scope);
+      const continuity = await loadSavedScrapeContinuity(db, scope);
       return Response.json({
         ok: true,
         targets: continuity.targets,
@@ -267,7 +278,7 @@ export default async function (req) {
 
     if (action === 'save') {
       const saved = await saveScrapeContinuity(
-        base44,
+        db,
         scope,
         {
           targets: Array.isArray(input.targets) ? input.targets : undefined,
@@ -289,7 +300,7 @@ export default async function (req) {
       });
     }
 
-    const continuity = await loadSavedScrapeContinuity(base44, scope);
+    const continuity = await loadSavedScrapeContinuity(db, scope);
     const topic = String(input.topic || '').slice(0, 120).trim();
     const tags = Array.isArray(input.tags)
       ? input.tags.map(String)
@@ -310,8 +321,8 @@ export default async function (req) {
       'Hacker News': fetchHackerNews(topic),
       'GitHub Trending': fetchGithub(topic, tags),
       'YouTube Alerts': fetchYoutubeAlerts(channels, effectiveQuery),
-      'Hive Memory': fetchHiveSuggestions(base44, scope, visitedUrls, continuity),
-      'AI + Hive': base44.asServiceRole.integrations.Core.InvokeLLM({
+      'Hive Memory': fetchHiveSuggestions(db, scope, visitedUrls, continuity),
+      'AI + Hive': db.integrations.Core.InvokeLLM({
         add_context_from_internet: true,
         prompt:
           `Suggest 5 real, live, technical or current-event webpages worth scraping and synthesizing next.\n` +

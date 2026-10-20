@@ -66,6 +66,8 @@ export default function ScrapeTargetsManager({ workspaceId, onPick, history = []
             : 'Saved to DB + scrape-targets-continuity.json'
         );
       }
+    } catch (err) {
+      setSyncBadge(`Save error: ${err?.response?.data?.error || err?.message || 'retry'}`);
     } finally {
       setSaving(false);
     }
@@ -123,6 +125,8 @@ export default function ScrapeTargetsManager({ workspaceId, onPick, history = []
       });
       setSuggested(data?.targets || []);
       setErrors(data?.errors || {});
+    } catch (err) {
+      setErrors({ Discovery: err?.response?.data?.error || err?.message || 'Failed to fetch suggestions' });
     } finally {
       setBusy(false);
     }
