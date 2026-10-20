@@ -11,8 +11,17 @@
           "properties": {
             "action": {
               "type": "string",
-              "enum": ["status", "dispatch_task", "opeg_verify", "absorb_all_continuity"],
-              "description": "Gateway operation to run: status, dispatch_task, opeg_verify, or absorb_all_continuity."
+              "enum": [
+                "status",
+                "dispatch_task",
+                "opeg_verify",
+                "absorb_all_continuity",
+                "orifice_ping",
+                "orifice_absorb",
+                "orifice_tx_queue",
+                "orifice_peer_bridge"
+              ],
+              "description": "Gateway operation to run: status, dispatch_task, opeg_verify, absorb_all_continuity, or Synaptic Orifice TX/RX actions (orifice_ping, orifice_absorb, orifice_tx_queue, orifice_peer_bridge)."
             },
             "workspace_id": {
               "type": "string",

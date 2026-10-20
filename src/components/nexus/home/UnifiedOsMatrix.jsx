@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import SynapticOrificeBridgePanel from '@/components/nexus/omega/SynapticOrificeBridgePanel';
 import {
   Bot,
   Cpu,
@@ -205,6 +206,19 @@ export default function UnifiedOsMatrix({ workspace }) {
           </div>
         </div>
       </div>
+
+      {/* Live Bicameral Synaptic Orifice Transceiver (Creator Nexus <-> Fraymus Transmuter) */}
+      <SynapticOrificeBridgePanel
+        workspaceId={workspace?.id}
+        onBridgeComplete={() => {
+          base44.functions
+            .invoke('openclawGateway', { action: 'status', workspace_id: workspace?.id })
+            .then((res) => {
+              if (res?.data?.ok) setStatus(res.data);
+            })
+            .catch(() => {});
+        }}
+      />
 
       {/* 5-Pillar Architecture Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2.5">

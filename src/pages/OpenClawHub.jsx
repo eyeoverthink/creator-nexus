@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { base44 } from '@/api/base44Client';
 import Sidebar from '@/components/nexus/Sidebar';
+import SynapticOrificeBridgePanel from '@/components/nexus/omega/SynapticOrificeBridgePanel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -257,6 +258,12 @@ export default function OpenClawHub() {
             </Button>
           </div>
         </div>
+
+        {/* Live Bicameral Synaptic Orifice Bridge to fraymus-transmuter.base44.app */}
+        <SynapticOrificeBridgePanel
+          workspaceId={hubData?.workspace?.id}
+          onBridgeComplete={() => loadHubStatus()}
+        />
 
         {/* 4 Telemetry Counters */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
