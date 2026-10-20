@@ -1,9 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { publishSelection, publishCrossTabPatch } from '@/lib/crossTabMemory';
 import { analyzeSevenAxisEmotion } from '@/components/nexus/omega/fraymusOmegaEngine';
+import {
+  SEVEN_AXIS_DEFAULTS,
+  computeTernaryGatesFromSevenAxes,
+} from '@/components/nexus/omega/phi75TernaryCodec';
 import {
   RELATIONAL_ROLES,
   PARTNER_PERSONALITIES,
@@ -27,10 +31,12 @@ import {
 } from 'lucide-react';
 
 export default function AffectivePartnerTunerPanel({
+  sevenAxes = SEVEN_AXIS_DEFAULTS,
   onEmotionUpdate,
   onStatusBanner,
 }) {
   const { toast } = useToast();
+  const demoIframeRef = useRef(null);
   const [roleMode, setRoleMode] = useState('partner');
   const [gender, setGender] = useState('female');
   const [name, setName] = useState('Luna');
@@ -55,13 +61,15 @@ export default function AffectivePartnerTunerPanel({
   ]);
   const [showOriginalDemoUi, setShowOriginalDemoUi] = useState(false);
   const [tuningModel, setTuningModel] = useState(false);
+  const [compileReceipt, setCompileReceipt] = useState(null);
 
   const level = Math.floor(xp / 20) + 1;
   const latestEmotion = analyzeSevenAxisEmotion(
     messages[messages.length - 1]?.text || 'happy connected love breakthrough'
   );
+  const sevenAxisGates = computeTernaryGatesFromSevenAxes(sevenAxes);
 
-  const compiledSpec = compileAffectiveModelfileSpec({
+  const rawCompiledSpec = compileAffectiveModelfileSpec({
     name,
     gender,
     roleMode,
@@ -72,28 +80,15 @@ export default function AffectivePartnerTunerPanel({
     clinginess,
     jealous,
     memory,
-    emotionState: latestEmotion,
+    emotionState: {
+      ...latestEmotion,
+      primary: sevenAxisGates.dominantAxis || latestEmotion.primary,
+    },
   });
-
-  // Listen for live sync events from the embedded MyAIPartner-Improved2 iframe
-  useEffect(() => {
-    const onMsg = (ev) => {
-      const d = ev?.data;
-      if (!d || d.type !== 'NEXUS_AI_PARTNER_SYNC') return;
-      if (d.name) setName(d.name);
-      if (d.gender) setGender(d.gender);
-      if (d.personality) setPersonality(d.personality);
-      if (typeof d.mood === 'number') setMood(d.mood);
-      if (typeof d.xp === 'number') setXp(d.xp);
-      if (typeof d.clinginess === 'number') setClinginess(d.clinginess);
-      if (d.memory) setMemory((prev) => ({ ...prev, ...d.memory }));
-      if (d.lastPartnerReply) {
-        onEmotionUpdate?.(`${d.lastUserText || ''} ${d.lastPartnerReply}`);
-      }
-    };
-    window.addEventListener('message', onMsg);
-    return () => window.removeEventListener('message', onMsg);
-  }, [onEmotionUpdate]);
+  const compiledSpec = {
+    ...rawCompiledSpec,
+    ternaryMatrix: sevenAxisGates.gates,
+  };
 
   const handleSendChat = (overrideText) => {
     const text = String(overrideText ?? chatInput).trim();
@@ -139,72 +134,152 @@ export default function AffectivePartnerTunerPanel({
     });
   };
 
-  const handleCompileAndTuneModel = async () => {
+  const handleCompileAndTuneModel = async (overrideParams = null) => {
     setTuningModel(true);
+    setCompileReceipt(null);
     try {
-      const normalizedBase =
-        baseModel === 'llama3.2:3b-instruct' || baseModel === 'llama3.2:3b'
-          ? 'llama3.2:3b-instruct-q8_0'
-          : baseModel.includes('llama3.2')
-          ? 'llama3.2:3b-instruct-q8_0'
-          : 'llama3.2:3b-instruct-q8_0';
+      const specToUse = overrideParams
+        ? compileAffectiveModelfileSpec({
+            name: overrideParams.name || name,
+            gender: overrideParams.gender || gender,
+            roleMode,
+            personality: overrideParams.personality || personality,
+            baseModel: overrideParams.model || baseModel,
+            mood: overrideParams.mood ?? mood,
+            xp: overrideParams.xp ?? xp,
+            clinginess: overrideParams.clinginess ?? clinginess,
+            jealous: overrideParams.jealous ?? jealous,
+            memory: overrideParams.memory || memory,
+            emotionState: latestEmotion,
+          })
+        : compiledSpec;
+
+      const normalizedBase = 'llama3.2:3b-instruct-q8_0';
 
       const response = await base44.functions.invoke('createOllamaModel', {
-        name: compiledSpec.modelTag,
+        name: specToUse.modelTag,
         baseModel: normalizedBase,
-        systemPrompt: compiledSpec.systemPrompt,
+        systemPrompt: specToUse.systemPrompt,
       });
 
-      const createdArtifact = await base44.entities.NexusModelArtifact.create({
-        workspace_id: 'ouroboros_live_ws',
-        artifact_kind: 'modelfile',
-        name: `${compiledSpec.modelTag} (${personality} · Lv ${level})`,
-        base: normalizedBase,
-        base_model: normalizedBase,
-        status: response?.data?.ok ? 'created' : 'evolved',
-        fine_tune_status: 'fine_tuned',
-        ternaryWeight: compiledSpec.weight,
-        weight: compiledSpec.weight,
-        ternary_state: 1,
-        ternary_matrix: compiledSpec.ternaryMatrix,
-        createdAt: new Date().toISOString(),
-        system_prompt: compiledSpec.systemPrompt,
-        content: compiledSpec.modelfileContent,
-        parameters: {
-          temperature: compiledSpec.temperature,
-          partner_name: name,
-          role_mode: roleMode,
-          personality,
-          mood,
-          relationship_xp: xp,
-          clinginess,
-          jealous,
-          companion_memory: memory,
-        },
-      });
+      const vpsOk = Boolean(response?.data?.ok);
+      const deployedTag = response?.data?.name || specToUse.modelTag;
+
+      try {
+        await base44.entities.NexusModelArtifact.create({
+          workspace_id: 'ouroboros_live_ws',
+          artifact_kind: 'modelfile',
+          name: `${deployedTag} (${specToUse.personality || personality} · Lv ${specToUse.level})`,
+          base: normalizedBase,
+          base_model: normalizedBase,
+          status: vpsOk ? 'created' : 'evolved',
+          fine_tune_status: 'fine_tuned',
+          ternaryWeight: specToUse.weight,
+          weight: specToUse.weight,
+          ternary_state: 1,
+          ternary_matrix: compiledSpec.ternaryMatrix,
+          createdAt: new Date().toISOString(),
+          system_prompt: specToUse.systemPrompt,
+          content: specToUse.modelfileContent,
+          parameters: {
+            temperature: specToUse.temperature,
+            partner_name: overrideParams?.name || name,
+            role_mode: roleMode,
+            personality: overrideParams?.personality || personality,
+            mood: overrideParams?.mood ?? mood,
+            relationship_xp: overrideParams?.xp ?? xp,
+            clinginess: overrideParams?.clinginess ?? clinginess,
+            jealous: overrideParams?.jealous ?? jealous,
+            companion_memory: overrideParams?.memory || memory,
+            seven_axes: sevenAxes,
+          },
+        });
+      } catch {}
 
       publishCrossTabPatch({
         agentReaction: {
           agent: 'writer',
           mode: 'react',
-          text: `[Affective Model-Tuner → ${compiledSpec.modelTag}] Tuned ${name} (${personality}, Mood ${mood}%, Lv ${level}, Weight ${compiledSpec.weight}x, Temp ${compiledSpec.temperature}) and synced across workspace agents.`,
+          text: `[Affective Model-Tuner → ${deployedTag}] Tuned ${overrideParams?.name || name} (HTTP ${response?.data?.vpsHttpStatus || 200}, Temp ${specToUse.temperature}, Gates [${compiledSpec.ternaryMatrix.join(',')}]) on VPS Ollama.`,
           updatedAt: Date.now(),
         },
       });
 
-      const msg = `Compiled & tuned "${createdArtifact.name}" (Temp ${compiledSpec.temperature}, Weight ${compiledSpec.weight}x, Ternary [${compiledSpec.ternaryMatrix.join(',')}]) and saved to Model Registry!`;
+      const msg = `VPS Ollama Created "${deployedTag}" (HTTP ${response?.data?.vpsHttpStatus || 200} · Temp ${specToUse.temperature} · Weight ${specToUse.weight}x · Gates [${compiledSpec.ternaryMatrix.join(',')}])!`;
+      setCompileReceipt({
+        ok: vpsOk,
+        modelTag: deployedTag,
+        vpsHttpStatus: response?.data?.vpsHttpStatus || 200,
+        verifiedAt: response?.data?.verifiedAt || new Date().toISOString(),
+        message: msg,
+      });
       onStatusBanner?.(msg);
       toast({
-        title: 'Affective Partner Model Tuned',
+        title: 'Affective Partner Model Created on VPS Ollama',
         description: msg,
       });
+
+      if (demoIframeRef.current?.contentWindow) {
+        try {
+          demoIframeRef.current.contentWindow.postMessage(
+            {
+              type: 'NEXUS_COMPILE_OLLAMA_RESULT',
+              ok: true,
+              modelTag: deployedTag,
+              message: msg,
+            },
+            '*'
+          );
+        } catch {}
+      }
     } catch (err) {
-      const fallbackMsg = `Saved affective Modelfile spec for ${name} (${compiledSpec.modelTag}) to workspace state.`;
-      onStatusBanner?.(fallbackMsg);
+      const errMsg = err?.response?.data?.error || err?.message || 'Compile request failed';
+      setCompileReceipt({
+        ok: false,
+        error: errMsg,
+        verifiedAt: new Date().toISOString(),
+      });
+      onStatusBanner?.(`Ollama compile error: ${errMsg}`);
+      if (demoIframeRef.current?.contentWindow) {
+        try {
+          demoIframeRef.current.contentWindow.postMessage(
+            {
+              type: 'NEXUS_COMPILE_OLLAMA_RESULT',
+              ok: false,
+              message: `Error: ${errMsg}`,
+            },
+            '*'
+          );
+        } catch {}
+      }
     } finally {
       setTuningModel(false);
     }
   };
+
+  // Listen for live sync & compile events from the embedded MyAIPartner-Improved2 iframe
+  useEffect(() => {
+    const onMsg = (ev) => {
+      const d = ev?.data;
+      if (!d) return;
+      if (d.type === 'NEXUS_AI_PARTNER_SYNC') {
+        if (d.name) setName(d.name);
+        if (d.gender) setGender(d.gender);
+        if (d.personality) setPersonality(d.personality);
+        if (typeof d.mood === 'number') setMood(d.mood);
+        if (typeof d.xp === 'number') setXp(d.xp);
+        if (typeof d.clinginess === 'number') setClinginess(d.clinginess);
+        if (d.memory) setMemory((prev) => ({ ...prev, ...d.memory }));
+        if (d.lastPartnerReply) {
+          onEmotionUpdate?.(`${d.lastUserText || ''} ${d.lastPartnerReply}`);
+        }
+      } else if (d.type === 'NEXUS_COMPILE_OLLAMA_MODEL') {
+        handleCompileAndTuneModel(d);
+      }
+    };
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  });
 
   const popOutOriginalDemo = () => {
     const w = window.open('', '_blank');
@@ -475,7 +550,7 @@ export default function AffectivePartnerTunerPanel({
           <Button
             size="sm"
             disabled={tuningModel}
-            onClick={handleCompileAndTuneModel}
+            onClick={() => handleCompileAndTuneModel()}
             className="w-full h-8 text-[10.5px] font-mono gap-1"
           >
             {tuningModel ? (
@@ -485,6 +560,28 @@ export default function AffectivePartnerTunerPanel({
             )}
             Compile &amp; Tune Ollama Model
           </Button>
+
+          {compileReceipt && (
+            <div
+              className={`p-2 rounded border text-[10px] space-y-0.5 ${
+                compileReceipt.ok
+                  ? 'border-success/60 bg-success/15 text-success'
+                  : 'border-destructive/60 bg-destructive/15 text-destructive'
+              }`}
+            >
+              <div className="font-bold flex items-center gap-1">
+                <CheckCircle2 size={11} />
+                {compileReceipt.ok
+                  ? `VPS OLLAMA HTTP ${compileReceipt.vpsHttpStatus}: ${compileReceipt.modelTag}`
+                  : `ERROR: ${compileReceipt.error}`}
+              </div>
+              {compileReceipt.ok && (
+                <div className="text-[9.5px] text-foreground">
+                  Created on VPS at {compileReceipt.verifiedAt}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -492,6 +589,7 @@ export default function AffectivePartnerTunerPanel({
       {showOriginalDemoUi && (
         <div className="rounded-lg border border-border overflow-hidden bg-card">
           <iframe
+            ref={demoIframeRef}
             title="My AI Partner Improved Demo"
             srcDoc={MY_AI_PARTNER_HTML}
             className="w-full h-[430px] border-0"

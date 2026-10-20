@@ -6,6 +6,88 @@ export const LOG_PHI = Math.log(PHI);
 export const PHI_75_ANCHOR_EXP = 75;
 export const PHI_75_SEAL = 4721424167835376.0; // φ^75 exact macro-anchor
 
+export const SEVEN_AXIS_DEFAULTS = {
+  joy: 0.9,
+  sadness: 0.1,
+  anger: 0.15,
+  fear: 0.15,
+  surprise: 0.65,
+  love: 0.75,
+  anxiety: 0.3,
+};
+
+export const TERNARY_GATE_LABELS = [
+  { index: 0, id: 'hook_velocity', label: 'G0 · Hook <15w', driver: 'joy + surprise − sadness' },
+  { index: 1, id: 'info_surprise', label: 'G1 · Info Surprise', driver: 'surprise + joy − fear' },
+  { index: 2, id: 'quant_proof', label: 'G2 · Quant Proof', driver: 'joy + love − anxiety' },
+  { index: 3, id: 'causal_mech', label: 'G3 · Causal Mech', driver: '(1 − anxiety) + joy' },
+  { index: 4, id: 'beat_cadence', label: 'G4 · Beat Cadence', driver: 'joy + anger − sadness' },
+  { index: 5, id: 'contrarian_twist', label: 'G5 · Contrarian Twist', driver: 'surprise + anger − fear' },
+  { index: 6, id: 'fluff_inhibit', label: 'G6 · Fluff Inhibit', driver: 'inhibitory −1 unless high anxiety' },
+  { index: 7, id: 'boundary_seal', label: 'G7 · Boundary Seal', driver: 'love + joy − anger' },
+];
+
+export function computeTernaryGatesFromSevenAxes(axes = SEVEN_AXIS_DEFAULTS) {
+  const a = { ...SEVEN_AXIS_DEFAULTS, ...(axes || {}) };
+  const joy = Number(a.joy ?? 0.9);
+  const sadness = Number(a.sadness ?? 0.1);
+  const anger = Number(a.anger ?? 0.15);
+  const fear = Number(a.fear ?? 0.15);
+  const surprise = Number(a.surprise ?? 0.65);
+  const love = Number(a.love ?? 0.75);
+  const anxiety = Number(a.anxiety ?? 0.3);
+
+  const g0 = joy * 0.6 + surprise * 0.4 - sadness * 0.5 >= 0.42 ? 1 : sadness > 0.68 ? -1 : 0;
+  const g1 = surprise * 0.75 + joy * 0.25 - fear * 0.45 >= 0.4 ? 1 : fear > 0.65 ? -1 : 0;
+  const g2 = joy * 0.4 + love * 0.35 + (1 - anxiety) * 0.25 >= 0.5 ? 1 : anger > 0.75 ? -1 : 0;
+  const g3 = (1 - anxiety * 0.65) * 0.6 + joy * 0.4 >= 0.48 ? 1 : anxiety > 0.78 ? -1 : 0;
+  const g4 = joy * 0.5 + anger * 0.3 - sadness * 0.5 >= 0.36 ? 1 : sadness > 0.62 ? -1 : 0;
+  const g5 = surprise * 0.55 + anger * 0.45 - fear * 0.35 >= 0.36 ? 1 : fear > 0.65 ? -1 : 0;
+  const g6 = anxiety > 0.68 && joy < 0.35 ? 0 : -1;
+  const g7 = love * 0.55 + joy * 0.45 - anger * 0.4 >= 0.34 ? 1 : anger > 0.78 ? -1 : 0;
+
+  const gates = [g0, g1, g2, g3, g4, g5, g6, g7];
+  const entries = Object.entries({ joy, sadness, anger, fear, surprise, love, anxiety }).sort(
+    (x, y) => y[1] - x[1]
+  );
+  const dominantAxis = entries[0]?.[0] || 'joy';
+  const posEnergy = (joy + surprise + love) / 3;
+  const negEnergy = (sadness + anger + fear + anxiety) / 4;
+  const sentiment = Number(Math.max(-1, Math.min(1, posEnergy - negEnergy)).toFixed(3));
+  const exponentShift = Math.round((posEnergy - negEnergy) * 4);
+  const dynamicTemp = Number(
+    Math.max(0.32, Math.min(0.88, 0.48 + joy * 0.2 + surprise * 0.12 - anxiety * 0.14)).toFixed(2)
+  );
+  const ensembleWeight = Number(
+    Math.max(0.8, Math.min(1.75, 1.0 + posEnergy * 0.45 - anxiety * 0.2)).toFixed(2)
+  );
+
+  return {
+    axes: { joy, sadness, anger, fear, surprise, love, anxiety },
+    gates,
+    dominantAxis,
+    sentiment,
+    exponentShift,
+    dynamicTemp,
+    ensembleWeight,
+  };
+}
+
+export function modulateWeightsWithSevenAxes(baseWeights = [], axes = SEVEN_AXIS_DEFAULTS) {
+  const { axes: a, gates, exponentShift } = computeTernaryGatesFromSevenAxes(axes);
+  const axisVals = [a.joy, a.sadness, a.anger, a.fear, a.surprise, a.love, a.anxiety];
+  const phiGain = Math.pow(PHI, exponentShift * 0.22);
+
+  return baseWeights.map((w, i) => {
+    const gateVal = gates[i % 8];
+    const axisVal = axisVals[i % 7];
+    // Gate = 0 attenuates toward zero (increasing zero-skip sparsity); +1 amplifies; -1 phase-flips/inhibits
+    const gateFactor = gateVal === 0 ? 0.38 * (1 - a.anxiety * 0.5) : gateVal === 1 ? 1 + axisVal * 0.45 : -(0.75 + axisVal * 0.35);
+    const val = w * phiGain * gateFactor;
+    return Number(val.toFixed(6));
+  });
+}
+
 export const TENSOR_PRESETS = [
   {
     id: 'attn_q',

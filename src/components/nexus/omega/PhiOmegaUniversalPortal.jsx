@@ -12,6 +12,10 @@ import {
   FRAYMUS_OMEGA_PORTAL_HTML,
 } from '@/components/nexus/omega/fraymusOmegaSource';
 import { runOmegaCognitiveCycle } from '@/components/nexus/omega/fraymusOmegaEngine';
+import {
+  SEVEN_AXIS_DEFAULTS,
+  computeTernaryGatesFromSevenAxes,
+} from '@/components/nexus/omega/phi75TernaryCodec';
 import AffectivePartnerTunerPanel from '@/components/nexus/omega/AffectivePartnerTunerPanel';
 import Phi75TernaryTransmuterPanel from '@/components/nexus/omega/Phi75TernaryTransmuterPanel';
 import {
@@ -54,11 +58,21 @@ export default function PhiOmegaUniversalPortal({ onSyncToMonolith }) {
   const [emotionInput, setEmotionInput] = useState(
     'I am so thrilled and deeply connected by this amazing breakthrough! Friendly, responsive, learning, and ready to harness all tools and agents in harmony!'
   );
+  const [sevenAxes, setSevenAxes] = useState(SEVEN_AXIS_DEFAULTS);
   const [selectedAgent, setSelectedAgent] = useState('strategist');
   const [directivePrompt, setDirectivePrompt] = useState('');
   const [busyAction, setBusyAction] = useState('');
   const [statusBanner, setStatusBanner] = useState('');
   const [agentResponse, setAgentResponse] = useState(null);
+
+  const handleAxisSliderChange = (axis, val) => {
+    const num = Number(Math.max(0, Math.min(1, Number(val))).toFixed(2));
+    setSevenAxes((prev) => ({ ...prev, [axis]: num }));
+  };
+  const liveAxisGateSummary = useMemo(
+    () => computeTernaryGatesFromSevenAxes(sevenAxes),
+    [sevenAxes]
+  );
 
   const openWindows = Object.values(memory?.windows || {});
   const activeSelectionText = memory?.selection?.text || '';
@@ -79,17 +93,19 @@ export default function PhiOmegaUniversalPortal({ onSyncToMonolith }) {
     [mass, velocity, emotionInput, activeSelectionText, generation]
   );
 
-  // Listen for live pulses from the embedded FraymusOmegaPortal.html iframe
+  // Listen for live pulses & Ollama compile requests from embedded iframes
   useEffect(() => {
-    const onMsg = (ev) => {
+    const onMsg = async (ev) => {
       const d = ev?.data;
-      if (!d || d.type !== 'NEXUS_OMEGA_PORTAL_PULSE') return;
-      if (d.generation) setGeneration(d.generation);
-      if (d.consciousness) setConsciousness(Number(d.consciousness));
-      publishSelection({
-        text: `[Φ-Omega Gen #${d.generation}] Aeon Ek=${d.aeonOutput} | Emotion=${String(d.emotionPrimary || 'joy').toUpperCase()} (${Math.round((d.emotionConfidence || 0.5) * 100)}%) | Peephole Saved=${d.savedCyclesPct}% | HDC=${d.inspirationPair}`,
-        field: 'Φ-Omega Universal Portal',
-      });
+      if (!d) return;
+      if (d.type === 'NEXUS_OMEGA_PORTAL_PULSE') {
+        if (d.generation) setGeneration(d.generation);
+        if (d.consciousness) setConsciousness(Number(d.consciousness));
+        publishSelection({
+          text: `[Φ-Omega Gen #${d.generation}] Aeon Ek=${d.aeonOutput} | Emotion=${String(d.emotionPrimary || 'joy').toUpperCase()} (${Math.round((d.emotionConfidence || 0.5) * 100)}%) | Peephole Saved=${d.savedCyclesPct}% | HDC=${d.inspirationPair}`,
+          field: 'Φ-Omega Universal Portal',
+        });
+      }
     };
     window.addEventListener('message', onMsg);
     return () => window.removeEventListener('message', onMsg);
@@ -410,31 +426,33 @@ export default function PhiOmegaUniversalPortal({ onSyncToMonolith }) {
           <div className="p-2.5 rounded-lg border border-border bg-card space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-caution flex items-center gap-1.5">
-                <Ear size={13} /> 2. EARS // FEEL, REFLECT &amp; RETAIN
+                <Ear size={13} /> 2. EARS // 7-AXIS SLIDERS &amp; TERNARY GATES
               </span>
               <span className="px-1.5 py-0.5 rounded bg-caution/20 text-caution text-[10px] font-bold uppercase">
-                {omegaState.emotion.primary} ({Math.round(omegaState.emotion.confidence * 100)}%)
+                {liveAxisGateSummary.dominantAxis} ({Number(sevenAxes[liveAxisGateSummary.dominantAxis] || 0).toFixed(2)}) · Gates [{liveAxisGateSummary.gates.join(',')}]
               </span>
             </div>
 
-            <input
-              type="text"
-              value={emotionInput}
-              onChange={(e) => setEmotionInput(e.target.value)}
-              placeholder="Speak or type to Φ-Omega affective sensorium..."
-              className="w-full h-7 rounded bg-background border border-input px-2 text-[11px]"
-            />
-
             <div className="grid grid-cols-7 gap-1 pt-0.5">
-              {Object.entries(omegaState.emotion.norm).map(([axis, val]) => (
+              {Object.entries(sevenAxes).map(([axis, val]) => (
                 <div
                   key={axis}
-                  className="bg-background border border-border rounded p-1 text-center"
+                  className="bg-background border border-border rounded p-1 text-center space-y-0.5"
                 >
                   <div className="text-[9px] text-muted-foreground uppercase">{axis.slice(0, 3)}</div>
                   <div className="text-[10px] font-bold text-foreground">
-                    {Math.round(val * 100)}%
+                    {Number(val).toFixed(2)}
                   </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={val}
+                    onChange={(e) => handleAxisSliderChange(axis, e.target.value)}
+                    className="w-full h-1 accent-primary cursor-pointer"
+                    title={`${axis}: ${Number(val).toFixed(2)}`}
+                  />
                 </div>
               ))}
             </div>
@@ -562,10 +580,14 @@ export default function PhiOmegaUniversalPortal({ onSyncToMonolith }) {
       {viewMode === 'phi75' ? (
         <Phi75TernaryTransmuterPanel
           omegaEmotion={omegaState.emotion}
+          sevenAxes={sevenAxes}
+          onChangeAxis={handleAxisSliderChange}
+          onSetAllAxes={setSevenAxes}
           onStatusBanner={(msg) => setStatusBanner(msg)}
         />
       ) : viewMode === 'partner' ? (
         <AffectivePartnerTunerPanel
+          sevenAxes={sevenAxes}
           onEmotionUpdate={(txt) => setEmotionInput(txt)}
           onStatusBanner={(msg) => setStatusBanner(msg)}
         />

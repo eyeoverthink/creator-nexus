@@ -15,10 +15,17 @@ export default async function(req) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const name = String(body.name || '').trim();
+    const rawName = String(body.name || '').trim();
+    const name = rawName
+      .toLowerCase()
+      .replace(/[^a-z0-9._:-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
     const rawBaseModel = String(body.baseModel || '').trim();
     const baseModel =
-      rawBaseModel === 'llama3.2:3b-instruct' || rawBaseModel === 'llama3.2:3b'
+      !rawBaseModel ||
+      rawBaseModel === 'llama3.2:3b-instruct' ||
+      rawBaseModel === 'llama3.2:3b'
         ? 'llama3.2:3b-instruct-q8_0'
         : rawBaseModel;
     const systemPrompt = String(body.systemPrompt || '').trim();
@@ -30,13 +37,16 @@ export default async function(req) {
       );
     }
 
+    const consoleKey =
+      process.env.FRAYMUS_CONSOLE_KEY || secrets.get('FRAYMUS_CONSOLE_KEY') || '';
+
     const upstreamRes = await fetch(
       'https://fraymus-messenger.srv1944678.hstgr.cloud/api/console/ollama/create',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-console-key': process.env.FRAYMUS_CONSOLE_KEY || secrets.get('FRAYMUS_CONSOLE_KEY') || '',
+          'x-console-key': consoleKey,
         },
         body: JSON.stringify({
           name,
@@ -72,6 +82,9 @@ export default async function(req) {
       ok: true,
       name,
       from: baseModel,
+      vpsHttpStatus: upstreamRes.status,
+      secretConfigured: Boolean(consoleKey),
+      verifiedAt: new Date().toISOString(),
       result: responseData,
     });
   } catch (error) {

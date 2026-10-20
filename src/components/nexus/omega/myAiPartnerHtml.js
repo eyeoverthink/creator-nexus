@@ -56,12 +56,49 @@ export const MY_AI_PARTNER_HTML = `<!DOCTYPE html>
       const [jealous, setJealous] = useState(false);
       const [memory, setMemory] = useState({ snack: "tacos", classMood: "hyped" });
       const [input, setInput] = useState("");
+      const [compileStatus, setCompileStatus] = useState("");
+      const [compiling, setCompiling] = useState(false);
       const [messages, setMessages] = useState([
         { id: "1", role: "assistant", text: "hi!! it's Luna 😘 Connected directly to your Φ-Omega Portal & 7-Axis Emotion Engine! Ready to co-create, tune models, or roast your code!", ts: Date.now() }
       ]);
 
       const accent = gender === "female" ? "#FF6B8A" : "#5B8DEF";
       const level = Math.floor(xp / 20) + 1;
+
+      useEffect(() => {
+        const onMsg = (ev) => {
+          const d = ev && ev.data;
+          if (!d || d.type !== "NEXUS_COMPILE_OLLAMA_RESULT") return;
+          setCompiling(false);
+          setCompileStatus(d.message || ("Compiled & pushed " + (d.modelTag || "model") + " to VPS Ollama!"));
+        };
+        window.addEventListener("message", onMsg);
+        return () => window.removeEventListener("message", onMsg);
+      }, []);
+
+      const triggerIframeCompile = () => {
+        setCompiling(true);
+        setCompileStatus("Pushing affective Modelfile to VPS Ollama via parent bridge...");
+        if (window.parent) {
+          try {
+            window.parent.postMessage({
+              type: "NEXUS_COMPILE_OLLAMA_MODEL",
+              name,
+              gender,
+              personality,
+              model,
+              mood,
+              xp,
+              clinginess,
+              jealous,
+              memory
+            }, "*");
+          } catch (e) {
+            setCompiling(false);
+            setCompileStatus("Bridge error: " + e.message);
+          }
+        }
+      };
 
       const syncToOmega = (lastText, lastReply, nextMood, nextXp, nextMem) => {
         if (window.parent) {
@@ -125,10 +162,22 @@ export const MY_AI_PARTNER_HTML = `<!DOCTYPE html>
               </div>
               <div style={{ fontSize: 11, marginBottom: 6, fontWeight: 700 }}>Attentiveness / Proactivity: {clinginess}%</div>
               <input type="range" min="0" max="100" value={clinginess} onChange={e => setClinginess(Number(e.target.value))} style={{ width: "100%", marginBottom: 10 }} />
-              <div style={{ fontSize: 11, padding: 8, borderRadius: 10, background: "var(--bg)", border: "1px solid var(--border)" }}>
+              <div style={{ fontSize: 11, padding: 8, borderRadius: 10, background: "var(--bg)", border: "1px solid var(--border)", marginBottom: 10 }}>
                 <div>🍿 Snack: <b>{memory.snack}</b></div>
                 <div>🎓 Vibe: <b>{memory.classMood}</b></div>
               </div>
+              <button
+                onClick={triggerIframeCompile}
+                disabled={compiling}
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 12, background: accent, color: "#fff", fontWeight: 800, fontSize: 12 }}
+              >
+                {compiling ? "⏳ Compiling to VPS Ollama..." : "⚡ Compile & Tune Ollama Model"}
+              </button>
+              {compileStatus && (
+                <div style={{ marginTop: 8, padding: 8, borderRadius: 10, background: "#e8f8ef", border: "1px solid #34c759", color: "#126b2e", fontSize: 11, fontWeight: 700 }}>
+                  {compileStatus}
+                </div>
+              )}
             </div>
 
             <div style={{ background: "var(--surface)", borderRadius: 20, border: "1px solid var(--border)", display: "flex", flexDirection: "column", height: 360, overflow: "hidden" }}>
