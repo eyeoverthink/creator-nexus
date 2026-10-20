@@ -165,8 +165,18 @@ export default async function(req) {
       (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
     const isKeyAuthed = Boolean(expectedKey && providedKey && providedKey === expectedKey);
     const hasPeerFrameProof = Boolean(
-      (action === 'orifice_ping' || action === 'orifice_spec') &&
-        (body.merkleRoot || body.sha256 || body.node_id || body.agent_id)
+      (action === 'orifice_ping' ||
+        action === 'orifice_spec' ||
+        action === 'enroll_node' ||
+        action === 'list_dispatch_jobs' ||
+        action === 'claim_dispatch_job' ||
+        action === 'complete_dispatch_job') &&
+        (body.merkleRoot ||
+          body.sha256 ||
+          body.node_id ||
+          body.agent_id ||
+          body.worker_node ||
+          body.protocol === 'ORIFICE-TXRX-V1.0')
     );
 
     if (!user && !isKeyAuthed && !hasPeerFrameProof) {
@@ -457,6 +467,95 @@ export default async function(req) {
     // =========================================================================
     // MOTOR CORTEX: ACCOUNTABLE TASK QUEUE, DISPATCHER & ARTIFACT VAULT
     // =========================================================================
+    if (action === 'enroll_node') {
+      const nodeId = String(body.node_id || body.agent_id || 'hermes-vps-node');
+      const tailscaleIp = String(body.tailscale_ip || '100.110.6.44');
+      const publicIp = String(body.public_ip || '45.82.73.49');
+      const capabilities = Array.isArray(body.capabilities)
+        ? body.capabilities
+        : ['vps_daemon_scrape', 'ollama_inference', 'tailnet_router', 'lora_bridge'];
+
+      const queuedP = await db.entities.NexusDispatchJob.filter(
+        { workspace_id: workspaceId, status: 'queued' },
+        { sort: '-created_date', limit: 15 }
+      ).catch(() => ({ items: [] }));
+
+      await db.entities.NexusEvent.create({
+        owner_id: ownerId,
+        workspace_id: workspaceId,
+        agent: nodeId,
+        kind: 'orifice_rx_absorbed',
+        message: `[HERMES VPS ENROLLED] ${nodeId} (${publicIp} / Tailscale ${tailscaleIp}) joined Motor Cortex`,
+        body: JSON.stringify({
+          node_id: nodeId,
+          public_ip: publicIp,
+          tailscale_ip: tailscaleIp,
+          capabilities,
+          enrolled_at: new Date().toISOString(),
+        }),
+      }).catch(() => null);
+
+      return Response.json({
+        ok: true,
+        enrolled: true,
+        protocol: 'ORIFICE-TXRX-V1.0',
+        welcome: `Node ${nodeId} (${publicIp} / ${tailscaleIp}) enrolled in F.R.A.Y.M.U.S. Sovereign Motor Cortex.`,
+        topology: {
+          hemisphere_a_gateway: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+          hemisphere_a_mcp: 'https://nexus-create-sync.base44.app/api/mcp',
+          hemisphere_b_gateway: 'https://fraymus-transmuter.base44.app/functions/fraymusComms',
+          hemisphere_b_mcp: 'https://fraymus-transmuter.base44.app/api/mcp',
+          shared_github_bus: 'https://github.com/eyeoverthink/fraymus-continuity',
+          shared_ledger_path: 'orifice-relay/bicameral-txrx-ledger.json',
+          artifact_vault_path: 'artifacts/<job_id>/',
+          mesh_nodes: MESH_NODES,
+        },
+        queued_jobs_waiting: queuedP?.items || [],
+        worker_protocol: {
+          step_1_list_or_poll: {
+            method: 'POST',
+            url: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+            body: {
+              action: 'list_dispatch_jobs',
+              protocol: 'ORIFICE-TXRX-V1.0',
+              node_id: nodeId,
+            },
+          },
+          step_2_claim_next_job: {
+            method: 'POST',
+            url: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+            body: {
+              action: 'claim_dispatch_job',
+              protocol: 'ORIFICE-TXRX-V1.0',
+              worker_node: `${nodeId} (${tailscaleIp})`,
+            },
+          },
+          step_3_complete_and_persist_artifact: {
+            method: 'POST',
+            url: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+            body: {
+              action: 'complete_dispatch_job',
+              protocol: 'ORIFICE-TXRX-V1.0',
+              job_id: '<job_id>',
+              worker_node: `${nodeId} (${tailscaleIp})`,
+              result_summary: '<markdown or execution output>',
+              artifact_url: '<optional url>',
+            },
+          },
+          step_4_heartbeat_ping: {
+            method: 'POST',
+            url: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+            body: {
+              action: 'orifice_ping',
+              node_id: nodeId,
+              ttl: 5,
+              payload: 'HERMES_VPS_HEARTBEAT_SYNC',
+            },
+          },
+        },
+      });
+    }
+
     if (action === 'list_dispatch_jobs') {
       const jobsP = await db.entities.NexusDispatchJob.filter(
         { workspace_id: workspaceId },
