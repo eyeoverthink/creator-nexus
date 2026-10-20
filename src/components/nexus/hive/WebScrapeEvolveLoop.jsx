@@ -79,19 +79,23 @@ export default function WebScrapeEvolveLoop({ workspace, nexus, onEvolved }) {
 
         if (data?.ok) {
           iterationRef.current = nextIter;
-          // Recursive step: follow an unvisited link from this page that best matches the evolving seed
-          const seen = new Set([...visitedRef.current, url.trim()]);
-          visitedRef.current = [...seen];
-          setVisited([...seen]);
-          const words = (data.nextSeedPrompt || seedRef.current).toLowerCase().split(/\W+/).filter((w) => w.length > 3);
-          const next = (data.scrape?.links || [])
-            .filter((l) => !seen.has(l.url))
-            .map((l) => ({ ...l, score: words.filter((w) => l.label.toLowerCase().includes(w)).length }))
-            .sort((a, b) => b.score - a.score)[0];
-          if (next) setUrl(next.url);
-          else setAutoRepeat(false);
+          const allVisited = Array.isArray(data.visitedUrls)
+            ? data.visitedUrls
+            : [...new Set([...visitedRef.current, data.scrape?.url || url.trim()])];
+          visitedRef.current = allVisited;
+          setVisited(allVisited);
+
+          if (data.nextTarget?.url) {
+            setUrl(data.nextTarget.url);
+          } else {
+            const seen = new Set(allVisited);
+            const fallbackLink = (data.scrape?.links || []).find((l) => !seen.has(l.url));
+            if (fallbackLink) setUrl(fallbackLink.url);
+            else setAutoRepeat(false);
+          }
+
           setCurrentResult(data);
-          setHistory((prev) => [data, ...prev.slice(0, 9)]);
+          setHistory((prev) => [data, ...prev.slice(0, 14)]);
           if (data.nextSeedPrompt) {
             setThoughtSeed(data.nextSeedPrompt);
           }
@@ -187,13 +191,26 @@ export default function WebScrapeEvolveLoop({ workspace, nexus, onEvolved }) {
       </div>
 
       <ScrapeTargetsManager
+        workspaceId={workspace?.id}
         history={history.map((h) => h.scrape?.title).filter(Boolean)}
-        onPick={(t) => { setUrl(t.url); if (t.reason) setThoughtSeed(t.reason); }}
+        visitedUrls={visited}
+        onPick={(t) => {
+          setUrl(t.url);
+          if (t.reason) setThoughtSeed(t.reason);
+        }}
       />
       {visited.length > 0 && (
-        <p className="text-[10px] text-muted-foreground">
-          Crawl path ({visited.length} pages, never repeats): {visited.slice(-4).join(' → ')}
-        </p>
+        <div className="p-2 rounded bg-background border border-border text-[10px] text-muted-foreground flex flex-wrap items-center justify-between gap-2">
+          <span>
+            <strong className="text-foreground">Ouroboros Recursive Crawl Path ({visited.length} unique pages):</strong>{' '}
+            {visited.slice(-4).join(' → ')}
+          </span>
+          {currentResult?.nextTarget?.url && (
+            <span className="text-primary">
+              Next Queued Link: {currentResult.nextTarget.label || currentResult.nextTarget.url}
+            </span>
+          )}
+        </div>
       )}
 
       {/* URL & Thought Seed Inputs */}
@@ -264,16 +281,53 @@ export default function WebScrapeEvolveLoop({ workspace, nexus, onEvolved }) {
       {/* Results Inspector */}
       {currentResult ? (
         <div className="space-y-3 pt-1">
-          {/* Pipeline Status Banner */}
-          <div className="p-2.5 rounded bg-success/10 border border-success/30 text-success flex flex-wrap items-center justify-between gap-2 text-[11px]">
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 size={13} />
-              <strong>Cycle #{currentResult.iteration} Complete (Gen #{currentResult.generation}):</strong>{' '}
-              Scraped &ldquo;{currentResult.scrape?.title}&rdquo; → Saved to Library ({currentResult.saved?.assetTitle}) &amp; Orbit r={Number(currentResult.orbit?.radius || 0.25).toFixed(4)}
-            </span>
-            <span className="font-semibold">
-              Fitness F = {currentResult.orbit?.fitness} · Hash [{currentResult.orbit?.codeHash}]
-            </span>
+          {/* Pipeline Status Banner + Real Measured Benchmark Metrics */}
+          <div className="p-2.5 rounded bg-success/10 border border-success/30 text-success space-y-1.5 text-[11px]">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 size={13} />
+                <strong>
+                  Ouroboros Gen #{currentResult.parentGeneration ?? 0} [{currentResult.parentHash || 'GENESIS'}] → Gen #{currentResult.generation} [{currentResult.orbit?.codeHash}]:
+                </strong>{' '}
+                Scraped &ldquo;{currentResult.scrape?.title}&rdquo; ({currentResult.scrape?.scrapeLatencyMs}ms)
+              </span>
+              <span className="font-semibold">
+                Measured Fitness F = {currentResult.orbit?.fitness} (Δ{currentResult.emotionDelta?.fitnessDelta >= 0 ? '+' : ''}
+                {currentResult.emotionDelta?.fitnessDelta ?? 0}) · Exec {currentResult.benchmark?.measuredLatencyNs}ns ({currentResult.benchmark?.speedup}x)
+              </span>
+            </div>
+            {currentResult.mutationDiffSummary && (
+              <div className="text-[10px] text-foreground bg-background/70 px-2 py-1 rounded border border-border">
+                <strong>Recursive Genome Mutation:</strong> {currentResult.mutationDiffSummary}
+              </div>
+            )}
+            {currentResult.benchmark && (
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 text-[10px] text-foreground pt-0.5">
+                <div className="p-1.5 rounded bg-background/80 border border-border">
+                  <div className="text-muted-foreground">5-Stage Gate</div>
+                  <div className="font-semibold text-success">{currentResult.benchmark.passedCount}/5 Passed</div>
+                </div>
+                <div className="p-1.5 rounded bg-background/80 border border-border">
+                  <div className="text-muted-foreground">Signal Grounding</div>
+                  <div className="font-semibold">{currentResult.benchmark.groundingRatio}% ({currentResult.benchmark.matchedTokens} tokens)</div>
+                </div>
+                <div className="p-1.5 rounded bg-background/80 border border-border">
+                  <div className="text-muted-foreground">Parent Divergence</div>
+                  <div className="font-semibold">{currentResult.benchmark.mutationDivergence}% mutated</div>
+                </div>
+                <div className="p-1.5 rounded bg-background/80 border border-border">
+                  <div className="text-muted-foreground">Measured Throughput</div>
+                  <div className="font-semibold">{currentResult.benchmark.opsPerSec?.toLocaleString()} ops/s</div>
+                </div>
+                <div className="p-1.5 rounded bg-background/80 border border-border">
+                  <div className="text-muted-foreground">Entropy / RPE Affect</div>
+                  <div className="font-semibold">
+                    E={currentResult.benchmark.structuralEntropy} · RPE {currentResult.emotionDelta?.rewardDelta >= 0 ? '+' : ''}
+                    {currentResult.emotionDelta?.rewardDelta}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Stage Navigation Tabs */}

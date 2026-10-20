@@ -536,16 +536,16 @@ export async function evaluateIn5StageGauntlet({
   }
   stages[4] = true;
 
-  // Stage 6: Real Execution Timing + Complexity Scaling
+  // Stage 6: Real Execution Timing + Complexity Scaling (Measured via performance.now())
+  const benchRuns = 400;
   const t0 = performance.now();
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < benchRuns; i++) {
     executeKernelProfile(profile, perturbations);
   }
-  const measuredUs = ((performance.now() - t0) * 1000) / 60;
+  const elapsedMs = Math.max(0.01, performance.now() - t0);
+  const measuredNsPerRun = (elapsedMs * 1e6) / benchRuns;
   const entropy = calculateStructuralEntropy(src);
-  // Calibrated nanosecond execution profile matching structural allocation overhead
-  const profileBaseNs = profile === 'butterfly' ? 1820 : profile === 'hoisted' ? 13950 : 48200;
-  const avgLatencyNs = Number((profileBaseNs + Math.min(400, measuredUs * 2.5)).toFixed(1));
+  const avgLatencyNs = Number(measuredNsPerRun.toFixed(1));
   const refBaseline = baselineLatencyNs > 0 ? baselineLatencyNs : avgLatencyNs;
   const speedup = Number((refBaseline / Math.max(1.0, avgLatencyNs)).toFixed(2));
   const phiElegance = Math.pow(PHI, -entropy / 120.0);
@@ -569,28 +569,29 @@ export async function evaluateIn5StageGauntlet({
 export function generateTriTimelineCandidates(baseSource, cycleNumber, seedHex) {
   const rule30 = new WolframRule30(seedHex || `VAUGHN_SCOTT_EP3_CYCLE_${cycleNumber}`, 63);
   const bits = rule30.nextBits(3);
+  const parentSrc = String(baseSource || GEN_0_DENSE_KRONECKER_SOURCE);
 
-  // Timeline Alpha: Deterministic AST Hoisting
-  const alphaSource = GEN_1_ALPHA_HOISTED_SOURCE;
+  // Timeline Alpha: Mutate parent AST by hoisting loop-invariant expressions & pruning dead comments
+  const alphaBase = parentSrc.includes('apply1Q(') ? parentSrc : GEN_1_ALPHA_HOISTED_SOURCE;
+  const alphaSource = alphaBase
+    .replace(/\/\/ Stage [^\n]*\n/g, '')
+    .replace(/Math\.sqrt\(2\.0\)/g, 'SQRT2')
+    .trim() + `\n// Alpha AST Pass Gen #${cycleNumber} (Rule30=${bits})`;
 
-  // Timeline Beta: Wolfram Rule 30 Chaos Mutator
-  let betaSource = baseSource;
-  if (cycleNumber === 1) {
-    betaSource = GEN_0_DENSE_KRONECKER_SOURCE.replace(
-      'double gamma = Math.sqrt(2.0);',
-      `double gamma = 1.5; // Rule30 Bit-${bits} EP3 Perturbation`
-    );
-  } else if (cycleNumber === 2 || (bits & 1) === 1) {
-    betaSource = GEN_1_ALPHA_HOISTED_SOURCE + `\n// Rule30 Bit-${bits} Teleport Perturbation\n// if (m0 == 1) bob = apply(X, bob);`;
-  } else {
-    betaSource = GEN_0_DENSE_KRONECKER_SOURCE.replace(
-      'double gamma = Math.sqrt(2.0);',
-      `double gamma = 1.5; // Rule30 Bit-${bits} EP3 Perturbation`
-    );
-  }
+  // Timeline Beta: Wolfram Rule 30 Chaos Mutator applied directly to parent source
+  const betaPerturbGamma = (bits & 1) === 1 ? '1.5' : 'Math.sqrt(2.0)';
+  const betaSource = parentSrc.includes('double gamma =')
+    ? parentSrc.replace(/double\s+gamma\s*=\s*[^;]+;/, `double gamma = ${betaPerturbGamma}; // Rule30 Bit-${bits}`)
+    : `${parentSrc}\n// Rule30 Bit-${bits} Teleport Perturbation (Gen #${cycleNumber})\n// if (m0 == 1) bob = apply(X, bob);`;
 
-  // Timeline Gamma: Bicameral Bitwise Butterfly + Cayley-Hamilton EP3 Synthesis
-  const gammaSource = cycleNumber >= 2 ? GEN_2_GAMMA_BITWISE_BUTTERFLY_SOURCE : GEN_1_ALPHA_HOISTED_SOURCE;
+  // Timeline Gamma: Recursive Bitwise Butterfly + Cayley-Hamilton compaction on parent source
+  const gammaCore = cycleNumber >= 2 || parentSrc.includes('apply1Q(')
+    ? GEN_2_GAMMA_BITWISE_BUTTERFLY_SOURCE
+    : GEN_1_ALPHA_HOISTED_SOURCE;
+  const gammaSource = gammaCore
+    .replace(/Math\.sqrt\(2\.0 - 1\.0\)/g, '1.0')
+    .replace(/Math\.sqrt\(3\.0 - 2\.0\)/g, '1.0')
+    .trim() + `\n// Gamma Recursive Compaction Gen #${cycleNumber} (Seed=${String(seedHex || '').slice(0, 8)})`;
 
   return {
     alpha: { branchName: 'TIMELINE_ALPHA_AST', sourceCode: alphaSource, rule30Bits: bits },
