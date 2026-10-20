@@ -18,12 +18,14 @@ import {
 } from '@/components/nexus/omega/phi75TernaryCodec';
 import AffectivePartnerTunerPanel from '@/components/nexus/omega/AffectivePartnerTunerPanel';
 import Phi75TernaryTransmuterPanel from '@/components/nexus/omega/Phi75TernaryTransmuterPanel';
+import OpegEmpiricalGroundingPanel from '@/components/nexus/omega/OpegEmpiricalGroundingPanel';
 import {
   Eye,
   Ear,
   Hand,
   Heart,
   Cpu,
+  ShieldCheck,
   Sparkles,
   Send,
   Database,
@@ -49,7 +51,7 @@ export default function PhiOmegaUniversalPortal({ onSyncToMonolith }) {
 
   const [viewMode, setViewMode] = useState(() => {
     const q = new URLSearchParams(window.location.search).get('view');
-    return q && ['phi75', 'partner', 'split', 'portal', 'java'].includes(q) ? q : 'phi75';
+    return q && ['opeg', 'phi75', 'partner', 'split', 'portal', 'java'].includes(q) ? q : 'opeg';
   });
   const [generation, setGeneration] = useState(1);
   const [consciousness, setConsciousness] = useState(500.0);
@@ -301,6 +303,14 @@ export default function PhiOmegaUniversalPortal({ onSyncToMonolith }) {
             className="h-7 text-[10px] px-2.5"
           >
             Universal Deck + Portal
+          </Button>
+          <Button
+            size="sm"
+            variant={viewMode === 'opeg' ? 'default' : 'outline'}
+            onClick={() => setViewMode('opeg')}
+            className="h-7 text-[10px] px-2.5 gap-1"
+          >
+            <ShieldCheck size={11} /> OPEG V1.0 // Σ → R_san (Artifact 38)
           </Button>
           <Button
             size="sm"
@@ -576,8 +586,12 @@ export default function PhiOmegaUniversalPortal({ onSyncToMonolith }) {
         </div>
       )}
 
-      {/* Embedded φ^75-Ternary Transmuter, Companion Tuner, Interactive Portal, or Java Source View */}
-      {viewMode === 'phi75' ? (
+      {/* Embedded OPEG V1.0, φ^75-Ternary Transmuter, Companion Tuner, Interactive Portal, or Java Source View */}
+      {viewMode === 'opeg' ? (
+        <OpegEmpiricalGroundingPanel
+          onStatusBanner={(msg) => setStatusBanner(msg)}
+        />
+      ) : viewMode === 'phi75' ? (
         <Phi75TernaryTransmuterPanel
           omegaEmotion={omegaState.emotion}
           sevenAxes={sevenAxes}
