@@ -1,6 +1,6 @@
 import {useState,useRef,useCallback,useEffect} from 'react';
 import {Link} from 'react-router-dom';
-import {ArrowLeft,Maximize2,ExternalLink,Activity,Layers3,Users,Cpu} from 'lucide-react';
+import {ArrowLeft,Maximize2,ExternalLink,Activity,Layers3,Users,Cpu,Sparkles} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import {AI_WORKSHOP_OS_HTML} from '@/components/nexus/loosescrew/aiWorkshopOsHtml';
@@ -9,9 +9,11 @@ import FraymusHivePanel from '@/components/nexus/hive/FraymusHivePanel';
 import CrossTabMemoryBar from '@/components/nexus/CrossTabMemoryBar';
 import SovereignOsSpawnerPanel from '@/components/nexus/loosescrew/SovereignOsSpawnerPanel';
 import CounterfactualEvolutionSimulator from '@/components/nexus/spark/CounterfactualEvolutionSimulator';
+import PhiOmegaUniversalPortal from '@/components/nexus/omega/PhiOmegaUniversalPortal';
 
 export default function AiWorkshopOs(){
- const [showPreflightLab,setShowPreflightLab]=useState(true);
+ const [showOmegaPortal,setShowOmegaPortal]=useState(true);
+ const [showPreflightLab,setShowPreflightLab]=useState(false);
  const [showOsSpawner,setShowOsSpawner]=useState(false);
  const [showTelemetry,setShowTelemetry]=useState(false);
  const [showHive,setShowHive]=useState(false);
@@ -51,15 +53,17 @@ export default function AiWorkshopOs(){
     <strong className="text-primary truncate">F.R.A.Y.M.U.S. // 3D Monolith &amp; Sovereign OS Engine</strong>
    </div>
    <div className="flex flex-wrap items-center gap-1.5">
-    <Button size="sm" variant={showPreflightLab?'default':'outline'} onClick={()=>{setShowPreflightLab(v=>!v);if(!showPreflightLab){setShowOsSpawner(false);setShowHive(false);setShowTelemetry(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Activity size={11}/>{showPreflightLab?'Hide Pre-Flight & Model Lab':'🎯 Pre-Flight & Ternary Model Lab'}</Button>
-    <Button size="sm" variant={showOsSpawner?'default':'outline'} onClick={()=>{setShowOsSpawner(v=>!v);if(!showOsSpawner){setShowPreflightLab(false);setShowHive(false);setShowTelemetry(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Cpu size={11}/>{showOsSpawner?'Hide OS Engine':'⚛ Sovereign OS'}</Button>
-    <Button size="sm" variant={showHive?'default':'outline'} onClick={()=>{setShowHive(v=>!v);if(!showHive){setShowPreflightLab(false);setShowTelemetry(false);setShowOsSpawner(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Users size={11}/>{showHive?'Hide Hive':'🐝 15-Agent Hive'}</Button>
-    <Button size="sm" variant={showTelemetry?'default':'outline'} onClick={()=>{setShowTelemetry(v=>!v);if(!showTelemetry){setShowPreflightLab(false);setShowHive(false);setShowOsSpawner(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Activity size={11}/>{showTelemetry?'Hide Telemetry':'RSA · RSI'}</Button>
+    <Button size="sm" variant={showOmegaPortal?'default':'outline'} onClick={()=>{setShowOmegaPortal(v=>!v);if(!showOmegaPortal){setShowPreflightLab(false);setShowOsSpawner(false);setShowHive(false);setShowTelemetry(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Sparkles size={11}/>{showOmegaPortal?'Hide Φ-Omega Portal':'⚡ Φ-Omega // Optimus Prime'}</Button>
+    <Button size="sm" variant={showPreflightLab?'default':'outline'} onClick={()=>{setShowPreflightLab(v=>!v);if(!showPreflightLab){setShowOmegaPortal(false);setShowOsSpawner(false);setShowHive(false);setShowTelemetry(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Activity size={11}/>{showPreflightLab?'Hide Pre-Flight & Model Lab':'🎯 Pre-Flight & Ternary Model Lab'}</Button>
+    <Button size="sm" variant={showOsSpawner?'default':'outline'} onClick={()=>{setShowOsSpawner(v=>!v);if(!showOsSpawner){setShowOmegaPortal(false);setShowPreflightLab(false);setShowHive(false);setShowTelemetry(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Cpu size={11}/>{showOsSpawner?'Hide OS Engine':'⚛ Sovereign OS'}</Button>
+    <Button size="sm" variant={showHive?'default':'outline'} onClick={()=>{setShowHive(v=>!v);if(!showHive){setShowOmegaPortal(false);setShowPreflightLab(false);setShowTelemetry(false);setShowOsSpawner(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Users size={11}/>{showHive?'Hide Hive':'🐝 15-Agent Hive'}</Button>
+    <Button size="sm" variant={showTelemetry?'default':'outline'} onClick={()=>{setShowTelemetry(v=>!v);if(!showTelemetry){setShowOmegaPortal(false);setShowPreflightLab(false);setShowHive(false);setShowOsSpawner(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Activity size={11}/>{showTelemetry?'Hide Telemetry':'RSA · RSI'}</Button>
     <Button size="sm" variant="outline" onClick={popOut} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Maximize2 size={11}/>Pop Out</Button>
     <a href="https://github.com/eyeoverthink/looseScrew" target="_blank" rel="noopener noreferrer" className="inline-flex h-7 items-center gap-1 rounded border border-primary/50 bg-selection px-2 text-[10.5px] text-primary"><ExternalLink size={11}/>GitHub</a>
    </div>
   </header>
   <CrossTabMemoryBar/>
+  {showOmegaPortal&&<PhiOmegaUniversalPortal onSyncToMonolith={syncSystemsToMonolith}/>}
   {showPreflightLab&&<CounterfactualEvolutionSimulator/>}
   {showOsSpawner&&<SovereignOsSpawnerPanel onSyncToMonolith={syncSystemsToMonolith}/>}
   {showHive&&<div className="max-h-[58vh] overflow-y-auto border-b border-border bg-background/95 z-20"><FraymusHivePanel/></div>}

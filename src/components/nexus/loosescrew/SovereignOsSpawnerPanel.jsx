@@ -17,6 +17,13 @@ import {
 
 const FRONTIER_PRESETS = [
   {
+    id: 'phi_omega',
+    label: '⚛ Φ-Omega // Optimus Prime v16.0',
+    name: 'Φ-Omega Optimus Prime Universal OS',
+    directive:
+      'Unify Aeon Kernel v15.4 (receipt a8af8af5, Ek=120.0), Babel v6.1 Peephole Optimizer (SAR bias 2^k-1), 7-Axis Affective Lexicon, 8,192-D HDC Imagination, 16,384-D Tachyon O(1) Wormhole, Langevin SDE Reflection, and Proof 7 Air-Gap Survival as the universal eyes, ears, and hands of all agents.',
+  },
+  {
     id: 'coral',
     label: '🐝 CORAL 4-Agent Co-Evolution OS',
     name: 'CORAL Swarm-1103 OS',

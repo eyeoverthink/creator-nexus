@@ -9,6 +9,13 @@ import {
 
 const ARCHETYPE_DOMAINS = [
   {
+    prefix: 'Phi-Omega',
+    codename: 'Optimus-Prime-v16',
+    cat: 'suites',
+    color: '#ffcc00',
+    focus: 'Universal Sensorium (Eyes, Ears & Hands) uniting Aeon VM a8af8af5, Babel v6.1 Peephole, 7-Axis Emotion, 8,192-D HDC & 16,384-D Tachyon O(1) Wormhole',
+  },
+  {
     prefix: 'Fraynix',
     codename: 'Chronos-Phi',
     cat: 'suites',
