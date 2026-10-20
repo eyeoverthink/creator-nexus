@@ -1,5 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { secrets } from 'base44:runtime';
+import {
+  MESH_NODES,
+  classifyAndRouteDirective,
+  executeDirectiveAndPersistArtifact,
+  commitArtifactToGithubVault,
+} from '../../shared/motorDispatcher.ts';
 
 function slugify(str) {
   return (
@@ -246,6 +252,10 @@ export default async function(req) {
           'orifice_tx_queue',
           'orifice_peer_bridge',
           'orifice_github_sync',
+          'dispatch_route_task',
+          'list_dispatch_jobs',
+          'claim_dispatch_job',
+          'complete_dispatch_job',
           'absorb_all_continuity',
           'dispatch_task',
           'opeg_verify',
@@ -442,6 +452,189 @@ export default async function(req) {
         commitReceipt,
         syncedAt: new Date().toISOString(),
       });
+    }
+
+    // =========================================================================
+    // MOTOR CORTEX: ACCOUNTABLE TASK QUEUE, DISPATCHER & ARTIFACT VAULT
+    // =========================================================================
+    if (action === 'list_dispatch_jobs') {
+      const jobsP = await db.entities.NexusDispatchJob.filter(
+        { workspace_id: workspaceId },
+        { sort: '-created_date', limit: 30 }
+      ).catch(() => ({ items: [] }));
+
+      return Response.json({
+        ok: true,
+        workspaceId,
+        meshNodes: MESH_NODES,
+        jobs: jobsP?.items || [],
+      });
+    }
+
+    if (action === 'dispatch_route_task') {
+      const directive = String(body.directive || '').trim();
+      if (!directive) {
+        return Response.json({ error: 'directive is required' }, { status: 400 });
+      }
+      const preferredNode = String(body.preferred_node || 'auto');
+      const queueOnly = Boolean(body.queue_only);
+
+      const routePlan = classifyAndRouteDirective(directive, preferredNode);
+      const jobId = `job_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+
+      const createdJob = await db.entities.NexusDispatchJob.create({
+        owner_id: ownerId,
+        workspace_id: workspaceId,
+        job_id: jobId,
+        directive,
+        task_type: routePlan.task_type,
+        assigned_node: routePlan.assigned_node,
+        assigned_ip: routePlan.assigned_ip,
+        fallback_node: routePlan.fallback_node,
+        routing_reason: routePlan.routing_reason,
+        execution_mode: routePlan.execution_mode,
+        status: queueOnly ? 'queued' : 'running',
+        artifact_kind: routePlan.artifact_kind,
+        artifact_title: `[${routePlan.task_type.toUpperCase()}] ${directive.slice(0, 72)}`,
+      });
+
+      if (queueOnly) {
+        return Response.json({
+          ok: true,
+          mode: 'queued_for_worker',
+          job: createdJob,
+          meshNodes: MESH_NODES,
+        });
+      }
+
+      // Execute & persist real artifact (PDF / Cover Art / LoRA+Modelfile bundle / Blueprint) into Base44 + GitHub Vault + NexusAsset
+      const artifactOut = await executeDirectiveAndPersistArtifact({
+        db,
+        ownerId,
+        workspaceId,
+        jobRecord: createdJob,
+      });
+
+      const updatedJob = await db.entities.NexusDispatchJob.update(createdJob.id, {
+        status: 'completed',
+        claimed_by: routePlan.assigned_node,
+        artifact_title: artifactOut.artifact_title,
+        artifact_url: artifactOut.artifact_url,
+        artifact_github_url: artifactOut.artifact_github_url,
+        artifact_sha256: artifactOut.artifact_sha256,
+        artifact_size_bytes: artifactOut.artifact_size_bytes,
+        result_summary: artifactOut.result_summary,
+        completed_at: new Date().toISOString(),
+      });
+
+      await db.entities.NexusEvent.create({
+        owner_id: ownerId,
+        workspace_id: workspaceId,
+        agent: 'motor-dispatcher',
+        kind: 'motor_dispatch_completed',
+        message: `[Motor Dispatcher -> ${routePlan.assigned_node}] Completed "${directive.slice(0, 80)}"`,
+        body: JSON.stringify({
+          job_id: jobId,
+          assigned_node: routePlan.assigned_node,
+          artifact_url: artifactOut.artifact_url,
+          artifact_github_url: artifactOut.artifact_github_url,
+          sha256: artifactOut.artifact_sha256,
+        }),
+      }).catch(() => null);
+
+      return Response.json({
+        ok: true,
+        mode: 'executed_and_persisted',
+        job: updatedJob,
+        artifact: artifactOut,
+      });
+    }
+
+    if (action === 'claim_dispatch_job') {
+      const workerNode = String(body.worker_node || 'desktop-actid8c (100.88.61.56)');
+      const targetJobId = String(body.job_id || '');
+
+      let jobToClaim = null;
+      if (targetJobId) {
+        const p = await db.entities.NexusDispatchJob.filter(
+          { workspace_id: workspaceId, job_id: targetJobId },
+          { limit: 1 }
+        );
+        jobToClaim = (p?.items || [])[0] || null;
+      } else {
+        const p = await db.entities.NexusDispatchJob.filter(
+          { workspace_id: workspaceId, status: 'queued' },
+          { sort: '-created_date', limit: 1 }
+        );
+        jobToClaim = (p?.items || [])[0] || null;
+      }
+
+      if (!jobToClaim) {
+        return Response.json({ ok: true, claimed: false, message: 'No queued jobs waiting.' });
+      }
+
+      // If execute_cloud_fallback is requested on a queued job, run and complete it immediately
+      if (body.execute_now) {
+        const artifactOut = await executeDirectiveAndPersistArtifact({
+          db,
+          ownerId,
+          workspaceId,
+          jobRecord: jobToClaim,
+        });
+        const completed = await db.entities.NexusDispatchJob.update(jobToClaim.id, {
+          status: 'completed',
+          claimed_by: workerNode,
+          artifact_title: artifactOut.artifact_title,
+          artifact_url: artifactOut.artifact_url,
+          artifact_github_url: artifactOut.artifact_github_url,
+          artifact_sha256: artifactOut.artifact_sha256,
+          artifact_size_bytes: artifactOut.artifact_size_bytes,
+          result_summary: artifactOut.result_summary,
+          completed_at: new Date().toISOString(),
+        });
+        return Response.json({ ok: true, claimed: true, completed: true, job: completed });
+      }
+
+      const claimed = await db.entities.NexusDispatchJob.update(jobToClaim.id, {
+        status: 'claimed',
+        claimed_by: workerNode,
+      });
+      return Response.json({ ok: true, claimed: true, job: claimed });
+    }
+
+    if (action === 'complete_dispatch_job') {
+      const targetJobId = String(body.job_id || '');
+      const workerNode = String(body.worker_node || 'tailnet-worker');
+      const summary = String(body.result_summary || 'Completed by remote Tailnet worker.');
+      const artifactUrl = String(body.artifact_url || '');
+
+      const p = await db.entities.NexusDispatchJob.filter(
+        { workspace_id: workspaceId, job_id: targetJobId },
+        { limit: 1 }
+      );
+      const existing = (p?.items || [])[0];
+      if (!existing) {
+        return Response.json({ error: `Job ${targetJobId} not found` }, { status: 404 });
+      }
+
+      const ghUrl = await commitArtifactToGithubVault({
+        db,
+        jobId: targetJobId,
+        fileName: 'worker-output.md',
+        contentText: `# Worker Output (${workerNode})\n- **Job ID:** ${targetJobId}\n- **Artifact URL:** ${artifactUrl}\n\n${summary}`,
+        jobSnapshot: existing,
+      });
+
+      const updated = await db.entities.NexusDispatchJob.update(existing.id, {
+        status: 'completed',
+        claimed_by: workerNode,
+        artifact_url: artifactUrl || existing.artifact_url,
+        artifact_github_url: ghUrl || existing.artifact_github_url,
+        result_summary: summary,
+        completed_at: new Date().toISOString(),
+      });
+
+      return Response.json({ ok: true, job: updated });
     }
 
     if (action === 'orifice_ping') {

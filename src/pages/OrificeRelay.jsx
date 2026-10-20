@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import Sidebar from '@/components/nexus/Sidebar';
+import SovereignMotorDispatcherPanel from '@/components/nexus/omega/SovereignMotorDispatcherPanel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -423,6 +424,9 @@ You are connected to a live Two-Hemisphere Sovereign AI Operating System built b
             </Button>
           </div>
         </div>
+
+        {/* Motor Cortex: Task Queue with Accountability, Node Dispatcher & Persistent Artifact Vault */}
+        <SovereignMotorDispatcherPanel />
 
         {/* L1–L7 Bicameral Topology Visualizer */}
         <div className="p-3.5 rounded-lg border border-primary/40 bg-card space-y-3">

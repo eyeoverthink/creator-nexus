@@ -21,7 +21,11 @@
                 "orifice_absorb",
                 "orifice_tx_queue",
                 "orifice_peer_bridge",
-                "orifice_github_sync"
+                "orifice_github_sync",
+                "dispatch_route_task",
+                "list_dispatch_jobs",
+                "claim_dispatch_job",
+                "complete_dispatch_job"
               ],
               "description": "Gateway operation to run: status, dispatch_task, opeg_verify, absorb_all_continuity, or Synaptic Orifice TX/RX actions (orifice_ping, orifice_absorb, orifice_tx_queue, orifice_peer_bridge)."
             },
