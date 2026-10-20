@@ -1,4 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
+import { secrets } from 'base44:runtime';
+import process from 'node:process';
 
 export default async function(req) {
   try {
@@ -30,7 +32,7 @@ export default async function(req) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-console-key': 'PLACEHOLDER_CONSOLE_KEY',
+          'x-console-key': process.env.FRAYMUS_CONSOLE_KEY || secrets.get('FRAYMUS_CONSOLE_KEY') || '',
         },
         body: JSON.stringify({
           name,
