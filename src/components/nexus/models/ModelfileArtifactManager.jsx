@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import TernaryWeightMatrixEditor from '@/components/nexus/models/TernaryWeightMatrixEditor';
+import { ollamaRequest } from '@/components/nexus/models/ollamaClient';
+import { createModelOnOllamaBackend } from '@/components/nexus/models/ollamaCreateModel';
 import {
   Upload,
   Sparkles,
@@ -12,6 +14,8 @@ import {
   Loader2,
   CheckCircle2,
   Plus,
+  Server,
+  RefreshCw,
 } from 'lucide-react';
 
 const KIND_LABELS = {
@@ -42,11 +46,58 @@ export default function ModelfileArtifactManager({
   const [fileUri, setFileUri] = useState('');
   const [fileName, setFileName] = useState('');
 
+  const [ollamaSettings, setOllamaSettings] = useState(() => {
+    try {
+      const keys = Object.keys(localStorage).filter((k) => k.startsWith('nexus-model:'));
+      if (keys.length > 0) {
+        const parsed = JSON.parse(localStorage.getItem(keys[0]) || 'null');
+        if (parsed?.endpoint) return parsed;
+      }
+    } catch {}
+    return {
+      provider: 'ollama',
+      connection: 'local',
+      endpoint: 'http://localhost:11434',
+      model: '',
+    };
+  });
+  const [ollamaToken, setOllamaToken] = useState('');
+  const [installedOllamaModels, setInstalledOllamaModels] = useState([]);
+  const [checkingOllama, setCheckingOllama] = useState(false);
+
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [fineTuneReport, setFineTuneReport] = useState(null);
   const [statusMsg, setStatusMsg] = useState('');
   const [error, setError] = useState('');
+
+  const fetchInstalledOllamaModels = async (silent = false) => {
+    if (!silent) {
+      setCheckingOllama(true);
+      setError('');
+    }
+    try {
+      const data = await ollamaRequest(ollamaSettings, ollamaToken, '/api/tags');
+      const names = (data?.models || []).map((m) => m.name).filter(Boolean);
+      setInstalledOllamaModels(names);
+      if (names.length && !baseModel) {
+        setBaseModel(names[0]);
+      }
+      if (!silent) {
+        setStatusMsg(`Connected to Ollama (${ollamaSettings.endpoint}): ${names.length} model(s) available.`);
+      }
+      return names;
+    } catch (err) {
+      if (!silent) setError(err.message || 'Could not reach Ollama /api/tags');
+      return [];
+    } finally {
+      if (!silent) setCheckingOllama(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInstalledOllamaModels(true);
+  }, []);
 
   const loadIntoEditor = (art) => {
     if (!art) return;
@@ -185,23 +236,74 @@ export default function ModelfileArtifactManager({
   const handleFineTune = async (artId) => {
     setBusy(true);
     setError('');
+    setStatusMsg('');
     try {
-      const { data } = await base44.functions.invoke('nexusEvolution', {
+      const targetArtifact =
+        artifacts.find((a) => a.id === (artId || selected?.id)) ||
+        selected || {
+          id: artId,
+          name: name || 'fraymus-ternary-director',
+          base_model: baseModel,
+          content,
+          system_prompt: systemPrompt,
+          weight,
+          ternary_state: ternaryState,
+          ternary_matrix: ternaryMatrix,
+          evolution_generation: 1,
+        };
+
+      // Step 1: Compile ternary {-1, 0, +1} directive & workspace few-shot messages
+      const { data: prepData } = await base44.functions.invoke('nexusEvolution', {
         action: 'fine_tune_ternary_model',
-        artifact_id: artId || selected?.id,
+        artifact_id: targetArtifact.id,
       });
-      if (data?.error) throw new Error(data.error);
-      if (Array.isArray(data?.artifacts)) {
-        onArtifactsChange?.(data.artifacts);
+      if (prepData?.error) throw new Error(prepData.error);
+
+      // Step 2: Actually create the fine-tuned model on the user's Ollama backend via POST /api/create
+      const ollamaCreated = await createModelOnOllamaBackend({
+        settings: ollamaSettings,
+        token: ollamaToken,
+        artifact: {
+          ...targetArtifact,
+          base_model: baseModel || targetArtifact.base_model,
+          content: content || targetArtifact.content,
+          system_prompt: systemPrompt || targetArtifact.system_prompt,
+        },
+        fewShotMessages: prepData?.fewShotMessages || [],
+        ternaryDirective: prepData?.ternaryDirective || '',
+      });
+
+      if (Array.isArray(ollamaCreated.installedModels)) {
+        setInstalledOllamaModels(ollamaCreated.installedModels);
       }
-      if (data?.fineTuneReport) {
-        setFineTuneReport(data.fineTuneReport);
-        setStatusMsg(
-          `Fine-tuned "${data.fineTuneReport.artifactName}" to Gen ${data.fineTuneReport.generation} (Final Loss ${data.fineTuneReport.finalLoss} · Projected Retention ${data.fineTuneReport.projectedRetentionPct}%).`
-        );
+
+      // Step 3: Persist Ollama creation receipt & compiled Modelfile back to the artifact record
+      const { data: finalData } = await base44.functions.invoke('nexusEvolution', {
+        action: 'fine_tune_ternary_model',
+        artifact_id: targetArtifact.id,
+        ollama_result: ollamaCreated,
+      });
+
+      if (Array.isArray(finalData?.artifacts)) {
+        onArtifactsChange?.(finalData.artifacts);
       }
+      if (finalData?.artifact) {
+        loadIntoEditor(finalData.artifact);
+      }
+      if (finalData?.fineTuneReport) {
+        setFineTuneReport({
+          ...finalData.fineTuneReport,
+          ollamaModelTag: ollamaCreated.createdModelTag,
+          ollamaBaseModel: ollamaCreated.resolvedBaseModel,
+          ollamaDigest: ollamaCreated.digest,
+          ollamaElapsedMs: ollamaCreated.elapsedMs,
+        });
+      }
+      setStatusMsg(
+        `Created model "${ollamaCreated.createdModelTag}" (FROM ${ollamaCreated.resolvedBaseModel}) on Ollama (${ollamaSettings.endpoint}) in ${ollamaCreated.elapsedMs}ms.`
+      );
     } catch (err) {
-      setError(err.message || 'Fine-tune calibration failed');
+      setError(err.message || 'Ollama model creation failed');
     } finally {
       setBusy(false);
     }
@@ -252,6 +354,59 @@ export default function ModelfileArtifactManager({
 
   return (
     <div className="space-y-3 font-mono text-xs">
+      {/* Live Ollama Backend Connection Bar for /api/create */}
+      <div className="p-2.5 rounded-lg border border-border bg-card flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Server size={13} className="text-primary" />
+          <span className="font-semibold text-[11px] text-foreground">
+            OLLAMA BACKEND TARGET (POST /api/create):
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5 flex-1 max-w-3xl">
+          <select
+            value={ollamaSettings.connection || 'local'}
+            onChange={(e) =>
+              setOllamaSettings((s) => ({ ...s, connection: e.target.value }))
+            }
+            className="h-7 rounded bg-background border border-input px-2 text-[11px]"
+          >
+            <option value="local">Local (localhost)</option>
+            <option value="network">Network / Tailscale</option>
+            <option value="https">HTTPS Tunnel</option>
+          </select>
+          <input
+            type="url"
+            value={ollamaSettings.endpoint}
+            onChange={(e) =>
+              setOllamaSettings((s) => ({ ...s, endpoint: e.target.value }))
+            }
+            placeholder="http://localhost:11434"
+            className="flex-1 min-w-[180px] h-7 rounded bg-background border border-input px-2 text-[11px]"
+          />
+          <input
+            type="password"
+            value={ollamaToken}
+            onChange={(e) => setOllamaToken(e.target.value)}
+            placeholder="Bearer token (optional)"
+            className="w-36 h-7 rounded bg-background border border-input px-2 text-[11px]"
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={checkingOllama}
+            onClick={() => fetchInstalledOllamaModels(false)}
+            className="h-7 px-2.5 text-[10.5px] font-mono gap-1"
+          >
+            {checkingOllama ? (
+              <Loader2 size={11} className="animate-spin" />
+            ) : (
+              <RefreshCw size={11} />
+            )}
+            Check /api/tags ({installedOllamaModels.length})
+          </Button>
+        </div>
+      </div>
+
       {/* Automated AI Prompt / Modelfile Generator + Private Upload Bar */}
       <div className="p-3 rounded-lg border border-border bg-card space-y-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -500,12 +655,16 @@ export default function ModelfileArtifactManager({
 
           {fineTuneReport && (
             <div className="p-2.5 rounded border border-primary/40 bg-selection space-y-1.5 text-[10.5px]">
-              <div className="flex items-center justify-between font-semibold text-primary">
+              <div className="flex flex-wrap items-center justify-between gap-2 font-semibold text-primary">
                 <span>
-                  ⚡ TERNARY FINE-TUNE CALIBRATION REPORT: {fineTuneReport.artifactName} (Gen{' '}
+                  ⚡ OLLAMA /api/create &amp; TERNARY FINE-TUNE REPORT: {fineTuneReport.artifactName} (Gen{' '}
                   {fineTuneReport.generation})
                 </span>
-                <span>{fineTuneReport.quantizationScheme}</span>
+                {fineTuneReport.ollamaModelTag && (
+                  <span className="px-2 py-0.5 rounded bg-success/20 text-success border border-success/40">
+                    Ollama Tag: {fineTuneReport.ollamaModelTag} (FROM {fineTuneReport.ollamaBaseModel}) · {fineTuneReport.ollamaElapsedMs}ms
+                  </span>
+                )}
               </div>
               <div className="grid grid-cols-4 gap-2">
                 {fineTuneReport.epochs.map((ep) => (

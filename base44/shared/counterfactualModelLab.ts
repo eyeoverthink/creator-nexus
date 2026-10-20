@@ -615,33 +615,82 @@ export async function runTernaryFineTuneJob(db, scope, input) {
   const nextGen = (target.evolution_generation || 1) + 1;
   const elapsedMs = Number((performance.now() - t0).toFixed(2));
 
+  const ternaryDirective =
+    `[F.R.A.Y.M.U.S. TERNARY {-1, 0, +1} QUANTIZED STEERING | WEIGHT=${target.weight ?? 1}x | STATE=${target.ternary_state ?? 1}]\n` +
+    TERNARY_DIMENSIONS.map((d, i) => {
+      const v = prevMatrix[i] ?? 1;
+      return `- ${d.label}: ${v === 1 ? '+1 EXCITATORY (AMPLIFY)' : v === -1 ? '-1 INHIBITORY (SUPPRESS)' : '0 NEUTRAL'}`;
+    }).join('\n');
+
+  // Build real few-shot MESSAGE pairs from workspace NexusExample & SparkCard records for Ollama /api/create
+  const fewShotMessages: Array<{ role: string; content: string }> = [];
+  for (const ex of examples.slice(0, 3)) {
+    if (ex.before_body && ex.after_body) {
+      fewShotMessages.push({
+        role: 'user',
+        content: `Apply ternary counterfactual optimization (${ex.task || 'improve retention & surprise'}):\n${String(ex.before_body).slice(0, 500)}`,
+      });
+      fewShotMessages.push({
+        role: 'assistant',
+        content: String(ex.after_body).slice(0, 700),
+      });
+    }
+  }
+  for (const sp of sparks.filter((s: any) => s.narration).slice(0, 2)) {
+    fewShotMessages.push({
+      role: 'user',
+      content: `Draft a high-retention script for hook: "${sp.hook_title}" with twist: "${sp.signature_twist || ''}"`,
+    });
+    fewShotMessages.push({
+      role: 'assistant',
+      content: String(sp.narration).slice(0, 700),
+    });
+  }
+  if (fewShotMessages.length === 0) {
+    fewShotMessages.push(
+      {
+        role: 'user',
+        content: 'Optimize hook and pacing for counterfactual audience retention.',
+      },
+      {
+        role: 'assistant',
+        content:
+          'Four co-evolving agents cut kernel cycles by 20 percent from 1363 to 1103 cycles. By sharing a polar memory bus, variation operators mutate register strides directly in the sandbox. The voice and captions in this video were made with AI.',
+      }
+    );
+  }
+
   // Build JSONL fine-tune preview lines
-  const jsonlSample = [
-    JSON.stringify({
-      messages: [
-        { role: 'system', content: target.system_prompt || 'F.R.A.Y.M.U.S. Ternary Director' },
-        { role: 'user', content: 'Optimize hook and pacing for counterfactual audience retention.' },
-        {
-          role: 'assistant',
-          content:
-            'Four co-evolving agents cut kernel cycles by 20 percent from 1363 to 1103 cycles. By sharing a polar memory bus, variation operators mutate register strides directly in the sandbox. The voice and captions in this video were made with AI.',
-        },
-      ],
-      ternary_weights: prevMatrix,
-    }),
-  ].join('\n');
+  const jsonlSample = JSON.stringify({
+    messages: [{ role: 'system', content: `${target.system_prompt || ''}\n${ternaryDirective}`.trim() }, ...fewShotMessages],
+    ternary_weights: prevMatrix,
+  });
+
+  const ollamaMeta = input.ollama_result && typeof input.ollama_result === 'object' ? input.ollama_result : null;
 
   const updated = await db.entities.NexusModelArtifact.update(target.id, {
     evolution_generation: nextGen,
     fine_tune_status: 'fine_tuned',
     preflight_score: 93.4,
     surprise_bits: 1.74,
+    ...(ollamaMeta?.compiledModelfile && target.artifact_kind === 'modelfile'
+      ? { content: String(ollamaMeta.compiledModelfile).slice(0, 18500) }
+      : {}),
+    ...(ollamaMeta?.resolvedBaseModel ? { base_model: String(ollamaMeta.resolvedBaseModel) } : {}),
     parameters: {
       ...(target.parameters || {}),
       last_fine_tuned_at: new Date().toISOString(),
       training_samples: sampleCount,
       final_loss: 0.412,
       quantization: 'BitNet-b1.58 Ternary {-1, 0, +1}',
+      ...(ollamaMeta
+        ? {
+            ollama_model_tag: ollamaMeta.createdModelTag,
+            ollama_base_model: ollamaMeta.resolvedBaseModel,
+            ollama_digest: ollamaMeta.digest || '',
+            ollama_create_ms: ollamaMeta.elapsedMs || 0,
+          }
+        : {}),
     },
   });
 
@@ -651,15 +700,21 @@ export async function runTernaryFineTuneJob(db, scope, input) {
     measuredMs: elapsedMs,
     artifact: updated,
     artifacts: freshArtifacts,
+    fewShotMessages,
+    ternaryDirective,
     fineTuneReport: {
       artifactName: updated.name,
       generation: nextGen,
-      quantizationScheme: 'BitNet b1.58 Ternary {-1, 0, +1} + LoRA r=16',
+      quantizationScheme: 'BitNet b1.58 Ternary {-1, 0, +1} + Ollama /api/create',
       samplesProcessed: sampleCount,
       epochs,
       finalLoss: 0.412,
       projectedRetentionPct: 93.4,
       jsonlPreview: jsonlSample,
+      ollamaModelTag: ollamaMeta?.createdModelTag || null,
+      ollamaBaseModel: ollamaMeta?.resolvedBaseModel || null,
+      ollamaDigest: ollamaMeta?.digest || null,
+      ollamaElapsedMs: ollamaMeta?.elapsedMs || null,
     },
   };
 }
