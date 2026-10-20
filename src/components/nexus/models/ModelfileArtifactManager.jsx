@@ -43,7 +43,7 @@ export default function ModelfileArtifactManager({
 
   const [kind, setKind] = useState('modelfile');
   const [name, setName] = useState('');
-  const [baseModel, setBaseModel] = useState('llama3.2:3b-instruct');
+  const [baseModel, setBaseModel] = useState('llama3.2:3b-instruct-q8_0');
   const [systemPrompt, setSystemPrompt] = useState('');
   const [content, setContent] = useState('');
   const [ternaryState, setTernaryState] = useState(1);
@@ -64,7 +64,7 @@ export default function ModelfileArtifactManager({
     setSelectedId(art.id);
     setKind(art.artifact_kind || 'modelfile');
     setName(art.name || '');
-    setBaseModel(art.base_model || art.base || 'llama3.2:3b-instruct');
+    setBaseModel(art.base_model || art.base || 'llama3.2:3b-instruct-q8_0');
     setSystemPrompt(art.system_prompt || '');
     setContent(art.content || '');
     setTernaryState(Number(art.ternary_state ?? 1));
@@ -205,7 +205,11 @@ export default function ModelfileArtifactManager({
     try {
       const cardTitle = card?.name || name || 'custom-model';
       const generatedModelName = toFraymusKebabName(cardTitle);
-      const cardBaseModel = (card?.base_model || card?.base || baseModel || 'llama3.2:3b-instruct').trim();
+      const rawCardBase = (card?.base_model || card?.base || baseModel || 'llama3.2:3b-instruct-q8_0').trim();
+      const cardBaseModel =
+        rawCardBase === 'llama3.2:3b-instruct' || rawCardBase === 'llama3.2:3b'
+          ? 'llama3.2:3b-instruct-q8_0'
+          : rawCardBase;
       const cardTernaryState = Number(card?.ternary_state ?? ternaryState ?? 1);
       const cardWeight = Number(card?.weight ?? card?.ternaryWeight ?? weight ?? 1.0);
       const cardMatrix = Array.isArray(card?.ternary_matrix) ? card.ternary_matrix : ternaryMatrix;

@@ -16,7 +16,11 @@ export default async function(req) {
 
     const body = await req.json().catch(() => ({}));
     const name = String(body.name || '').trim();
-    const baseModel = String(body.baseModel || '').trim();
+    const rawBaseModel = String(body.baseModel || '').trim();
+    const baseModel =
+      rawBaseModel === 'llama3.2:3b-instruct' || rawBaseModel === 'llama3.2:3b'
+        ? 'llama3.2:3b-instruct-q8_0'
+        : rawBaseModel;
     const systemPrompt = String(body.systemPrompt || '').trim();
 
     if (!name || !baseModel || !systemPrompt) {

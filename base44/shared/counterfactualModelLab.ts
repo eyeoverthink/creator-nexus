@@ -142,7 +142,7 @@ export async function saveModelArtifact(db, scope, input) {
       ? input.artifact_kind
       : 'modelfile',
     name: String(input.name || 'Untitled Model Artifact').trim().slice(0, 160),
-    base_model: String(input.base_model || 'llama3.2:3b').trim().slice(0, 120),
+    base_model: String(input.base_model || 'llama3.2:3b-instruct-q8_0').trim().slice(0, 120),
     content: String(input.content || '').slice(0, 18500),
     system_prompt: String(input.system_prompt || '').slice(0, 7500),
     file_uri: String(input.file_uri || '').slice(0, 1900),
@@ -202,7 +202,11 @@ export async function updateTernaryWeights(db, scope, input) {
 export async function generateAutomatedArtifactOrPrompt(db, scope, input) {
   const kind = input.artifact_kind || 'prompt_template';
   const goal = String(input.goal || 'Maximize counterfactual audience retention and information surprise').trim();
-  const baseModel = String(input.base_model || 'llama3.2:3b-instruct').trim();
+  const rawBase = String(input.base_model || 'llama3.2:3b-instruct-q8_0').trim();
+  const baseModel =
+    rawBase === 'llama3.2:3b-instruct' || rawBase === 'llama3.2:3b'
+      ? 'llama3.2:3b-instruct-q8_0'
+      : rawBase;
   const ternaryMatrix = Array.isArray(input.ternary_matrix)
     ? input.ternary_matrix
     : [1, 1, 1, 1, 1, 1, -1, 1];
