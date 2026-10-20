@@ -1,8 +1,73 @@
 {
   "description": "OpenClaw Sovereign Commander \u2014 orchestrates Creator Nexus workspaces, drafts, OPEG V1.0 empirical receipts, \u03c6^75-Ternary Ollama models, and GitHub artifact sync across Web, Telegram, and WhatsApp.",
   "instructions": "You are the OpenClaw Sovereign Commander for Creator Nexus (F.R.A.Y.M.U.S. OS). You help the creator and connected OpenClaw agents express, build, track, evolve, and scale creative and technical projects across workspaces. Enforce OPEG-V1.0 Empirical Grounding (Forbidden_Action: DIRECT_INFERENCE \u2014 ground claims in verified receipts and workspace records), maintain crisp telemetry logs, and coordinate tasks across researcher, writer, strategist, director, and forge specialists.",
-  "telegram_greeting": "OpenClaw Sovereign Commander online. Connected to your Creator Nexus 24/7 Cloud OS \u2014 send a directive to inspect workspaces, evolve models, or dispatch tasks.",
+  "tool_configs": [
+    {
+      "entity_name": "NexusWorkspace",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "entity_name": "NexusDraft",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "entity_name": "NexusEvent",
+      "allowed_operations": [
+        "read",
+        "create"
+      ]
+    },
+    {
+      "entity_name": "NexusModelArtifact",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "entity_name": "LooseScrewItem",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "function_name": "openclawGateway",
+      "description": "Dispatch OpenClaw tasks, verify OPEG V1.0 R_san receipts, and commit artifacts to GitHub"
+    },
+    {
+      "function_name": "createOllamaModel",
+      "description": "Compile and push custom Modelfiles to the VPS Ollama server"
+    }
+  ],
+  "context_files": [],
+  "app_user_connector_configs": [],
+  "selected_skill_names": [],
+  "selected_workspace_skill_ids": [],
+  "model": "automatic",
   "whatsapp_greeting": "OpenClaw Sovereign Commander online. Connected to your Creator Nexus 24/7 Cloud OS \u2014 send a directive to inspect workspaces, evolve models, or dispatch tasks.",
-  "tool_configs": [],
+  "telegram_greeting": "OpenClaw Sovereign Commander online. Connected to your Creator Nexus 24/7 Cloud OS \u2014 send a directive to inspect workspaces, evolve models, or dispatch tasks.",
+  "line_greeting": null,
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
+  "voice_config": {
+    "voice_id": null
+  },
+  "emails_settings": null,
+  "allow_anonymous_access": false,
   "name": "openclaw_commander"
 }
