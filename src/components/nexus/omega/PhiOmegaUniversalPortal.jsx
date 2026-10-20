@@ -13,11 +13,13 @@ import {
 } from '@/components/nexus/omega/fraymusOmegaSource';
 import { runOmegaCognitiveCycle } from '@/components/nexus/omega/fraymusOmegaEngine';
 import AffectivePartnerTunerPanel from '@/components/nexus/omega/AffectivePartnerTunerPanel';
+import Phi75TernaryTransmuterPanel from '@/components/nexus/omega/Phi75TernaryTransmuterPanel';
 import {
   Eye,
   Ear,
   Hand,
   Heart,
+  Cpu,
   Sparkles,
   Send,
   Database,
@@ -283,6 +285,14 @@ export default function PhiOmegaUniversalPortal({ onSyncToMonolith }) {
           </Button>
           <Button
             size="sm"
+            variant={viewMode === 'phi75' ? 'default' : 'outline'}
+            onClick={() => setViewMode('phi75')}
+            className="h-7 text-[10px] px-2.5 gap-1"
+          >
+            <Cpu size={11} /> φ⁷⁵-Ternary ↔ GGUF Transmuter
+          </Button>
+          <Button
+            size="sm"
             variant={viewMode === 'partner' ? 'default' : 'outline'}
             onClick={() => setViewMode('partner')}
             className="h-7 text-[10px] px-2.5 gap-1"
@@ -545,8 +555,13 @@ export default function PhiOmegaUniversalPortal({ onSyncToMonolith }) {
         </div>
       )}
 
-      {/* Embedded Companion & Affective Model-Tuning Suite, Interactive Portal, or Java Source View */}
-      {viewMode === 'partner' ? (
+      {/* Embedded φ^75-Ternary Transmuter, Companion Tuner, Interactive Portal, or Java Source View */}
+      {viewMode === 'phi75' ? (
+        <Phi75TernaryTransmuterPanel
+          omegaEmotion={omegaState.emotion}
+          onStatusBanner={(msg) => setStatusBanner(msg)}
+        />
+      ) : viewMode === 'partner' ? (
         <AffectivePartnerTunerPanel
           onEmotionUpdate={(txt) => setEmotionInput(txt)}
           onStatusBanner={(msg) => setStatusBanner(msg)}
