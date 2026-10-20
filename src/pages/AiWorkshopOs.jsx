@@ -40,20 +40,20 @@ export default function AiWorkshopOs(){
   w.document.open();w.document.write(AI_WORKSHOP_OS_HTML);w.document.close();
  };
  return <div className="fixed inset-0 bg-background flex flex-col">
-  <header className="h-10 px-3 bg-card border-b border-border flex items-center justify-between font-mono text-xs z-20">
-   <div className="flex items-center gap-3">
-    <Link to="/studio" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"><Layers3 size={13}/>Studio Panel</Link>
+  <header className="min-h-10 py-1.5 px-3 bg-card border-b border-border flex flex-wrap items-center justify-between gap-2 font-mono text-xs z-20">
+   <div className="flex flex-wrap items-center gap-2.5">
+    <Link to="/studio" className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"><Layers3 size={13}/>Studio</Link>
     <span className="text-border">|</span>
-    <Link to="/loose-screw" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"><ArrowLeft size={13}/>looseScrew Lab</Link>
+    <Link to="/loose-screw" className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"><ArrowLeft size={13}/>looseScrew</Link>
     <span className="text-border">|</span>
-    <strong className="text-primary">F.R.A.Y.M.U.S. // Tycho dream.srv — 3D Monolith &amp; Sovereign OS Engine</strong>
+    <strong className="text-primary truncate">F.R.A.Y.M.U.S. // 3D Monolith &amp; Sovereign OS Engine</strong>
    </div>
-   <div className="flex items-center gap-2">
-    <Button size="sm" variant={showOsSpawner?'default':'outline'} onClick={()=>{setShowOsSpawner(v=>!v);if(!showOsSpawner){setShowHive(false);setShowTelemetry(false);}}} className="h-7 font-mono text-[11px] gap-1"><Cpu size={11}/>{showOsSpawner?'Hide Sovereign OS Engine':'⚛ Evolve Sovereign OS'}</Button>
-    <Button size="sm" variant={showHive?'default':'outline'} onClick={()=>{setShowHive(v=>!v);if(!showHive){setShowTelemetry(false);setShowOsSpawner(false);}}} className="h-7 font-mono text-[11px] gap-1"><Users size={11}/>{showHive?'Hide 15-Agent Hive':'🐝 15-Agent Hive & Digest'}</Button>
-    <Button size="sm" variant={showTelemetry?'default':'outline'} onClick={()=>{setShowTelemetry(v=>!v);if(!showTelemetry){setShowHive(false);setShowOsSpawner(false);}}} className="h-7 font-mono text-[11px] gap-1"><Activity size={11}/>{showTelemetry?'Hide RSA/RSI Telemetry':'Live RSA · RSI · Sentiment'}</Button>
-    <Button size="sm" variant="outline" onClick={popOut} className="h-7 font-mono text-[11px] gap-1"><Maximize2 size={11}/>Pop Out Native Window</Button>
-    <a href="https://github.com/eyeoverthink/looseScrew" target="_blank" rel="noopener noreferrer" className="inline-flex h-7 items-center gap-1 rounded border border-primary/50 bg-selection px-2.5 text-[11px] text-primary"><ExternalLink size={11}/>GitHub</a>
+   <div className="flex flex-wrap items-center gap-1.5">
+    <Button size="sm" variant={showOsSpawner?'default':'outline'} onClick={()=>{setShowOsSpawner(v=>!v);if(!showOsSpawner){setShowHive(false);setShowTelemetry(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Cpu size={11}/>{showOsSpawner?'Hide OS Engine':'⚛ Sovereign OS'}</Button>
+    <Button size="sm" variant={showHive?'default':'outline'} onClick={()=>{setShowHive(v=>!v);if(!showHive){setShowTelemetry(false);setShowOsSpawner(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Users size={11}/>{showHive?'Hide Hive':'🐝 15-Agent Hive'}</Button>
+    <Button size="sm" variant={showTelemetry?'default':'outline'} onClick={()=>{setShowTelemetry(v=>!v);if(!showTelemetry){setShowHive(false);setShowOsSpawner(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Activity size={11}/>{showTelemetry?'Hide Telemetry':'RSA · RSI'}</Button>
+    <Button size="sm" variant="outline" onClick={popOut} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Maximize2 size={11}/>Pop Out</Button>
+    <a href="https://github.com/eyeoverthink/looseScrew" target="_blank" rel="noopener noreferrer" className="inline-flex h-7 items-center gap-1 rounded border border-primary/50 bg-selection px-2 text-[10.5px] text-primary"><ExternalLink size={11}/>GitHub</a>
    </div>
   </header>
   <CrossTabMemoryBar/>

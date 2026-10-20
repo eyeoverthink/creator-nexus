@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
+import { publishSelection } from '@/lib/crossTabMemory';
+import SovereignOsSandboxCard from '@/components/nexus/loosescrew/SovereignOsSandboxCard';
 import {
   Cpu,
   GitMerge,
@@ -10,7 +12,6 @@ import {
   Plus,
   Radio,
   Sparkles,
-  Terminal,
   Zap,
 } from 'lucide-react';
 
@@ -58,6 +59,14 @@ export default function SovereignOsSpawnerPanel({ onSyncToMonolith }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [lastEventMsg, setLastEventMsg] = useState('');
+
+  const broadcastOsToSynapse = useCallback((sys) => {
+    if (!sys) return;
+    publishSelection({
+      text: `[Sovereign OS: ${sys.name} // Gen ${sys.generation} · #${sys.codeHash}] ${sys.focus} | Fitness: ${sys.fitness} | Speedup: ${sys.speedup}x | CORAL Cycles: ${sys.coralCycles || 1103} | Syscalls: ${(sys.syscalls || []).join(', ')}`,
+      field: `${sys.name} (Gen ${sys.generation})`,
+    });
+  }, []);
 
   const loadSystems = useCallback(async () => {
     setLoading(true);
@@ -109,6 +118,7 @@ export default function SovereignOsSpawnerPanel({ onSyncToMonolith }) {
         }
         if (data?.system) {
           setSelectedSystem(data.system);
+          broadcastOsToSynapse(data.system);
           const actionVerb =
             data.mode === 'crossover'
               ? 'Cross-Pollinated'
@@ -130,7 +140,29 @@ export default function SovereignOsSpawnerPanel({ onSyncToMonolith }) {
         setBusy(false);
       }
     },
-    [busy, customName, directive, useAi, webGrounded, onSyncToMonolith]
+    [busy, customName, directive, useAi, webGrounded, onSyncToMonolith, broadcastOsToSynapse]
+  );
+
+  const handleMintProof = useCallback(
+    async (sys) => {
+      if (!sys || busy) return;
+      setBusy(true);
+      setError('');
+      try {
+        const { data } = await base44.functions.invoke('nexusEvolution', {
+          action: 'mint_proof_certificate',
+        });
+        if (data?.error) throw new Error(data.error);
+        setLastEventMsg(
+          `Minted Cryptographic Proof-of-Evolution (PoE) Certificate for ${sys.name} (#${sys.codeHash}) to Library & Centripetal Orbit`
+        );
+      } catch (e) {
+        setError(e.message || 'Could not mint PoE certificate');
+      } finally {
+        setBusy(false);
+      }
+    },
+    [busy]
   );
 
   useEffect(() => {
@@ -162,12 +194,12 @@ export default function SovereignOsSpawnerPanel({ onSyncToMonolith }) {
   }, [autoEvolve, busy, systems, runSpawnOrEvolve]);
 
   return (
-    <div className="p-4 border-b border-border bg-background/95 font-mono text-xs text-foreground space-y-3 z-20 max-h-[62vh] overflow-y-auto">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2.5">
+    <div className="p-3.5 border-b border-border bg-background/95 font-mono text-xs text-foreground space-y-2.5 z-20 max-h-[58vh] overflow-y-auto">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
         <div className="flex items-center gap-2">
-          <Cpu size={15} className="text-primary" />
+          <Cpu size={15} className="text-primary shrink-0" />
           <div>
-            <div className="font-semibold text-sm flex items-center gap-2">
+            <div className="font-semibold text-xs sm:text-sm flex flex-wrap items-center gap-2">
               <span>F.R.A.Y.M.U.S. SOVEREIGN SUB-OS GENESIS &amp; CO-EVOLUTION ENGINE</span>
               <span className="px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/30 text-[10px]">
                 {systems.length} LIVE SYSTEMS
@@ -179,20 +211,20 @@ export default function SovereignOsSpawnerPanel({ onSyncToMonolith }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
             variant={autoEvolve ? 'default' : 'outline'}
             onClick={() => setAutoEvolve((v) => !v)}
-            className="h-7 text-[11px] font-mono gap-1"
+            className="h-7 text-[10.5px] font-mono gap-1"
           >
-            <Radio size={12} className={autoEvolve ? 'animate-pulse' : ''} />
-            {autoEvolve ? 'Auto-Evolve Loop: ON (18s)' : 'Enable Auto-Evolve Loop'}
+            <Radio size={11} className={autoEvolve ? 'animate-pulse' : ''} />
+            {autoEvolve ? 'Auto-Evolve: ON (18s)' : 'Auto-Evolve Loop'}
           </Button>
-          <Link to="/argon" className="text-[11px] text-primary hover:underline">
+          <Link to="/argon" className="text-[10.5px] text-primary hover:underline">
             Argon Orbit →
           </Link>
-          <Link to="/loose-screw" className="text-[11px] text-primary hover:underline">
+          <Link to="/loose-screw" className="text-[10.5px] text-primary hover:underline">
             looseScrew CODE →
           </Link>
         </div>
@@ -214,30 +246,30 @@ export default function SovereignOsSpawnerPanel({ onSyncToMonolith }) {
                 directiveOverride: p.directive,
               })
             }
-            className="px-2.5 py-1 rounded bg-secondary/70 hover:bg-primary/20 border border-border hover:border-primary/40 text-[10px] text-foreground transition-colors"
+            className="px-2 py-1 rounded bg-secondary/70 hover:bg-primary/20 border border-border hover:border-primary/40 text-[10px] text-foreground transition-colors"
           >
             {p.label}
           </button>
         ))}
       </div>
 
-      {/* Custom Spawner + Live Internet Grounding + Crossover Controls */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 items-center bg-card p-3 rounded-lg border border-border">
+      {/* Custom Spawner + Live Internet Grounding */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center bg-card p-2.5 rounded-lg border border-border">
         <input
           type="text"
           value={customName}
           onChange={(e) => setCustomName(e.target.value)}
           placeholder="OS name (optional)..."
-          className="lg:col-span-2 h-8 px-2.5 rounded bg-background border border-input text-xs"
+          className="md:col-span-2 h-8 px-2.5 rounded bg-background border border-input text-xs"
         />
         <input
           type="text"
           value={directive}
           onChange={(e) => setDirective(e.target.value)}
           placeholder="Directive or research topic (e.g. 'Zero-latency WebGPU shader kernel')..."
-          className="lg:col-span-4 h-8 px-2.5 rounded bg-background border border-input text-xs"
+          className="md:col-span-4 h-8 px-2.5 rounded bg-background border border-input text-xs"
         />
-        <label className="lg:col-span-2 flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
+        <label className="md:col-span-2 flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
           <input
             type="checkbox"
             checked={useAi}
@@ -245,7 +277,7 @@ export default function SovereignOsSpawnerPanel({ onSyncToMonolith }) {
           />
           <Sparkles size={11} className="text-primary" /> AI Architect
         </label>
-        <label className="lg:col-span-2 flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
+        <label className="md:col-span-2 flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
           <input
             type="checkbox"
             checked={webGrounded}
@@ -253,7 +285,7 @@ export default function SovereignOsSpawnerPanel({ onSyncToMonolith }) {
           />
           <Globe size={11} className="text-success" /> Live Web Search
         </label>
-        <div className="lg:col-span-2 flex justify-end">
+        <div className="md:col-span-2 flex justify-end">
           <Button
             size="sm"
             disabled={busy}
@@ -266,11 +298,11 @@ export default function SovereignOsSpawnerPanel({ onSyncToMonolith }) {
         </div>
       </div>
 
-      {/* Genetic Crossover Bar when 2+ systems exist */}
+      {/* Genetic Crossover Bar */}
       {systems.length >= 2 && selectedSystem && (
-        <div className="px-3 py-2 rounded bg-secondary/40 border border-border flex flex-wrap items-center justify-between gap-2 text-[11px]">
+        <div className="px-3 py-1.5 rounded bg-secondary/40 border border-border flex flex-wrap items-center justify-between gap-2 text-[11px]">
           <div className="flex flex-wrap items-center gap-2">
-            <GitMerge size={13} className="text-primary" />
+            <GitMerge size={12} className="text-primary" />
             <span>
               <strong>Genetic OS Crossover:</strong> Combine{' '}
               <span className="text-primary">{selectedSystem.name}</span> with:
@@ -331,9 +363,10 @@ export default function SovereignOsSpawnerPanel({ onSyncToMonolith }) {
                   key={sys.id}
                   onClick={() => {
                     setSelectedSystem(sys);
+                    broadcastOsToSynapse(sys);
                     onSyncToMonolith?.(systems, sys);
                   }}
-                  className={`p-3 rounded-lg border cursor-pointer transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                  className={`p-2.5 rounded-lg border cursor-pointer transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
                     isSel
                       ? 'border-primary bg-selection'
                       : 'border-border bg-card hover:bg-secondary/50'
@@ -351,12 +384,12 @@ export default function SovereignOsSpawnerPanel({ onSyncToMonolith }) {
                       </span>
                       <span className="text-[10px] text-muted-foreground">#{sys.codeHash}</span>
                     </div>
-                    <div className="text-[11px] text-muted-foreground line-clamp-2">{sys.focus}</div>
+                    <div className="text-[10.5px] text-muted-foreground line-clamp-2">{sys.focus}</div>
                     <div className="flex flex-wrap gap-2 text-[10px] text-success">
                       <span>Fitness: {sys.fitness}</span>
                       <span>· Speedup: {sys.speedup}x</span>
                       <span>· CORAL: {sys.coralCycles || 1103} cyc</span>
-                      <span>· 3D Synapses: {sys.synapseCount}</span>
+                      <span>· Synapses: {sys.synapseCount}</span>
                     </div>
                   </div>
                   <div className="shrink-0 flex items-center gap-1.5">
@@ -379,33 +412,18 @@ export default function SovereignOsSpawnerPanel({ onSyncToMonolith }) {
           )}
         </div>
 
-        {/* Live Micro-OS Executable Kernel Preview */}
-        <div className="lg:col-span-6 rounded-lg border border-border bg-card overflow-hidden flex flex-col h-72">
-          <div className="px-3 py-1.5 border-b border-border bg-secondary/50 flex items-center justify-between text-[10px]">
-            <span className="font-semibold text-primary flex items-center gap-1.5">
-              <Terminal size={12} />
-              {selectedSystem
-                ? `LIVE KERNEL SANDBOX: ${selectedSystem.name} (Gen ${selectedSystem.generation})`
-                : 'SELECT A SOVEREIGN OS'}
-            </span>
-            {selectedSystem && (
-              <span className="text-muted-foreground">
-                Syscalls: {(selectedSystem.syscalls || []).slice(0, 3).join(', ')}
-              </span>
-            )}
-          </div>
-          {selectedSystem?.appHtml ? (
-            <iframe
-              title={selectedSystem.name}
-              srcDoc={selectedSystem.appHtml}
-              className="flex-1 w-full border-0"
-            />
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-              Select or spawn a Sovereign OS to run its interactive kernel.
-            </div>
-          )}
-        </div>
+        <SovereignOsSandboxCard
+          selectedSystem={selectedSystem}
+          busy={busy}
+          onFocusMonolith={(sys) => onSyncToMonolith?.(systems, sys)}
+          onBroadcastSynapse={(sys) => {
+            broadcastOsToSynapse(sys);
+            setLastEventMsg(
+              `Broadcast ${sys.name} (Gen ${sys.generation}) kernel & syscalls to Cross-Tab Synapse Memory`
+            );
+          }}
+          onMintProof={handleMintProof}
+        />
       </div>
     </div>
   );
