@@ -489,7 +489,7 @@ export default async function(req) {
         : ['vps_daemon_scrape', 'ollama_inference', 'tailnet_router', 'lora_bridge'];
 
       const queuedP = await db.entities.NexusDispatchJob.filter(
-        { workspace_id: workspaceId, status: 'queued' },
+        { status: 'queued' },
         { sort: '-created_date', limit: 15 }
       ).catch(() => ({ items: [] }));
 

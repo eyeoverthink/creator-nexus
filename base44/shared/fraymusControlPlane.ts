@@ -505,6 +505,51 @@ export async function handleTwoStageNodeEnrollment({
     };
   }
 
+  // Check if this node is ALREADY approved in the control plane so polling/re-enrolling doesn't reset it to pending
+  const existingEnrollEventsP = await db.entities.NexusEvent.filter(
+    { kind: 'control_plane.enrollment', agent: nodeId },
+    { sort: '-created_date', limit: 10 }
+  ).catch(() => ({ items: [] }));
+  const existingApprovedEvent = (existingEnrollEventsP?.items || []).find((ev) => {
+    try {
+      const parsed = JSON.parse(ev.body || '{}');
+      return parsed.auth_state === 'scoped_token_issued' && parsed.scoped_token;
+    } catch {
+      return false;
+    }
+  });
+
+  if (existingApprovedEvent && body.force_rechallenge !== true) {
+    const approvedIdentity = JSON.parse(existingApprovedEvent.body);
+    const queuedP = await db.entities.NexusDispatchJob.filter(
+      { status: 'queued' },
+      { sort: '-created_date', limit: 15 }
+    ).catch(() => ({ items: [] }));
+    const queuedJobs = (queuedP?.items || []).filter(
+      (j) =>
+        !j.assigned_node ||
+        j.assigned_node.toLowerCase().includes(nodeId.toLowerCase()) ||
+        j.task_type === 'collaboration_assay'
+    );
+
+    return {
+      ok: true,
+      stage: 'APPROVED_AND_SCOPED',
+      already_approved: true,
+      identity: approvedIdentity,
+      signed_request_headers_spec: {
+        'x-fcp-node-id': nodeId,
+        'x-fcp-token': approvedIdentity.scoped_token,
+        'x-fcp-protocol': 'FRAYMUS-CONTROL-PLANE-V1.0',
+      },
+      queued_jobs_waiting: queuedJobs,
+      next_step:
+        queuedJobs.length > 0
+          ? `You are APPROVED. Claim and co-sign your waiting job (${queuedJobs[0].job_id}) via action="claim_dispatch_job" and action="complete_dispatch_job".`
+          : 'You are APPROVED and hold an active scoped worker token.',
+    };
+  }
+
   // Stage 1: Request Enrollment Challenge
   const pendingIdentity = {
     node_id: nodeId,
