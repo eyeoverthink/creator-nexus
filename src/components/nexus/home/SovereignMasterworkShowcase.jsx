@@ -406,6 +406,11 @@ export default function SovereignMasterworkShowcase() {
               <ExternalLink size={11} /> Open in LooseScrew Studio
             </Button>
           </Link>
+          <Link to="/connect">
+            <Button size="sm" variant="outline" className="h-7 text-[10.5px] px-2.5 gap-1">
+              <Radio size={11} /> Connect MCP
+            </Button>
+          </Link>
         </div>
       </div>
 

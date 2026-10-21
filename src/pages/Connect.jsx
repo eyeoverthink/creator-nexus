@@ -10,9 +10,8 @@ const CLIENT_TABS = [
     id: 'claude',
     label: 'Claude',
     steps: [
-      'Open your profile menu in Claude → Settings → Connectors.',
-      'Click "Add custom connector".',
-      'Name it "Creator Nexus OS", paste the MCP Server URL above, and click Add.',
+      'Click "Add connector" below to open Claude’s custom-connector form pre-filled with Creator Nexus (or paste the MCP Server URL if missing).',
+      'Review the pre-filled details and click "Add".',
       'Complete the OAuth sign-in & consent screen when prompted so Claude acts with your workspace permissions.',
     ],
   },
@@ -20,27 +19,26 @@ const CLIENT_TABS = [
     id: 'chatgpt',
     label: 'ChatGPT',
     steps: [
-      'Open Apps in ChatGPT → enable Developer mode (note ChatGPT’s warning that custom developer connectors can access external data and actions).',
-      'Click "Create app", name it "Creator Nexus OS", paste the MCP Server URL above, and click Create.',
-      'Enable the app from the chat composer before prompting it.',
-      'Approve the Creator Nexus OAuth consent prompt when it opens.',
+      'In the ChatGPT desktop app, open Settings and choose Plugins, then open the MCPs tab and click "Add server". (On the web, custom MCP servers go through Developer mode instead.)',
+      'Name it "Creator Nexus", set Type to "Streamable HTTP", paste the MCP Server URL above, and click "Save".',
+      'Click "Restart", then enable the server.',
+      'Sign in and approve access on the Creator Nexus consent page when it opens.',
     ],
   },
   {
     id: 'cursor',
     label: 'Cursor',
     steps: [
-      'Open Cursor Settings → Customize → MCPs tab → click "New MCP Server" to open mcp.json.',
+      'Open Customize → MCPs tab → click "New MCP Server" to open mcp.json.',
       'Add an entry whose "url" is the MCP Server URL above, save mcp.json, and toggle the server on.',
-      'Complete the OAuth sign-in on the Creator Nexus consent page when prompted.',
+      'Sign in and approve access on the Creator Nexus consent page when prompted.',
     ],
   },
   {
-    id: 'custom',
-    label: 'Custom',
+    id: 'others',
+    label: 'Others',
     steps: [
-      'Copy the MCP Server URL above and register it as a Streamable HTTP MCP server in OpenClaw or any MCP-compatible client.',
-      'Name + URL is all most clients need — then reload your client.',
+      'Copy the MCP Server URL above and add it as a streamable HTTP MCP server (name + URL is all most clients need), then reload the client.',
       'When the OAuth consent window opens, sign in with your Creator Nexus account and approve access.',
     ],
   },
@@ -131,6 +129,22 @@ export default function Connect() {
               ))}
             </ol>
           </div>
+
+          {activeClient === 'claude' && (
+            <div className="pt-1">
+              <Button asChild size="sm" className="gap-1.5 text-xs">
+                <a
+                  href={`https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=${encodeURIComponent(
+                    'Creator Nexus'
+                  )}&connectorUrl=${encodeURIComponent(mcpUrl)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Add connector in Claude
+                </a>
+              </Button>
+            </div>
+          )}
 
           {activeClient === 'cursor' && (
             <pre className="p-3 rounded bg-background border border-border font-mono text-[11px] text-muted-foreground overflow-x-auto">
