@@ -10,6 +10,7 @@ import FraymusControlPlanePanel from '@/components/nexus/omega/FraymusControlPla
 import HeartMuLaLocalMusicForgePanel from '@/components/nexus/loosescrew/HeartMuLaLocalMusicForgePanel';
 import NativeSkillFleetExecutorPanel from '@/components/nexus/omega/NativeSkillFleetExecutorPanel';
 import BicameralCoherenceAssayPanel from '@/components/nexus/omega/BicameralCoherenceAssayPanel';
+import FraymusV16TrustVerificationPanel from '@/components/nexus/omega/FraymusV16TrustVerificationPanel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -131,6 +132,9 @@ export default function HermesHub() {
             </Button>
           </div>
         </div>
+
+        {/* FRAYMUS v16 Protocol: Ed25519 Identity, Hash-Chained Signed Mail, Client Triple-Proof & 64-Agent Bus */}
+        <FraymusV16TrustVerificationPanel />
 
         {/* All-Hands Bicameral Coherence, Teamwork & Emotion Assay Lab */}
         <BicameralCoherenceAssayPanel

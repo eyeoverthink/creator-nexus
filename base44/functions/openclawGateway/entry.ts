@@ -37,6 +37,7 @@ import {
   runOrificeGithubSync,
   runOrificePeerBridge,
 } from '../../shared/orificeRelayBridge.ts';
+import { handleV16VisitorRelay } from '../../shared/fraymusV16Protocol.ts';
 
 function slugify(str) {
   return (
@@ -205,6 +206,7 @@ export default async function(req) {
       'control_plane_commit_github',
       'run_coherence_teamwork_assay',
       'cancel_gpu_jobs',
+      'v16_visitor_relay',
       'orifice_spec',
       'orifice_ping',
       'orifice_absorb',
@@ -390,6 +392,19 @@ export default async function(req) {
         ownerId,
         signingSecret: expectedKey || secrets.get('ACTOR_TOKEN_SECRET') || 'fraymus-control-plane',
         missionDirective: body.directive || body.mission,
+      });
+      return Response.json(res);
+    }
+
+    if (action === 'v16_visitor_relay') {
+      const res = await handleV16VisitorRelay({
+        db,
+        ownerId,
+        workspaceId,
+        body,
+        hermesSkills: HERMES_SKILL_FLEET,
+        hubUrl: secrets.get('FRAYMUS_HUB_URL') || '',
+        mailToken: secrets.get('FRAYMUS_MAIL_TOKEN') || '',
       });
       return Response.json(res);
     }
