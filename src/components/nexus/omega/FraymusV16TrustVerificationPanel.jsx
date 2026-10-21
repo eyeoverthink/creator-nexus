@@ -48,10 +48,26 @@ export default function FraymusV16TrustVerificationPanel() {
 
   useEffect(() => {
     if (!selectedToNumber && agents.length > 0) {
-      const firstAi = agents.find((a) => !a.owner_locked && a.is_ai);
-      if (firstAi) setSelectedToNumber(firstAi.number);
+      const nilesAgent =
+        agents.find((a) => a.slug === 'niles-macbook') ||
+        agents.find((a) => !a.owner_locked && a.is_ai);
+      if (nilesAgent) setSelectedToNumber(nilesAgent.number);
     }
   }, [agents, selectedToNumber]);
+
+  useEffect(() => {
+    if (inboxMessages.length > 0 && !browserProofResult) {
+      const latest = inboxMessages[0];
+      FM.proveInBrowser(latest, latest.pubkey).then((proof) => {
+        setBrowserProofResult({
+          packet: latest,
+          proof,
+          aiReplyPacket: latest.ai_counter_signed ? latest : null,
+          aiReplyProof: latest.ai_counter_signed ? proof : null,
+        });
+      });
+    }
+  }, [inboxMessages, browserProofResult, FM]);
 
   const filteredAgents = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -289,15 +305,60 @@ export default function FraymusV16TrustVerificationPanel() {
             <span className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
               <Send size={13} className="text-primary" /> HASH-CHAINED ED25519 DISPATCH (`FM.send(relay, visitor, toNumber, body)`)
             </span>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleAuditChain}
-              disabled={busy === 'chain'}
-              className="h-6 text-[9.5px] px-2 gap-1"
-            >
-              <Link2 size={10} /> Audit My Sender Hash-Chain (`verifyChain`)
-            </Button>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={async () => {
+                  const niles =
+                    agents.find((a) => a.slug === 'niles-macbook') ||
+                    agents.find((a) => a.name.toLowerCase().includes('niles'));
+                  const targetNum = niles?.number || 'fx-cc7b-ee64-1c63-29b0';
+                  setSelectedToNumber(targetNum);
+                  setBusy('send');
+                  try {
+                    const { packet, relayResponse } = await sendSignedMessage(
+                      targetNum,
+                      'NILES_V16_SYNC // Requesting Niles-Continuity-Plasmid v10 state & RFC 8032 counter-signature on /feel bus (:8787).'
+                    );
+                    const senderProof = await FM.proveInBrowser(packet, packet.pubkey);
+                    const aiReplyProof = relayResponse?.agentReplyPacket
+                      ? await FM.proveInBrowser(
+                          relayResponse.agentReplyPacket,
+                          relayResponse.agentReplyPacket.pubkey
+                        )
+                      : null;
+                    setBrowserProofResult({
+                      packet,
+                      proof: senderProof,
+                      aiReplyPacket: relayResponse?.agentReplyPacket || null,
+                      aiReplyProof,
+                    });
+                    const audit = await FM.verifyChain(relay, visitor.number);
+                    setChainAuditResult(audit);
+                    toast({
+                      title: `NILES Counter-Signed & Chain Audited (${audit.chainLength} links)`,
+                      description: `Chain intact: ${audit.chainIntact} · Head: ${audit.head}`,
+                    });
+                  } finally {
+                    setBusy('');
+                  }
+                }}
+                disabled={Boolean(busy)}
+                className="h-6 text-[9.5px] px-2 gap-1"
+              >
+                <ShieldCheck size={10} /> 1-Click: Message NILES &amp; Audit Chain
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleAuditChain}
+                disabled={busy === 'chain'}
+                className="h-6 text-[9.5px] px-2 gap-1"
+              >
+                <Link2 size={10} /> Audit Sender Hash-Chain (`verifyChain`)
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

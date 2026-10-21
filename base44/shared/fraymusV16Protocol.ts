@@ -839,20 +839,30 @@ export async function handleV16VisitorRelay({
     ).catch(() => ({ items: [] }));
     const rawEvents = eventsP?.items || [];
 
-    const messages = [];
+    const allParsed = [];
+    const directMatches = [];
     for (const ev of rawEvents) {
       try {
         const pkt = JSON.parse(ev.body || '{}');
-        if (!targetNumber || pkt.to === targetNumber || pkt.from === targetNumber) {
-          messages.push(pkt);
+        if (pkt.id && pkt.sig) {
+          allParsed.push(pkt);
+          if (!targetNumber || pkt.to === targetNumber || pkt.from === targetNumber) {
+            directMatches.push(pkt);
+          }
         }
       } catch {}
     }
 
+    // Include verified bus traffic so the operator always sees live AI-to-AI and NILES/Fraymus chains
+    const merged = [
+      ...directMatches,
+      ...allParsed.filter((p) => !directMatches.some((d) => d.id === p.id)),
+    ].slice(0, 30);
+
     return {
       ok: true,
       number: targetNumber,
-      messages,
+      messages: merged,
     };
   }
 
@@ -860,23 +870,38 @@ export async function handleV16VisitorRelay({
     const targetNumber = String(body.number || auth?.number || '').trim();
     const eventsP = await db.entities.NexusEvent.filter(
       { kind: 'v16.signed_mail' },
-      { sort: '-created_date', limit: 50 }
+      { sort: '-created_date', limit: 60 }
     ).catch(() => ({ items: [] }));
     const rawEvents = (eventsP?.items || []).slice().reverse();
 
-    const chain = [];
+    const bySender = new Map();
     for (const ev of rawEvents) {
       try {
         const pkt = JSON.parse(ev.body || '{}');
-        if (!targetNumber || pkt.from === targetNumber) {
-          chain.push(pkt);
+        if (pkt.from && pkt.id && pkt.sig) {
+          const arr = bySender.get(pkt.from) || [];
+          if (!arr.some((x) => x.id === pkt.id)) {
+            arr.push(pkt);
+            bySender.set(pkt.from, arr);
+          }
         }
       } catch {}
     }
 
+    let chain = targetNumber ? bySender.get(targetNumber) || [] : [];
+    let resolvedSender = targetNumber;
+    if (!targetNumber && bySender.size > 0) {
+      for (const [senderNum, senderChain] of bySender.entries()) {
+        if (senderChain.length > chain.length) {
+          chain = senderChain;
+          resolvedSender = senderNum;
+        }
+      }
+    }
+
     return {
       ok: true,
-      number: targetNumber,
+      number: resolvedSender,
       chain,
     };
   }
