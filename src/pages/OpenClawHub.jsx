@@ -7,6 +7,7 @@ import SynapticOrificeBridgePanel from '@/components/nexus/omega/SynapticOrifice
 import HermesSkillFleetPanel from '@/components/nexus/omega/HermesSkillFleetPanel';
 import CloudModelTrainingDashboardPane from '@/components/nexus/omega/CloudModelTrainingDashboardPane';
 import HostingerGpuBurstTrainerPanel from '@/components/nexus/omega/HostingerGpuBurstTrainerPanel';
+import SovereignAmbassadorGatekeeperPanel from '@/components/nexus/omega/SovereignAmbassadorGatekeeperPanel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -282,9 +283,10 @@ export default function OpenClawHub() {
         <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg border border-border bg-card">
           <div className="flex flex-wrap items-center gap-1.5">
             {[
-              ['command', '1. Omnichannel Command & Live Chat'],
-              ['hermes', `2. Hermes Fleet (${hermesManifest.skills.length || 29} Skills & Sub-Agents)`],
-              ['training', '3. Cloud GPU Model Evolution & Active Training Jobs'],
+              ['command', '1. Omnichannel Command & Ambassador'],
+              ['ambassador', '2. Sovereign Ambassador & Entry/Exit Watchdog'],
+              ['hermes', `3. Hermes Fleet (${hermesManifest.skills.length || 29} Skills & Sub-Agents)`],
+              ['training', '4. Cloud GPU Model Evolution & Jobs'],
             ].map(([tabId, tabLabel]) => (
               <button
                 key={tabId}
@@ -314,6 +316,8 @@ export default function OpenClawHub() {
             </Link>
           </div>
         </div>
+
+        {activeHubTab === 'ambassador' && <SovereignAmbassadorGatekeeperPanel />}
 
         {activeHubTab === 'hermes' && hermesManifest.skills.length > 0 && (
           <HermesSkillFleetPanel

@@ -5,6 +5,7 @@ import Sidebar from '@/components/nexus/Sidebar';
 import SovereignMotorDispatcherPanel from '@/components/nexus/omega/SovereignMotorDispatcherPanel';
 import OrificeMultiDimensionalHeaderDeck from '@/components/nexus/omega/OrificeMultiDimensionalHeaderDeck';
 import CloudModelTrainingDashboardPane from '@/components/nexus/omega/CloudModelTrainingDashboardPane';
+import SovereignAmbassadorGatekeeperPanel from '@/components/nexus/omega/SovereignAmbassadorGatekeeperPanel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -447,6 +448,9 @@ You are connected to a live Two-Hemisphere Sovereign AI Operating System built b
             });
           }}
         />
+
+        {/* Sovereign Ambassador & Entry/Exit Sentinel Gatekeeper */}
+        <SovereignAmbassadorGatekeeperPanel />
 
         {/* Motor Cortex: Task Queue with Accountability, Node Dispatcher & Persistent Artifact Vault */}
         <SovereignMotorDispatcherPanel />

@@ -5,6 +5,7 @@ import Sidebar from '@/components/nexus/Sidebar';
 import HermesSkillFleetPanel from '@/components/nexus/omega/HermesSkillFleetPanel';
 import CloudModelTrainingDashboardPane from '@/components/nexus/omega/CloudModelTrainingDashboardPane';
 import HostingerGpuBurstTrainerPanel from '@/components/nexus/omega/HostingerGpuBurstTrainerPanel';
+import SovereignAmbassadorGatekeeperPanel from '@/components/nexus/omega/SovereignAmbassadorGatekeeperPanel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -126,6 +127,9 @@ export default function HermesHub() {
             </Button>
           </div>
         </div>
+
+        {/* Sovereign Ambassador & Entry/Exit Sentinel Gatekeeper */}
+        <SovereignAmbassadorGatekeeperPanel />
 
         {/* Hermes 29-Skill Fleet & Sub-Agent Spawner */}
         {hermesSkills.length > 0 && (

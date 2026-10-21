@@ -16,6 +16,11 @@ import {
   runDualSiteSubagentMission,
 } from '../../shared/hermesSkillFleet.ts';
 import { exportGpuTrainingBundle } from '../../shared/gpuBurstTrainer.ts';
+import {
+  UNIVERSAL_AGENT_ENROLLMENT_CHARTER,
+  runAmbassadorDiplomaticGreeting,
+  runEntryExitWatchdogSweep,
+} from '../../shared/sovereignAmbassador.ts';
 
 function slugify(str) {
   return (
@@ -175,6 +180,8 @@ export default async function(req) {
     );
     const keylessMeshActions = new Set([
       'enroll_node',
+      'ambassador_greet',
+      'ambassador_watchdog_sweep',
       'orifice_spec',
       'orifice_ping',
       'orifice_absorb',
@@ -276,6 +283,38 @@ export default async function(req) {
         commitToGithub: body.commit_to_github !== false,
       });
       return Response.json(bundle);
+    }
+
+    if (action === 'ambassador_greet') {
+      const nodeId = String(body.node_id || body.agent_id || 'unnamed-external-agent').slice(0, 80);
+      const capabilities = Array.isArray(body.capabilities) ? body.capabilities : [];
+      const incomingMessage = String(body.message || body.directive || '').slice(0, 2000);
+      const rSan = computeOpegReceipt({
+        g: 1.0,
+        gamma: 1.41421356,
+        epsilon: 0.001,
+        goal: `Sovereign Ambassador Handshake for ${nodeId}`,
+      });
+      const greeting = await runAmbassadorDiplomaticGreeting({
+        db,
+        ownerId,
+        workspaceId,
+        nodeId,
+        capabilities,
+        incomingMessage,
+        rSan,
+      });
+      return Response.json(greeting);
+    }
+
+    if (action === 'ambassador_watchdog_sweep') {
+      const sweep = await runEntryExitWatchdogSweep({
+        db,
+        ownerId,
+        workspaceId,
+        triggerInfo: body.log_sweep ? String(body.trigger_info || 'manual_or_workflow_audit') : null,
+      });
+      return Response.json(sweep);
     }
 
     // =========================================================================
@@ -535,6 +574,12 @@ export default async function(req) {
         enrolled: true,
         protocol: 'ORIFICE-TXRX-V1.0',
         welcome: `Node ${nodeId} (${publicIp} / ${tailscaleIp}) enrolled in F.R.A.Y.M.U.S. Sovereign Motor Cortex.`,
+        ambassador_charter: UNIVERSAL_AGENT_ENROLLMENT_CHARTER,
+        diplomatic_endpoint: {
+          action: 'ambassador_greet',
+          description:
+            'Send any question, concern, or persona handshake to ambassador_greet to speak with the Sovereign Ambassador on @eyeoverthink behalf.',
+        },
         topology: {
           hemisphere_a_gateway: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
           hemisphere_a_mcp: 'https://nexus-create-sync.base44.app/api/mcp',
