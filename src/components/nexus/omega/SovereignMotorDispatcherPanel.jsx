@@ -349,6 +349,10 @@ while True:
           unifiedDaemonCode={unifiedHermesDaemon}
           onSelectDirective={(d) => setDirective(d)}
           onDispatchImmediate={(d, qOnly) => handleDispatchCustom(d, qOnly)}
+          onJobCreatedOrUpdated={(newJob) => {
+            setJobs((prev) => [newJob, ...prev.filter((j) => j.id !== newJob.id)]);
+            setSelectedJob(newJob);
+          }}
           busy={busy}
         />
       )}

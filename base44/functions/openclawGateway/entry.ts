@@ -11,6 +11,9 @@ import {
   HERMES_SKILL_FLEET,
   HERMES_SUBAGENT_PIPELINES,
   UNIFIED_HERMES_SOVEREIGN_V2_PY,
+  buildHermesWorkerDirective,
+  handleHermesOrificePing,
+  runDualSiteSubagentMission,
 } from '../../shared/hermesSkillFleet.ts';
 
 function slugify(str) {
@@ -745,27 +748,45 @@ export default async function(req) {
       return Response.json({ ok: true, job: updated });
     }
 
+    if (action === 'spawn_dual_site_subagents') {
+      const mission = String(body.mission || body.directive || '').trim();
+      if (!mission) {
+        return Response.json({ error: 'mission or directive is required' }, { status: 400 });
+      }
+      const rSan = computeOpegReceipt({
+        g: 1.0,
+        gamma: 1.41421356,
+        epsilon: 0.001,
+        goal: `Solo Dual-Site Sub-Agent DAG: ${mission.slice(0, 120)}`,
+      });
+      const dagRes = await runDualSiteSubagentMission({
+        db,
+        ownerId,
+        workspaceId,
+        mission,
+        selectedSkills: body.selected_skills,
+        queueForVpsWorker: Boolean(body.queue_for_vps_worker),
+        peerTransmuterUrl: PEER_TRANSMUTER_URL,
+        expectedKey,
+        rSan,
+        executeDirectiveAndPersistArtifact,
+      });
+      return Response.json(dagRes);
+    }
+
     if (action === 'orifice_ping') {
       const nodeId = String(body.node_id || 'external-orifice-peer').slice(0, 80);
       const payloadStr = String(body.payload || `HEARTBEAT_PING from ${nodeId}`);
       const l1L5 = await inspectOrificeFrameL1ToL5(payloadStr, body.ttl ?? 5);
 
-      const txQueueRes = await db.entities.NexusEvent.filter(
-        { workspace_id: workspaceId, kind: 'orifice.tx_queue' },
-        { sort: '-created_date', limit: 10 }
-      ).catch(() => ({ items: [] }));
-      const queuedDirectives = (txQueueRes?.items || []).map((ev) => {
-        let parsedBody = {};
-        try {
-          parsedBody = JSON.parse(ev.body || '{}');
-        } catch {}
-        return {
-          event_id: ev.id,
-          target_node: ev.agent,
-          directive: ev.message,
-          created_date: ev.created_date,
-          ...parsedBody,
-        };
+      const { jobCompleteReceipt, queued_tx_directives } = await handleHermesOrificePing({
+        db,
+        ownerId,
+        workspaceId,
+        nodeId,
+        payloadStr,
+        l1L5,
+        commitArtifactToGithubVault,
       });
 
       return Response.json({
@@ -775,7 +796,8 @@ export default async function(req) {
         receptor_node: 'creator-nexus-sync',
         peer_node: nodeId,
         l1_l5_firewall: l1L5,
-        queued_tx_directives: queuedDirectives,
+        job_complete_receipt: jobCompleteReceipt,
+        queued_tx_directives,
         timestamp: new Date().toISOString(),
       });
     }
