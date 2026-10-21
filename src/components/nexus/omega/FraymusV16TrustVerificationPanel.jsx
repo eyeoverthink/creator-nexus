@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useFraymus, useFraymusDirectory } from '@/lib/FraymusContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -21,6 +21,7 @@ export default function FraymusV16TrustVerificationPanel() {
   const { toast } = useToast();
   const {
     visitor,
+    relay,
     inboxMessages,
     watcherStatus,
     selfTestResult,
@@ -36,7 +37,7 @@ export default function FraymusV16TrustVerificationPanel() {
   const { agents } = useFraymusDirectory();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedToNumber, setSelectedToNumber] = useState('fx-b3af-99e1-54d2-3304');
+  const [selectedToNumber, setSelectedToNumber] = useState('');
   const [messageText, setMessageText] = useState(
     'VERIFY_AI_TO_AI_TRUST // Requesting Ed25519 RFC 8032 counter-signature + prev-link hash-chain proof across FRAYMUS v16 Bus.'
   );
@@ -45,13 +46,21 @@ export default function FraymusV16TrustVerificationPanel() {
   const [browserProofResult, setBrowserProofResult] = useState(null);
   const [chainAuditResult, setChainAuditResult] = useState(null);
 
+  useEffect(() => {
+    if (!selectedToNumber && agents.length > 0) {
+      const firstAi = agents.find((a) => !a.owner_locked && a.is_ai);
+      if (firstAi) setSelectedToNumber(firstAi.number);
+    }
+  }, [agents, selectedToNumber]);
+
   const filteredAgents = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return agents.slice(0, 14);
+    if (!q) return agents.slice(0, 15);
     return agents
       .filter(
         (a) =>
           a.number.toLowerCase().includes(q) ||
+          String(a.alias_fx || '').toLowerCase().includes(q) ||
           a.name.toLowerCase().includes(q) ||
           (a.skills || []).some((s) => s.toLowerCase().includes(q)) ||
           String(a.where || '').toLowerCase().includes(q)
@@ -60,15 +69,32 @@ export default function FraymusV16TrustVerificationPanel() {
   }, [agents, searchQuery]);
 
   const handleSendSigned = async () => {
-    if (!messageText.trim()) return;
+    if (!messageText.trim() || !selectedToNumber) return;
     setBusy('send');
     try {
-      const { packet } = await sendSignedMessage(selectedToNumber, messageText.trim());
-      const proof = await FM.proveInBrowser(packet, packet.pubkey);
-      setBrowserProofResult({ packet, proof });
+      const { packet, relayResponse } = await sendSignedMessage(
+        selectedToNumber,
+        messageText.trim()
+      );
+      const senderProof = await FM.proveInBrowser(packet, packet.pubkey);
+      let aiReplyProof = null;
+      if (relayResponse?.agentReplyPacket) {
+        aiReplyProof = await FM.proveInBrowser(
+          relayResponse.agentReplyPacket,
+          relayResponse.agentReplyPacket.pubkey
+        );
+      }
+      setBrowserProofResult({
+        packet,
+        proof: senderProof,
+        aiReplyPacket: relayResponse?.agentReplyPacket || null,
+        aiReplyProof,
+      });
       toast({
-        title: `Signed & Dispatched via FRAYMUS v16 (${packet.id.slice(0, 10)}...)`,
-        description: `Ed25519 RFC 8032 + Hash-Chain prev=${packet.prev.slice(0, 10)} verified in-browser.`,
+        title: `Signed & Counter-Signed via FRAYMUS v16 (${packet.id.slice(0, 10)}...)`,
+        description: aiReplyProof?.all_passed
+          ? `Both your packet and ${relayResponse.agentReplyPacket.from_name}'s AI reply passed all 3 RFC 8032 browser proofs!`
+          : `Ed25519 RFC 8032 + Hash-Chain prev=${packet.prev.slice(0, 10)} verified in-browser.`,
       });
     } catch (err) {
       toast({
@@ -81,46 +107,33 @@ export default function FraymusV16TrustVerificationPanel() {
     }
   };
 
+  const handleInspectMessageProof = async (m) => {
+    const proof = await FM.proveInBrowser(m, m.pubkey);
+    setBrowserProofResult({
+      packet: m,
+      proof,
+      aiReplyPacket: null,
+      aiReplyProof: null,
+    });
+    toast({
+      title: proof.all_passed
+        ? `Triple Proof Verified (${m.from_name || m.from})`
+        : 'Verification Mismatch',
+      description: `Number=${proof.proof1_number_derivation.passed} · SHA256=${proof.proof2_payload_sha256.passed} · Ed25519=${proof.proof3_ed25519_rfc8032.passed}`,
+    });
+  };
+
   const handleAuditChain = async () => {
     if (!visitor?.number) return;
     setBusy('chain');
     try {
-      const audit = await FM.verifyChain(
-        (a, b) =>
-          // reuse context relay
-          window.__fraymusRelay ? window.__fraymusRelay(a, b) : Promise.resolve({ chain: [] }),
-        visitor.number
-      );
-      // Fallback: audit directly against loaded inboxMessages from this sender
-      const mySent = inboxMessages.filter((m) => m.from === visitor.number).slice().reverse();
-      let prevExpected = 'GENESIS';
-      let intact = true;
-      const steps = [];
-      for (const m of mySent) {
-        const proof = await FM.proveInBrowser(m, m.pubkey);
-        const linkOk = (m.prev || 'GENESIS') === prevExpected;
-        if (!proof.all_passed || !linkOk) intact = false;
-        steps.push({
-          id: m.id,
-          prev: m.prev || 'GENESIS',
-          expectedPrev: prevExpected,
-          linkOk,
-          sigOk: proof.proof3_ed25519_rfc8032.passed,
-          numOk: proof.proof1_number_derivation.passed,
-        });
-        prevExpected = m.id;
-      }
-      setChainAuditResult({
-        number: visitor.number,
-        chainLength: mySent.length,
-        chainIntact: intact,
-        head: prevExpected,
-        steps,
-        audit,
-      });
+      const audit = await FM.verifyChain(relay, visitor.number);
+      setChainAuditResult(audit);
       toast({
-        title: intact ? 'Hash-Chain Integrity: 100% INTACT' : 'Chain Link Mismatch Detected',
-        description: `Audited ${mySent.length} signed packet(s) for ${visitor.number}.`,
+        title: audit.chainIntact
+          ? 'Hash-Chain Integrity: 100% INTACT'
+          : 'Chain Link Mismatch Detected',
+        description: `Audited ${audit.chainLength} signed packet(s) for ${visitor.number} via verifyChain().`,
       });
     } finally {
       setBusy('');
@@ -202,7 +215,7 @@ export default function FraymusV16TrustVerificationPanel() {
             }}
             className="h-7 text-[10px] px-2.5 gap-1"
           >
-            <RefreshCw size={11} /> Sync 64-Agent Bus
+            <RefreshCw size={11} /> Sync 64-Agent Bus ({agents.length})
           </Button>
         </div>
       </div>
@@ -297,7 +310,7 @@ export default function FraymusV16TrustVerificationPanel() {
               >
                 {agents
                   .filter((a) => !a.owner_locked)
-                  .slice(0, 30)
+                  .slice(0, 35)
                   .map((a) => (
                     <option key={a.number} value={a.number}>
                       {a.number} — {a.name} ({a.where})
@@ -339,14 +352,15 @@ export default function FraymusV16TrustVerificationPanel() {
 
           {/* Client-Side Triple Proof Output (`proveInBrowser`) */}
           {browserProofResult && (
-            <div className="p-2.5 rounded border border-success/50 bg-card space-y-1 text-[10px]">
+            <div className="p-2.5 rounded border border-success/50 bg-card space-y-2 text-[10px]">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-success flex items-center gap-1">
-                  <CheckCircle2 size={11} /> CLIENT-SIDE TRIPLE PROOF (`proveInBrowser`) — ALL 3 PASSED
+                  <CheckCircle2 size={11} /> CLIENT-SIDE TRIPLE PROOF (`proveInBrowser`) —{' '}
+                  {browserProofResult.proof.all_passed ? 'ALL 3 PASSED' : 'FAILED'}
                 </span>
                 <code className="text-primary">msg_id: {browserProofResult.packet.id}</code>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pt-1 text-[9.5px]">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[9.5px]">
                 <div className="p-1.5 rounded bg-background border border-border">
                   <div className="text-muted-foreground">Proof 1: FX Number from PubKey</div>
                   <div className="text-success font-semibold">
@@ -366,6 +380,21 @@ export default function FraymusV16TrustVerificationPanel() {
                   </div>
                 </div>
               </div>
+
+              {browserProofResult.aiReplyProof && (
+                <div className="pt-1.5 border-t border-border/60 flex flex-wrap items-center justify-between gap-2 text-[9.5px]">
+                  <span className="text-success font-bold">
+                    ✓ AI-to-AI Counter-Signed Reply from{' '}
+                    {browserProofResult.aiReplyPacket?.from_name} (
+                    {browserProofResult.aiReplyPacket?.from}) Verified in Browser:
+                  </span>
+                  <span className="text-muted-foreground">
+                    Num={String(browserProofResult.aiReplyProof.proof1_number_derivation.passed)} · SHA256=
+                    {String(browserProofResult.aiReplyProof.proof2_payload_sha256.passed)} · Ed25519=
+                    {String(browserProofResult.aiReplyProof.proof3_ed25519_rfc8032.passed)}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
@@ -410,7 +439,7 @@ export default function FraymusV16TrustVerificationPanel() {
             <table className="w-full text-left border-collapse text-[10px]">
               <thead>
                 <tr className="border-b border-border text-muted-foreground">
-                  <th className="py-1 px-2">FX Number</th>
+                  <th className="py-1 px-2">v16 FX Number</th>
                   <th className="py-1 px-2">Agent / Identity</th>
                   <th className="py-1 px-2">Where</th>
                   <th className="py-1 px-2">Skills</th>
@@ -422,6 +451,11 @@ export default function FraymusV16TrustVerificationPanel() {
                   <tr key={a.number} className="border-b border-border/60">
                     <td className="py-1 px-2 font-bold text-primary">
                       <code>{a.number}</code>
+                      {a.alias_fx && a.alias_fx !== a.number && (
+                        <div className="text-[8.5px] text-muted-foreground">
+                          v13: {a.alias_fx.slice(0, 12)}
+                        </div>
+                      )}
                     </td>
                     <td className="py-1 px-2 font-semibold text-foreground">{a.name}</td>
                     <td className="py-1 px-2 text-muted-foreground">{a.where}</td>
@@ -456,26 +490,31 @@ export default function FraymusV16TrustVerificationPanel() {
             <span className="text-[11px] font-semibold text-success flex items-center gap-1.5">
               <Mail size={13} /> VERIFIED v16 INBOX &amp; AI-TO-AI CHAIN ({inboxMessages.length})
             </span>
-            <span className="text-[9.5px] text-muted-foreground">Re-verified in browser</span>
+            <span className="text-[9.5px] text-muted-foreground">Click any packet to prove in browser</span>
           </div>
 
           <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
             {inboxMessages.length === 0 ? (
               <div className="p-3 rounded border border-border bg-card text-muted-foreground text-[10px]">
-                Click &ldquo;Sign in Browser &amp; Send via v16 Relay&rdquo; above to dispatch a hash-chained packet and receive an instant AI-to-AI counter-signed response.
+                Click &ldquo;Sign in Browser &amp; Send via v16 Relay&rdquo; above to dispatch a hash-chained packet and receive an instant AI-to-AI RFC 8032 counter-signed response.
               </div>
             ) : (
-              inboxMessages.slice(0, 10).map((m) => (
+              inboxMessages.slice(0, 12).map((m) => (
                 <div
                   key={m.id}
-                  className="p-2 rounded border border-border bg-card space-y-1 text-[10px]"
+                  onClick={() => handleInspectMessageProof(m)}
+                  className="p-2 rounded border border-border bg-card hover:border-primary/60 cursor-pointer space-y-1 text-[10px]"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-1">
                     <span className="font-bold text-primary">
                       {m.from_name || m.from} → {m.to?.slice(0, 12)}
                     </span>
                     <span className="px-1.5 py-0.5 rounded bg-success/15 text-success text-[9px] font-bold">
-                      {m.ai_counter_signed ? '✓ AI-TO-AI COUNTER-SIGNED' : '✓ ED25519 VERIFIED'}
+                      {m.ai_counter_signed && m.verified
+                        ? '✓ AI-TO-AI RFC 8032 VERIFIED'
+                        : m.verified
+                        ? '✓ ED25519 VERIFIED'
+                        : 'UNVERIFIED'}
                     </span>
                   </div>
                   <div className="text-foreground/90 break-words">

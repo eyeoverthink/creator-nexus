@@ -7,6 +7,7 @@ import OrificeMultiDimensionalHeaderDeck from '@/components/nexus/omega/OrificeM
 import CloudModelTrainingDashboardPane from '@/components/nexus/omega/CloudModelTrainingDashboardPane';
 import SovereignAmbassadorGatekeeperPanel from '@/components/nexus/omega/SovereignAmbassadorGatekeeperPanel';
 import FraymusControlPlanePanel from '@/components/nexus/omega/FraymusControlPlanePanel';
+import FraymusV16TrustVerificationPanel from '@/components/nexus/omega/FraymusV16TrustVerificationPanel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -449,6 +450,9 @@ You are connected to a live Two-Hemisphere Sovereign AI Operating System built b
             });
           }}
         />
+
+        {/* FRAYMUS v16 Protocol: Ed25519 Identity, Hash-Chained Signed Mail, Client Triple-Proof & 64-Agent Bus */}
+        <FraymusV16TrustVerificationPanel />
 
         {/* Canonical Fraymus Control Plane Contract v1.0 */}
         <FraymusControlPlanePanel />

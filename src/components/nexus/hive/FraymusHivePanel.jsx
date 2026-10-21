@@ -20,8 +20,11 @@ import {
 } from 'lucide-react';
 import HiveTelemetryMonitor from '@/components/nexus/hive/HiveTelemetryMonitor';
 import { readCrossTabMemory } from '@/lib/crossTabMemory';
+import { useFraymus, useFraymusDirectory } from '@/lib/FraymusContext';
 
 export default function FraymusHivePanel({ nexus, compact = false }) {
+  const { visitor, watcherStatus, sendSignedMessage, FM } = useFraymus();
+  const { agents: busAgents, byName } = useFraymusDirectory();
   const [tierFilter, setTierFilter] = useState('all');
   const [selectedAgentId, setSelectedAgentId] = useState('fraymus');
   const [heartbeatTick, setHeartbeatTick] = useState(1530);
@@ -59,7 +62,7 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
     }
   };
 
-  const handleDispatchAgent = (agent) => {
+  const handleDispatchAgent = async (agent) => {
     const crossSnap = readCrossTabMemory();
     const liveSel = crossSnap.selection?.text ? ` | Selection (${crossSnap.selection.pageTitle}): "${crossSnap.selection.text.slice(0, 240)}"` : '';
     const liveEd = crossSnap.liveEdit?.excerpt ? ` | Edit (${crossSnap.liveEdit.pageTitle}): "${crossSnap.liveEdit.excerpt.slice(0, 200)}"` : '';
@@ -67,9 +70,28 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
       (taskPrompt.trim() || `[${agent.ceremonyName} · ${agent.fx}] ${agent.currentTask}`) +
       liveSel +
       liveEd;
-    const logLine = `[HIVE /dispatch → ${agent.openclawName} (${agent.fx})] ${customTask}`;
-    setDispatchLog((prev) => [logLine, ...prev].slice(0, 14));
+
     setPlasmidOut(encodeRnaPlasmid(agent, customTask));
+    setTaskPrompt('');
+
+    // Phase 2: Sign & hash-chain dispatch via FM.send(relay, visitor, toNumber, body) instead of window.FRAYMUS.seal()
+    const busMatch = byName(agent.openclawName) || byName(agent.ceremonyName);
+    const toNumber = busMatch?.number || agent.fx;
+    try {
+      const { packet, relayResponse } = await sendSignedMessage(toNumber, customTask);
+      const proof = await FM.proveInBrowser(packet, packet.pubkey);
+      const replyPkt = relayResponse?.agentReplyPacket;
+      const replyLine = replyPkt
+        ? `[v16 AI-to-AI ACK · ${replyPkt.from_name} (${replyPkt.from})] Ed25519 sig=${replyPkt.sig.slice(0, 14)}… prev=${replyPkt.prev}`
+        : null;
+      const logLine = `[v16 FM.send → ${agent.openclawName} (${toNumber})] id=${packet.id} prev=${packet.prev} Proof=${proof.all_passed ? '3/3 PASS' : 'WARN'} :: ${customTask}`;
+      setDispatchLog((prev) =>
+        replyLine ? [replyLine, logLine, ...prev].slice(0, 14) : [logLine, ...prev].slice(0, 14)
+      );
+    } catch {
+      const logLine = `[HIVE /dispatch → ${agent.openclawName} (${agent.fx})] ${customTask}`;
+      setDispatchLog((prev) => [logLine, ...prev].slice(0, 14));
+    }
 
     if (nexus?.run && agent.studioRole) {
       nexus.setAgent?.(agent.studioRole);
@@ -78,7 +100,6 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
         agent.studioRole
       );
     }
-    setTaskPrompt('');
   };
 
   const handleSignDigest = (digestId) => {
@@ -111,10 +132,16 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
             }`}
           />
           <div>
-            <div className="font-semibold text-foreground flex items-center gap-2">
+            <div className="font-semibold text-foreground flex flex-wrap items-center gap-2">
               <span>FRAYMUS 15-AGENT HIVE ROUTER &amp; ONE-TICK HEARTBEAT</span>
               <span className="px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/30 text-[10px]">
                 TICK #{heartbeatTick} (φ 1.618s)
+              </span>
+              <span className="px-2 py-0.5 rounded bg-success/15 text-success border border-success/40 text-[10px]">
+                ● v16 Signer: {visitor?.number || 'Ready'} ({busAgents.length} Bus Agents)
+              </span>
+              <span className="px-2 py-0.5 rounded bg-success/15 text-success border border-success/40 text-[10px]">
+                ● Email Watcher: {watcherStatus?.active ? 'ONLINE (Fail-Closed)' : 'Standby'}
               </span>
             </div>
             <div className="text-[10px] text-muted-foreground mt-0.5">

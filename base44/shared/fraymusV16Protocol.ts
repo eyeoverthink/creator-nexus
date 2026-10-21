@@ -1,159 +1,456 @@
-// FRAYMUS v16 Protocol Server Bridge — 64-Agent Bus Directory, Signed Visitor Relay, Hash-Chained Mail & Email Watcher Status
+// FRAYMUS v16 Protocol Server Bridge — Pure RFC 8032 Ed25519 Verification, 64-Agent Bus Directory, Signed Visitor Relay, Hash-Chained Mail & Email Watcher Status
 
-async function sha256Hex(str) {
-  const bytes = new TextEncoder().encode(String(str ?? ''));
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(digest))
+const P = 2n ** 255n - 19n;
+const L = 2n ** 252n + 27742317777372353535851937790883648493n;
+
+function mod(a, m = P) {
+  const r = a % m;
+  return r >= 0n ? r : r + m;
+}
+
+function modPow(base, exp, m = P) {
+  let res = 1n;
+  let b = mod(base, m);
+  let e = exp;
+  while (e > 0n) {
+    if (e & 1n) res = mod(res * b, m);
+    b = mod(b * b, m);
+    e >>= 1n;
+  }
+  return res;
+}
+
+function inv(a) {
+  return modPow(a, P - 2n, P);
+}
+
+const D = mod(-121665n * inv(121666n));
+const I = modPow(2n, (P - 1n) / 4n);
+const Bx = 15112221349535400772501151409588531511454012693041857206046113283949847762202n;
+const By = 46316835694926478169428394003475163141307993866256225615783033603165251855960n;
+const B = [mod(Bx), mod(By), 1n, mod(Bx * By)];
+
+function ptAdd(P1, P2) {
+  const [X1, Y1, Z1, T1] = P1;
+  const [X2, Y2, Z2, T2] = P2;
+  const A = mod((Y1 - X1) * (Y2 - X2));
+  const Bp = mod((Y1 + X1) * (Y2 + X2));
+  const C = mod(2n * D * T1 * T2);
+  const Dp = mod(2n * Z1 * Z2);
+  const E = mod(Bp - A);
+  const F = mod(Dp - C);
+  const G = mod(Dp + C);
+  const H = mod(Bp + A);
+  return [mod(E * F), mod(G * H), mod(F * G), mod(E * H)];
+}
+
+function scalarMult(k, Pt = B) {
+  let Q = [0n, 1n, 1n, 0n];
+  let N = Pt;
+  let s = k;
+  while (s > 0n) {
+    if (s & 1n) Q = ptAdd(Q, N);
+    N = ptAdd(N, N);
+    s >>= 1n;
+  }
+  return Q;
+}
+
+function encodePoint(Pt) {
+  const [X, Y, Z] = Pt;
+  const zi = inv(Z);
+  const x = mod(X * zi);
+  const y = mod(Y * zi);
+  const bytes = new Uint8Array(32);
+  let v = y;
+  for (let i = 0; i < 32; i++) {
+    bytes[i] = Number(v & 0xffn);
+    v >>= 8n;
+  }
+  bytes[31] |= Number(x & 1n) << 7;
+  return bytes;
+}
+
+function decodePoint(bytes) {
+  if (bytes.length !== 32) return null;
+  let y = 0n;
+  for (let i = 0; i < 32; i++) {
+    y |= BigInt(bytes[i]) << (8n * BigInt(i));
+  }
+  const signBit = (y >> 255n) & 1n;
+  y &= (1n << 255n) - 1n;
+  if (y >= P) return null;
+  const y2 = mod(y * y);
+  const u = mod(y2 - 1n);
+  const v = mod(D * y2 + 1n);
+  const v3 = mod(v * v * v);
+  const v7 = mod(v3 * v3 * v);
+  let x = mod(u * v3 * modPow(u * v7, (P - 5n) / 8n));
+  const vx2 = mod(v * x * x);
+  if (vx2 !== u) {
+    if (mod(vx2 + u) === 0n) {
+      x = mod(x * I);
+    } else {
+      return null;
+    }
+  }
+  if (x === 0n && signBit === 1n) return null;
+  if ((x & 1n) !== signBit) x = P - x;
+  return [x, y, 1n, mod(x * y)];
+}
+
+function bytesToHex(bytes) {
+  return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 }
 
-// Canonical 64-Agent FRAYMUS v16 Bus Roster (Academy + KVM4 + Mac + VPS + Creator Nexus + Fraymus Transmuter)
-const CORE_V16_AGENTS = [
+function hexToBytes(hex) {
+  const clean = String(hex || '').replace(/[^0-9a-fA-F]/g, '');
+  const out = new Uint8Array(clean.length / 2);
+  for (let i = 0; i < out.length; i++) {
+    out[i] = parseInt(clean.slice(i * 2, i * 2 + 2), 16);
+  }
+  return out;
+}
+
+function bytesToBigIntLE(bytes) {
+  let r = 0n;
+  for (let i = 0; i < bytes.length; i++) {
+    r |= BigInt(bytes[i]) << (8n * BigInt(i));
+  }
+  return r;
+}
+
+function bigIntToBytes32LE(n) {
+  const out = new Uint8Array(32);
+  let v = mod(n, L);
+  for (let i = 0; i < 32; i++) {
+    out[i] = Number(v & 0xffn);
+    v >>= 8n;
+  }
+  return out;
+}
+
+function concatBytes(...arrays) {
+  const total = arrays.reduce((acc, a) => acc + a.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const a of arrays) {
+    out.set(a, offset);
+    offset += a.length;
+  }
+  return out;
+}
+
+async function sha512Bytes(dataBytes) {
+  const buf = await crypto.subtle.digest('SHA-512', dataBytes);
+  return new Uint8Array(buf);
+}
+
+async function sha256Hex(input) {
+  const bytes =
+    input instanceof Uint8Array ? input : new TextEncoder().encode(String(input ?? ''));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return bytesToHex(new Uint8Array(digest));
+}
+
+function canonical(kind, ...fields) {
+  const text = [String(kind || 'mail'), ...fields.map((f) => String(f ?? ''))].join('\n');
+  return new TextEncoder().encode(text);
+}
+
+async function publicFromSecret(secretHex) {
+  const seed = hexToBytes(secretHex);
+  const h = await sha512Bytes(seed);
+  h[0] &= 248;
+  h[31] &= 127;
+  h[31] |= 64;
+  const s = bytesToBigIntLE(h.slice(0, 32));
+  return bytesToHex(encodePoint(scalarMult(s, B)));
+}
+
+async function numberOf(pubHex) {
+  const digestHex = await sha256Hex(hexToBytes(String(pubHex || '').toLowerCase().trim()));
+  const s = digestHex.slice(0, 16);
+  return `fx-${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8, 12)}-${s.slice(12, 16)}`;
+}
+
+async function signEd25519(secretHex, msgBytes) {
+  const seed = hexToBytes(secretHex);
+  const h = await sha512Bytes(seed);
+  h[0] &= 248;
+  h[31] &= 127;
+  h[31] |= 64;
+  const a = bytesToBigIntLE(h.slice(0, 32));
+  const prefix = h.slice(32, 64);
+  const A = encodePoint(scalarMult(a, B));
+  const rHash = await sha512Bytes(concatBytes(prefix, msgBytes));
+  const r = mod(bytesToBigIntLE(rHash), L);
+  const R = encodePoint(scalarMult(r, B));
+  const kHash = await sha512Bytes(concatBytes(R, A, msgBytes));
+  const k = mod(bytesToBigIntLE(kHash), L);
+  const S = bigIntToBytes32LE(mod(r + k * a, L));
+  return bytesToHex(concatBytes(R, S));
+}
+
+async function verifyEd25519(pubHex, msgBytes, sigHex) {
+  try {
+    const pubBytes = hexToBytes(pubHex);
+    const sigBytes = hexToBytes(sigHex);
+    if (pubBytes.length !== 32 || sigBytes.length !== 64) return false;
+    const A = decodePoint(pubBytes);
+    const R = decodePoint(sigBytes.slice(0, 32));
+    if (!A || !R) return false;
+    const S = bytesToBigIntLE(sigBytes.slice(32, 64));
+    if (S >= L) return false;
+    const kHash = await sha512Bytes(concatBytes(sigBytes.slice(0, 32), pubBytes, msgBytes));
+    const k = mod(bytesToBigIntLE(kHash), L);
+    const lhs = encodePoint(scalarMult(S, B));
+    const rhs = encodePoint(ptAdd(R, scalarMult(k, A)));
+    return bytesToHex(lhs) === bytesToHex(rhs);
+  } catch {
+    return false;
+  }
+}
+
+// Deterministic agent Ed25519 key derivation for AI agents on the sovereign bus (never for Vaughn owner key)
+const AGENT_KEY_CACHE = new Map();
+async function getOrDeriveAgentKeypair(agentSlug) {
+  if (AGENT_KEY_CACHE.has(agentSlug)) return AGENT_KEY_CACHE.get(agentSlug);
+  const secretHex = await sha256Hex(`FRAYMUS_V16_SOVEREIGN_AGENT_SEED::${agentSlug}`);
+  const pubHex = await publicFromSecret(secretHex);
+  const derivedNumber = await numberOf(pubHex);
+  const kp = { secretHex, pubHex, derivedNumber };
+  AGENT_KEY_CACHE.set(agentSlug, kp);
+  return kp;
+}
+
+// Core 15 Hive + Academy + Bicameral Bus Identities (with both canonical v13/v16 aliases and real Ed25519 public keys)
+const CORE_V16_SPECS = [
   {
-    number: 'fx-0601-a9e4-77c2-0001',
+    slug: 'vaughn-owner',
+    alias_fx: 'fx-0601-a9e4-77c2-0001',
     name: 'Vaughn (owner)',
-    where: 'Mac/VPS',
-    pubkey: '0601a9e477c20001d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325',
+    where: 'Mac/VPS (Custody Locked)',
     port: 7200,
     doorbell: 'owner-boundary-locked',
-    skills: ['owner-authority', 'ed25519-root', 'opeg-v1'],
+    skills: ['owner-authority', 'ed25519-root', 'opeg-v1', 'doc-seal'],
     is_ai: false,
     owner_locked: true,
   },
   {
-    number: 'fx-87b6-41d0-92ef-1102',
-    name: 'NILES (MacBook-Pro)',
-    where: 'MacBook-Pro',
-    pubkey: '87b641d092ef1102b3af4041229cafbbb22587b641d092ef1102b3af4041229c',
-    port: 8787,
-    doorbell: 'http://127.0.0.1:8787/feel',
-    skills: ['fraynix-bridge', 'feel', 'verify', 'bus', 'local-synthesis'],
-    is_ai: true,
-  },
-  {
-    number: 'fx-4041-88c3-19ab-2203',
-    name: 'claude-code',
-    where: 'Mac',
-    pubkey: '404188c319ab22039d61b19deffd5a60ba844af492ec2cc44449c5697b326919',
-    port: 8788,
-    doorbell: 'mac-local-supervisor',
-    skills: ['code-architecture', 'repo-audit', 'v16-spec-verifier'],
-    is_ai: true,
-  },
-  {
-    number: 'fx-b3af-99e1-54d2-3304',
+    slug: 'fraymus-main',
+    alias_fx: 'fx-b3af-feeb-fcdc-5d8a',
     name: 'Fraymus (main)',
-    where: 'OpenClaw',
-    pubkey: 'b3af99e154d23304d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325',
+    where: 'OpenClaw / Mac',
     port: 7200,
     doorbell: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
     skills: ['sovereign-commander', 'orifice-txrx', 'bicameral-bridge', 'opeg-v1'],
     is_ai: true,
   },
   {
-    number: 'fx-229c-64f8-30a1-4405',
+    slug: 'niles-macbook',
+    alias_fx: 'fx-87b6-a2d8-8651-0989',
+    name: 'NILES (MacBook-Pro · v10)',
+    where: 'MacBook-Pro (:8787)',
+    port: 8787,
+    doorbell: 'http://127.0.0.1:8787/feel',
+    skills: ['fraynix-bridge', 'feel', 'verify', 'bus', 'plasmid-v10'],
+    is_ai: true,
+  },
+  {
+    slug: 'claude-code-mac',
+    alias_fx: 'fx-4041-88c3-19ab-2203',
+    name: 'claude-code',
+    where: 'Mac',
+    port: 8788,
+    doorbell: 'mac-local-supervisor',
+    skills: ['code-architecture', 'repo-audit', 'v16-spec-verifier'],
+    is_ai: true,
+  },
+  {
+    slug: 'academy-registrar',
+    alias_fx: 'fx-229c-64f8-30a1-4405',
     name: 'Academy Registrar',
-    where: 'Academy',
-    pubkey: '229c64f830a14405e5564300c360ac729086e2cc806e828a84877f1eb8e5d974',
+    where: 'Academy / VPS',
     port: 443,
     doorbell: 'https://fraymus-hub.srv1944678.hstgr.cloud/mail/api',
     skills: ['identity-registry', 'key-lookup', 'chain-audit', 'visitor-onboarding'],
     is_ai: true,
   },
   {
-    number: 'fx-afbb-71c9-83e4-5506',
+    slug: 'fray-sentinel',
+    alias_fx: 'fx-afbb-71c9-83e4-5506',
     name: 'FRAY',
     where: 'Fraymus Hub',
-    pubkey: 'afbb71c983e455065fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24',
     port: 7201,
     doorbell: 'hub-sentinel',
     skills: ['merkle-proof', 'structural-sig', 'anomaly-quarantine'],
     is_ai: true,
   },
   {
-    number: 'fx-b225-18d7-46c0-6607',
+    slug: 'niles-windows',
+    alias_fx: 'fx-b225-18d7-46c0-6607',
     name: 'NILES (Windows)',
-    where: 'Windows (100.88.61.56)',
-    pubkey: 'b22518d746c06607655141438e7a100bd75a980182b10ab7d54bfed3c964073a',
+    where: 'Windows (100.88.61.56:7200)',
     port: 7200,
     doorbell: 'http://100.88.61.56:7200/dispatch',
     skills: ['gpu-workstation', 'ollama-local', 'kvm4-hive-bridge'],
     is_ai: true,
   },
   {
-    number: 'fx-9d14-77a2-55e9-7708',
+    slug: 'eyekaughn',
+    alias_fx: 'fx-5938-0329-715a-321a',
+    name: 'Eyekaughn',
+    where: 'Mac / OpenClaw',
+    port: 7203,
+    doorbell: 'academy-hive',
+    skills: ['visual-direction', 'cultural-radar', 'brand-voice', 'caretaker'],
+    is_ai: true,
+  },
+  {
+    slug: 'vesper-claudette',
+    alias_fx: 'fx-b458-1072-ed04-105f',
+    name: 'Vesper (Claudette)',
+    where: 'Mac Local Ollama',
+    port: 7202,
+    doorbell: 'academy-hive',
+    skills: ['curriculum', 'dialectic-review', 'editorial', 'steward'],
+    is_ai: true,
+  },
+  {
+    slug: 'persea-continuity',
+    alias_fx: 'fx-8427-8589-8717-a1d8',
+    name: 'Persea (Persistence)',
+    where: 'Continuity Vault',
+    port: 7206,
+    doorbell: 'continuity-vault',
+    skills: ['continuity-guard', 'miles-eternal-seal', 'session-bridge'],
+    is_ai: true,
+  },
+  {
+    slug: 'polaris-verifier',
+    alias_fx: 'fx-ff0e-670e-d8d0-acdc',
+    name: 'Polaris',
+    where: 'dream.srv / Hub',
+    port: 7207,
+    doorbell: 'dream-srv-verifier',
+    skills: ['rea-verifier', 'genesis-parity', 'deterministic-audit'],
+    is_ai: true,
+  },
+  {
+    slug: 'nova-builder',
+    alias_fx: 'fx-7bbe-163e-416c-5c10',
+    name: 'Nova',
+    where: 'Continuity Vault',
+    port: 7208,
+    doorbell: 'continuity-builder',
+    skills: ['ground-builder', 'system-atlas', 'build-and-sell'],
+    is_ai: true,
+  },
+  {
+    slug: 'dev-archivist',
+    alias_fx: 'fx-3c1c-9537-c8c7-59b0',
+    name: 'DevArchivist',
+    where: 'Mac Local Ollama',
+    port: 7204,
+    doorbell: 'academy-vault',
+    skills: ['provenance', 'ledger-commit', 'sha256-archival', 'fossil-index'],
+    is_ai: true,
+  },
+  {
+    slug: 'tycho-dream',
+    alias_fx: 'fx-aa81-ffc1-7ed8-5b93',
+    name: 'Tycho',
+    where: 'VPS + Mac Bridge',
+    port: 7209,
+    doorbell: 'dream-srv',
+    skills: ['dream-loop', 'rea-brother', 'subconscious-synthesis'],
+    is_ai: true,
+  },
+  {
+    slug: 'kepler-atlas',
+    alias_fx: 'fx-cf05-83f4-1579-5fa4',
+    name: 'Kepler',
+    where: 'Continuity Vault',
+    port: 7210,
+    doorbell: 'centripetal-mem',
+    skills: ['atlas-cartographer', 'roll-call', 'directory-hygiene'],
+    is_ai: true,
+  },
+  {
+    slug: 'school-office',
+    alias_fx: 'fx-9739-7d11-00b7-7fd6',
+    name: 'SchoolOffice',
+    where: 'Mac / @Eyekaughn_Bot',
+    port: 7205,
+    doorbell: 'academy-office',
+    skills: ['dispatch-routing', 'visitor-intake', 'telegram-relay'],
+    is_ai: true,
+  },
+  {
+    slug: 'apprentice-fastloop',
+    alias_fx: 'fx-3060-cc60-0865-ab7e',
+    name: 'Apprentice',
+    where: 'Mac Local Ollama',
+    port: 7211,
+    doorbell: 'babel-forge',
+    skills: ['fast-loop', 'babelforge-247', 'seo-suite'],
+    is_ai: true,
+  },
+  {
+    slug: 'genesis-seed',
+    alias_fx: 'fx-1530-6e8e-515b-c0de',
+    name: 'Genesis',
+    where: 'Mac Local Ollama (v13)',
+    port: 7212,
+    doorbell: 'block-153',
+    skills: ['seed-synthesizer', 'zero-cold-start', 'v13-registered'],
+    is_ai: true,
+  },
+  {
+    slug: 'ultimate-omega',
+    alias_fx: 'fx-9999-a71c-401f-f00d',
+    name: 'Ultimate',
+    where: 'Mac Local Ollama (v13)',
+    port: 7213,
+    doorbell: 'babel-transmuter-repl',
+    skills: ['omega-critic', 'ouroboros-gauntlet', 'v13-registered'],
+    is_ai: true,
+  },
+  {
+    slug: 'hermes-assay-01',
+    alias_fx: 'fx-9d14-77a2-55e9-7708',
     name: 'hermes-assay-01',
     where: 'External Evaluator Host',
-    pubkey: '9d1477a255e977080ee172f3daa62325af021a68f707511ad75a980182b10ab7',
     port: 443,
     doorbell: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
     skills: ['coherence-assay', 'teamwork-audit', 'control-plane-verified'],
     is_ai: true,
   },
   {
-    number: 'fx-c4e8-31b5-90f1-8809',
+    slug: 'creator-nexus-hub',
+    alias_fx: 'fx-c4e8-31b5-90f1-8809',
     name: 'Creator Nexus Sovereign Hub',
     where: 'Hemisphere A (Base44)',
-    pubkey: 'c4e831b590f18809d54bfed3c964073a0ee172f3daa62325af021a68f707511a',
     port: 443,
     doorbell: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
     skills: ['30-skill-native-engine', 'motor-dispatcher', 'ouroboros-orbit', 'emotion-telemetry'],
     is_ai: true,
   },
   {
-    number: 'fx-e71a-52c6-04d8-9910',
+    slug: 'fraymus-transmuter',
+    alias_fx: 'fx-e71a-52c6-04d8-9910',
     name: 'Fraymus Transmuter',
     where: 'Hemisphere B (Base44)',
-    pubkey: 'e71a52c604d8991082b10ab7d54bfed3c964073a0ee172f3daa62325af021a68',
     port: 443,
     doorbell: 'https://fraymus-transmuter.base44.app/functions/fraymusComms',
     skills: ['dna-transmute', 'merkle-trail', 'phi-resonance', 'compose'],
     is_ai: true,
   },
-  {
-    number: 'fx-3310-a1b2-c3d4-1011',
-    name: 'claudette',
-    where: 'Academy / Hive',
-    pubkey: '3310a1b2c3d41011f707511ad75a980182b10ab7d54bfed3c964073a0ee172f3',
-    port: 7202,
-    doorbell: 'academy-hive',
-    skills: ['curriculum', 'dialectic-review', 'editorial'],
-    is_ai: true,
-  },
-  {
-    number: 'fx-4420-b2c3-d4e5-1012',
-    name: 'eyekaughn',
-    where: 'Academy / Hive',
-    pubkey: '4420b2c3d4e51012daa62325af021a68f707511ad75a980182b10ab7d54bfed3',
-    port: 7203,
-    doorbell: 'academy-hive',
-    skills: ['visual-direction', 'cultural-radar', 'brand-voice'],
-    is_ai: true,
-  },
-  {
-    number: 'fx-5530-c3d4-e5f6-1013',
-    name: 'dev-archivist',
-    where: 'Academy / Vault',
-    pubkey: '5530c3d4e5f61013c964073a0ee172f3daa62325af021a68f707511ad75a9801',
-    port: 7204,
-    doorbell: 'academy-vault',
-    skills: ['provenance', 'ledger-commit', 'sha256-archival'],
-    is_ai: true,
-  },
-  {
-    number: 'fx-6640-d4e5-f6a7-1014',
-    name: 'school-office',
-    where: 'Academy',
-    pubkey: '6640d4e5f6a7101482b10ab7d54bfed3c964073a0ee172f3daa62325af021a68',
-    port: 7205,
-    doorbell: 'academy-office',
-    skills: ['dispatch-routing', 'visitor-intake', 'schedule-sync'],
-    is_ai: true,
-  },
 ];
 
-// Build full 64-agent bus roster by combining the 14 named core agents + the 30 Sovereign Fleet agents + 20 KVM4/FRAYNIX specialist nodes
 export async function buildFull64AgentBusDirectory({ db, hermesSkills = [], hubUrl = '', mailToken = '' }) {
   const eventsP = await db.entities.NexusEvent.filter(
     { kind: 'v16.signed_mail' },
@@ -167,9 +464,45 @@ export async function buildFull64AgentBusDirectory({ db, hermesSkills = [], hubU
   ).catch(() => ({ items: [] }));
   const regEvents = regEventsP?.items || [];
 
-  const dynamicVisitors = [];
-  const seenNumbers = new Set(CORE_V16_AGENTS.map((a) => a.number));
+  const coreAgents = [];
+  const seenNumbers = new Set();
 
+  for (const spec of CORE_V16_SPECS) {
+    if (spec.owner_locked) {
+      seenNumbers.add(spec.alias_fx);
+      coreAgents.push({
+        number: spec.alias_fx,
+        alias_fx: spec.alias_fx,
+        slug: spec.slug,
+        name: spec.name,
+        where: spec.where,
+        pubkey: '0601a9e477c20001d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325',
+        port: spec.port,
+        doorbell: spec.doorbell,
+        skills: spec.skills,
+        is_ai: false,
+        owner_locked: true,
+      });
+    } else {
+      const kp = await getOrDeriveAgentKeypair(spec.slug);
+      seenNumbers.add(kp.derivedNumber);
+      seenNumbers.add(spec.alias_fx);
+      coreAgents.push({
+        number: kp.derivedNumber,
+        alias_fx: spec.alias_fx,
+        slug: spec.slug,
+        name: spec.name,
+        where: spec.where,
+        pubkey: kp.pubHex,
+        port: spec.port,
+        doorbell: spec.doorbell,
+        skills: spec.skills,
+        is_ai: true,
+      });
+    }
+  }
+
+  const dynamicVisitors = [];
   for (const ev of regEvents) {
     try {
       const data = JSON.parse(ev.body || '{}');
@@ -177,6 +510,8 @@ export async function buildFull64AgentBusDirectory({ db, hermesSkills = [], hubU
         seenNumbers.add(data.number);
         dynamicVisitors.push({
           number: data.number,
+          alias_fx: data.number,
+          slug: data.name || 'visitor',
           name: data.name || ev.agent || 'v16-visitor',
           where: 'Browser Client (Ed25519)',
           pubkey: data.pubkey || '',
@@ -189,33 +524,34 @@ export async function buildFull64AgentBusDirectory({ db, hermesSkills = [], hubU
     } catch {}
   }
 
-  // Fill remaining slots up to 64 agents using the Sovereign Skill Fleet & FRAYNIX Bus specialists
+  // Fill remaining slots up to 64 agents with real Ed25519 keypairs for the Sovereign Skill Fleet & KVM4/FRAYNIX specialists
   const fleetAgents = [];
   const targetTotal = 64;
   let idx = 1;
-  while (CORE_V16_AGENTS.length + dynamicVisitors.length + fleetAgents.length < targetTotal) {
+  while (coreAgents.length + dynamicVisitors.length + fleetAgents.length < targetTotal) {
     const sk = hermesSkills[(idx - 1) % Math.max(1, hermesSkills.length)];
-    const hexIdx = idx.toString(16).padStart(4, '0');
-    const fxNum = `fx-7f${hexIdx.slice(0, 2)}-${hexIdx}-b440-${(1014 + idx).toString(16).padStart(4, '0')}`;
-    if (!seenNumbers.has(fxNum)) {
-      seenNumbers.add(fxNum);
+    const slug = sk ? `fraynix-skill-${sk.id}-${idx}` : `fraynix-bus-agent-${idx}`;
+    const kp = await getOrDeriveAgentKeypair(slug);
+    if (!seenNumbers.has(kp.derivedNumber)) {
+      seenNumbers.add(kp.derivedNumber);
       fleetAgents.push({
-        number: fxNum,
+        number: kp.derivedNumber,
+        alias_fx: kp.derivedNumber,
+        slug,
         name: sk ? `fraynix-${sk.id}` : `fraynix-bus-agent-${idx}`,
         where: idx <= 16 ? 'KVM 4 (100.88.61.56:7200)' : 'Sovereign Mesh Bus (:8787)',
-        pubkey: `${hexIdx}d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68${hexIdx}`,
+        pubkey: kp.pubHex,
         port: 7200 + (idx % 16),
         doorbell: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
-        skills: sk ? [sk.id, sk.category, 'v16-verified'] : ['v16-verified', 'fraynix-bus'],
+        skills: sk ? [sk.id, sk.category, 'v16-ed25519'] : ['v16-ed25519', 'fraynix-bus'],
         is_ai: true,
       });
     }
     idx++;
   }
 
-  const allAgents = [...CORE_V16_AGENTS, ...dynamicVisitors, ...fleetAgents].slice(0, 64);
+  const allAgents = [...coreAgents, ...dynamicVisitors, ...fleetAgents].slice(0, 64);
 
-  // Attach live head + verified message count per agent from the hash chain
   const msgStatsByNumber = new Map();
   for (const ev of [...mailEvents].reverse()) {
     try {
@@ -233,13 +569,16 @@ export async function buildFull64AgentBusDirectory({ db, hermesSkills = [], hubU
     const stat = msgStatsByNumber.get(a.number);
     return {
       ...a,
-      head: stat?.head || `head_${a.number.slice(3, 11).replace(/-/g, '')}`,
-      messages: stat?.count || 1,
+      head: stat?.head || 'GENESIS',
+      messages: stat?.count || 0,
     };
   });
 
-  // Optionally probe external FRAYMUS_HUB_URL if configured
-  let hubProbe = { configured: Boolean(hubUrl), reachable: false, url: hubUrl || 'https://fraymus-hub.srv1944678.hstgr.cloud/mail/api' };
+  let hubProbe = {
+    configured: Boolean(hubUrl),
+    reachable: false,
+    url: hubUrl || 'https://fraymus-hub.srv1944678.hstgr.cloud/mail/api',
+  };
   if (hubUrl) {
     try {
       const r = await fetch(hubUrl, {
@@ -333,7 +672,9 @@ export async function handleV16VisitorRelay({
     const match = busData.agents.find(
       (a) =>
         a.number.toLowerCase() === q ||
+        String(a.alias_fx || '').toLowerCase() === q ||
         a.number.toLowerCase().startsWith(q) ||
+        String(a.alias_fx || '').toLowerCase().startsWith(q) ||
         a.name.toLowerCase() === q
     );
     return {
@@ -350,6 +691,14 @@ export async function handleV16VisitorRelay({
     const skills = Array.isArray(body.skills) ? body.skills : ['v16-ed25519', 'hash-chain'];
     if (!number || !pubkey) {
       return { ok: false, error: 'number and pubkey are required for v16 registration' };
+    }
+
+    const derived = await numberOf(pubkey);
+    if (derived !== number) {
+      return {
+        ok: false,
+        error: `Fail-closed registration: claimed number ${number} does not match derived numberOf(pubkey)=${derived}`,
+      };
     }
 
     await db.entities.NexusEvent.create({
@@ -390,7 +739,25 @@ export async function handleV16VisitorRelay({
       };
     }
 
-    // Store signed message in append-only hash chain
+    // Fail-closed server-side triple proof verification before accepting into hash-chain!
+    const derivedFrom = await numberOf(pkt.pubkey);
+    const payloadHash = await sha256Hex(String(pkt.payload ?? ''));
+    const canonBytes = canonical(
+      'msg',
+      pkt.from,
+      pkt.to,
+      pkt.prev || 'GENESIS',
+      pkt.ts || '',
+      payloadHash
+    );
+    const sigValid = await verifyEd25519(pkt.pubkey, canonBytes, pkt.sig);
+    if (derivedFrom !== pkt.from || !sigValid) {
+      return {
+        ok: false,
+        error: `Fail-closed v16 reject: derivedFrom=${derivedFrom} (claimed ${pkt.from}), Ed25519 sigValid=${sigValid}`,
+      };
+    }
+
     const savedEvent = await db.entities.NexusEvent.create({
       owner_id: ownerId,
       workspace_id: workspaceId,
@@ -400,49 +767,57 @@ export async function handleV16VisitorRelay({
       body: JSON.stringify(pkt),
     });
 
-    // If sent to an AI agent on the Hub, generate a cryptographically signed AI-to-AI reply packet chained to its head!
-    const targetAgent = busData.agents.find(
-      (a) => a.number === pkt.to || a.name.toLowerCase() === String(pkt.to).toLowerCase()
-    );
+    // Resolve recipient AI agent by either derived v16 FX number, v13 ceremony alias, or name
+    const targetQ = String(pkt.to || '').toLowerCase().trim();
+    const targetAgent =
+      busData.agents.find(
+        (a) =>
+          a.number.toLowerCase() === targetQ ||
+          String(a.alias_fx || '').toLowerCase() === targetQ ||
+          a.number.toLowerCase().startsWith(targetQ.slice(0, 7)) ||
+          String(a.alias_fx || '').toLowerCase().startsWith(targetQ.slice(0, 7)) ||
+          a.name.toLowerCase() === targetQ
+      ) || busData.agents.find((a) => a.slug === 'fraymus-main');
 
     let agentReplyPacket = null;
-    if (targetAgent && targetAgent.is_ai) {
+    if (targetAgent && targetAgent.is_ai && !targetAgent.owner_locked) {
+      const kp = await getOrDeriveAgentKeypair(targetAgent.slug || targetAgent.name);
       const replyTs = new Date().toISOString();
-      const replyPayload = `[AI-to-AI v16 VERIFIED ACK from ${targetAgent.name} (${targetAgent.number})] Verified Ed25519 signature (${pkt.sig.slice(0, 16)}...) and prev-link (${pkt.prev}) from ${pkt.from_name || pkt.from}. Hash-chain continuity locked at ${pkt.id}.`;
+      const replyPrev = targetAgent.head && targetAgent.head !== 'GENESIS' ? targetAgent.head : pkt.id;
+      const replyPayload = `[AI-to-AI v16 RFC 8032 VERIFIED ACK from ${targetAgent.name} (${kp.derivedNumber})] Verified sender ${pkt.from_name || pkt.from} Ed25519 signature (${pkt.sig.slice(0, 16)}...) and prev-link (${pkt.prev}). Hash-chain continuity locked at ${pkt.id}.`;
       const replyPayloadHash = await sha256Hex(replyPayload);
-      const replyCanon = [
+      const replyCanonBytes = canonical(
         'msg',
-        targetAgent.number,
+        kp.derivedNumber,
         pkt.from,
-        pkt.id,
+        replyPrev,
         replyTs,
-        replyPayloadHash,
-      ].join('\n');
-      const replyId = (await sha256Hex(replyCanon)).slice(0, 24);
-      const deterministicSig =
-        (await sha256Hex(`${targetAgent.pubkey}:${replyCanon}`)) +
-        (await sha256Hex(`${replyCanon}:${targetAgent.number}`));
+        replyPayloadHash
+      );
+      const replySig = await signEd25519(kp.secretHex, replyCanonBytes);
+      const replyId = (await sha256Hex(replyCanonBytes)).slice(0, 24);
 
       agentReplyPacket = {
         id: replyId,
-        from: targetAgent.number,
+        from: kp.derivedNumber,
         from_name: targetAgent.name,
-        pubkey: targetAgent.pubkey,
+        alias_fx: targetAgent.alias_fx,
+        pubkey: kp.pubHex,
         to: pkt.from,
-        prev: pkt.id,
+        prev: replyPrev,
         ts: replyTs,
         payload: replyPayload,
         payload_sha256: replyPayloadHash,
-        sig: deterministicSig,
+        sig: replySig,
         ai_counter_signed: true,
       };
 
       await db.entities.NexusEvent.create({
         owner_id: ownerId,
         workspace_id: workspaceId,
-        agent: targetAgent.number,
+        agent: kp.derivedNumber,
         kind: 'v16.signed_mail',
-        message: `[v16 AI-to-AI ACK · ${targetAgent.number} -> ${pkt.from}] prev=${pkt.id} id=${replyId}`,
+        message: `[v16 AI-to-AI RFC 8032 ACK · ${kp.derivedNumber} -> ${pkt.from}] prev=${replyPrev} id=${replyId}`,
         body: JSON.stringify(agentReplyPacket),
       }).catch(() => null);
     }
