@@ -5,7 +5,13 @@ import {
   classifyAndRouteDirective,
   executeDirectiveAndPersistArtifact,
   commitArtifactToGithubVault,
+  runAbsorbAllContinuity,
 } from '../../shared/motorDispatcher.ts';
+import {
+  HERMES_SKILL_FLEET,
+  HERMES_SUBAGENT_PIPELINES,
+  UNIFIED_HERMES_SOVEREIGN_V2_PY,
+} from '../../shared/hermesSkillFleet.ts';
 
 function slugify(str) {
   return (
@@ -556,7 +562,7 @@ export default async function(req) {
       });
     }
 
-    if (action === 'list_dispatch_jobs') {
+    if (action === 'list_dispatch_jobs' || action === 'hermes_fleet_manifest') {
       const jobsP = await db.entities.NexusDispatchJob.filter(
         { workspace_id: workspaceId },
         { sort: '-created_date', limit: 30 }
@@ -567,6 +573,9 @@ export default async function(req) {
         workspaceId,
         meshNodes: MESH_NODES,
         jobs: jobsP?.items || [],
+        hermesSkills: HERMES_SKILL_FLEET,
+        subagentPipelines: HERMES_SUBAGENT_PIPELINES,
+        unifiedHermesDaemon: UNIFIED_HERMES_SOVEREIGN_V2_PY,
       });
     }
 
@@ -1032,156 +1041,14 @@ export default async function(req) {
     }
 
     if (action === 'absorb_all_continuity') {
-      const [draftsP, sparksP, modelsP, buildsP, regsP, eventsP] = await Promise.allSettled([
-        db.entities.NexusDraft.filter({ workspace_id: workspaceId }, { sort: '-updated_date', limit: 5 }),
-        db.entities.SparkCard.filter({ workspace_id: workspaceId }, { sort: '-created_date', limit: 8 }),
-        db.entities.NexusModelArtifact.list('-created_date', 8),
-        db.entities.LooseScrewItem.list('-created_date', 8),
-        db.entities.NexusRegressionRun.filter({ workspace_id: workspaceId }, { sort: '-created_date', limit: 5 }),
-        db.entities.NexusEvent.filter({ workspace_id: workspaceId }, { sort: '-created_date', limit: 10 }),
-      ]);
-
-      const unwrap = (r) =>
-        r.status === 'fulfilled'
-          ? Array.isArray(r.value)
-            ? r.value
-            : r.value?.items || []
-          : [];
-
-      const drafts = unwrap(draftsP);
-      const sparks = unwrap(sparksP);
-      const models = unwrap(modelsP);
-      const builds = unwrap(buildsP);
-      const regs = unwrap(regsP);
-      const events = unwrap(eventsP);
-
       const rSan = computeOpegReceipt({
         g: 1.0,
         gamma: 1.41421356,
         epsilon: 0.001,
         goal: 'Full-System Continuity & Memory Absorption',
       });
-
-      const scopes = [
-        {
-          scope: 'researcher',
-          display_name: 'OPEG V1.0 & Radar Empirical Scout',
-          context: `[OPEG-V1.0 Receipt ${rSan.receipt_id} · Σ Verified] Active Signals & Sparks (${sparks.length}): ${sparks
-            .slice(0, 4)
-            .map((s) => s.hook_title)
-            .join(' | ') || 'Ready'}. Enforce Forbidden_Action: DIRECT_INFERENCE.`,
-        },
-        {
-          scope: 'writer',
-          display_name: 'Affective & Multi-Pane Studio Co-Writer',
-          context: `[Studio Continuity · ${drafts.length} Active Drafts] Latest Drafts: ${drafts
-            .slice(0, 3)
-            .map((d) => `${d.title || 'Untitled'} (rev ${d.revision || 0})`)
-            .join(' | ') || 'Ready'}. Preserve creator voice and inline diff clarity.`,
-        },
-        {
-          scope: 'strategist',
-          display_name: 'Argon RSI & Regression Data Scientist',
-          context: `[Closed-Loop Data Science · ${regs.length} Regression Runs · ${events.length} Pulses] Latest guidance: ${
-            regs[0]?.guidance?.slice(0, 220) || 'Optimize hook retention, quantitative proof density, and novelty.'
-          }`,
-        },
-        {
-          scope: 'director',
-          display_name: 'World-Class Visual Director & Scene Compiler',
-          context: `[Visual Director · ${builds.length} LooseScrew Builds · ${sparks.length} Video Cards] Enforce nexus.scene_plan/1 timing invariants (1.5s–6.0s beats, synced B-roll visuals, and SHA-256 VMR provenance).`,
-        },
-        {
-          scope: 'models',
-          display_name: 'φ^75-Ternary & VPS Ollama Registry',
-          context: `[φ^75-Ternary Codec · ${models.length} Managed Artifacts] Active Models: ${models
-            .slice(0, 4)
-            .map((m) => m.name)
-            .join(' | ') || 'fraymus-opeg-v1-orchestrator'}.`,
-        },
-      ];
-
-      const existingContP = await db.entities.NexusContinuity.filter(
-        { workspace_id: workspaceId },
-        { limit: 20 }
-      ).catch(() => ({ items: [] }));
-      const existingCont = existingContP?.items || [];
-
-      const updatedScopes = [];
-      for (const item of scopes) {
-        const match = existingCont.find((c) => c.scope === item.scope);
-        if (match) {
-          await db.entities.NexusContinuity.update(match.id, {
-            display_name: item.display_name,
-            context: item.context.slice(0, 5900),
-            enabled: true,
-          }).catch(() => null);
-        } else {
-          await db.entities.NexusContinuity.create({
-            owner_id: ownerId,
-            workspace_id: workspaceId,
-            scope: item.scope,
-            display_name: item.display_name,
-            context: item.context.slice(0, 5900),
-            enabled: true,
-          }).catch(() => null);
-        }
-        updatedScopes.push(item.scope);
-      }
-
-      const goldenTheta = Number(((Date.now() % 360) * (Math.PI / 180)).toFixed(4));
-      const orbitNode = await db.entities.NexusOuroborosNode.create({
-        owner_id: ownerId,
-        workspace_id: workspaceId,
-        node_kind: 'orbit',
-        branch_origin: 'UNIFIED_OS_CONTINUITY_ABSORPTION',
-        code_hash: rSan.receipt_id.slice(-12),
-        generation: 3,
-        title: `Unified OS Continuity Snapshot (${drafts.length}D/${sparks.length}S/${models.length}M)`,
-        source_code: JSON.stringify(
-          {
-            receipt_id: rSan.receipt_id,
-            scopes: updatedScopes,
-            counts: {
-              drafts: drafts.length,
-              sparks: sparks.length,
-              models: models.length,
-              builds: builds.length,
-              regressions: regs.length,
-            },
-          },
-          null,
-          2
-        ),
-        fitness: 1.618,
-        baseline_latency_ns: 48200,
-        latency_ns: 6850,
-        speedup: 7.04,
-        structural_entropy: 3.14,
-        importance: 0.94,
-        radius: 0.48,
-        theta: goldenTheta,
-        continuity: 0.985,
-        access_count: 5,
-        stages_passed: [true, true, true, true, true],
-        diagnostic_summary: `Absorbed ${drafts.length} drafts, ${sparks.length} sparks, ${models.length} models, and ${builds.length} builds into persistent agent continuity & polar orbit.`,
-      }).catch(() => null);
-
-      return Response.json({
-        ok: true,
-        rSan,
-        updatedScopes,
-        orbitNodeId: orbitNode?.id || null,
-        counts: {
-          drafts: drafts.length,
-          sparks: sparks.length,
-          models: models.length,
-          builds: builds.length,
-          regressions: regs.length,
-          events: events.length,
-        },
-        absorbedAt: new Date().toISOString(),
-      });
+      const res = await runAbsorbAllContinuity({ db, ownerId, workspaceId, rSan });
+      return Response.json(res);
     }
 
     if (action === 'dispatch_task') {

@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
+import HermesSkillFleetPanel from '@/components/nexus/omega/HermesSkillFleetPanel';
 import {
   Cpu,
   HardDrive,
@@ -56,6 +57,9 @@ export default function SovereignMotorDispatcherPanel() {
   const [queueOnly, setQueueOnly] = useState(false);
   const [busy, setBusy] = useState('');
   const [meshNodes, setMeshNodes] = useState([]);
+  const [hermesSkills, setHermesSkills] = useState([]);
+  const [subagentPipelines, setSubagentPipelines] = useState([]);
+  const [unifiedHermesDaemon, setUnifiedHermesDaemon] = useState('');
   const [jobs, setJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [copiedWorker, setCopiedWorker] = useState(false);
@@ -69,6 +73,9 @@ export default function SovereignMotorDispatcherPanel() {
       });
       if (res?.data?.ok) {
         setMeshNodes(res.data.meshNodes || []);
+        setHermesSkills(res.data.hermesSkills || []);
+        setSubagentPipelines(res.data.subagentPipelines || []);
+        setUnifiedHermesDaemon(res.data.unifiedHermesDaemon || '');
         const list = res.data.jobs || [];
         setJobs(list);
         if (list.length > 0 && !selectedJob) {
@@ -90,16 +97,17 @@ export default function SovereignMotorDispatcherPanel() {
     loadQueueAndNodes();
   }, [loadQueueAndNodes]);
 
-  const handleDispatch = async (e) => {
-    e?.preventDefault();
-    if (!directive.trim()) return;
+  const handleDispatchCustom = async (customDirective, forceQueueOnly = queueOnly) => {
+    const text = String(customDirective ?? directive).trim();
+    if (!text) return;
+    setDirective(text);
     setBusy('dispatch');
     try {
       const res = await base44.functions.invoke('openclawGateway', {
         action: 'dispatch_route_task',
-        directive: directive.trim(),
+        directive: text,
         preferred_node: preferredNode,
-        queue_only: queueOnly,
+        queue_only: forceQueueOnly,
       });
       if (res?.data?.ok) {
         const newJob = res.data.job;
@@ -122,6 +130,11 @@ export default function SovereignMotorDispatcherPanel() {
     } finally {
       setBusy('');
     }
+  };
+
+  const handleDispatch = async (e) => {
+    e?.preventDefault();
+    return handleDispatchCustom(directive, queueOnly);
   };
 
   const handleForceExecuteQueuedJob = async (job) => {
@@ -326,6 +339,18 @@ while True:
             {workerScript}
           </pre>
         </div>
+      )}
+
+      {/* Hermes 29-Skill Fleet & Sub-Agent Meta-Orchestrator Panel */}
+      {hermesSkills.length > 0 && (
+        <HermesSkillFleetPanel
+          skills={hermesSkills}
+          pipelines={subagentPipelines}
+          unifiedDaemonCode={unifiedHermesDaemon}
+          onSelectDirective={(d) => setDirective(d)}
+          onDispatchImmediate={(d, qOnly) => handleDispatchCustom(d, qOnly)}
+          busy={busy}
+        />
       )}
 
       {/* Directive Composer + Presets */}
