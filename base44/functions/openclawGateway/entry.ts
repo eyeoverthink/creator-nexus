@@ -28,6 +28,7 @@ import {
   handleDisagreementEscalation,
   commitControlPlanePackToGithub,
 } from '../../shared/fraymusControlPlane.ts';
+import { executeNativeSkillInApp } from '../../shared/nativeSkillExecutors.ts';
 
 function slugify(str) {
   return (
@@ -202,6 +203,7 @@ export default async function(req) {
       'orifice_github_sync',
       'list_dispatch_jobs',
       'hermes_fleet_manifest',
+      'execute_native_skill',
       'claim_dispatch_job',
       'complete_dispatch_job',
       'dispatch_route_task',
@@ -677,6 +679,18 @@ export default async function(req) {
           },
         },
       });
+    }
+
+    if (action === 'execute_native_skill') {
+      const res = await executeNativeSkillInApp({
+        db,
+        ownerId,
+        workspaceId,
+        skillId: String(body.skill_id || ''),
+        inputQuery: String(body.query || body.directive || ''),
+        persistToVault: body.persist_to_vault !== false,
+      });
+      return Response.json(res);
     }
 
     if (action === 'list_dispatch_jobs' || action === 'hermes_fleet_manifest') {

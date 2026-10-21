@@ -8,6 +8,7 @@ import HostingerGpuBurstTrainerPanel from '@/components/nexus/omega/HostingerGpu
 import SovereignAmbassadorGatekeeperPanel from '@/components/nexus/omega/SovereignAmbassadorGatekeeperPanel';
 import FraymusControlPlanePanel from '@/components/nexus/omega/FraymusControlPlanePanel';
 import HeartMuLaLocalMusicForgePanel from '@/components/nexus/loosescrew/HeartMuLaLocalMusicForgePanel';
+import NativeSkillFleetExecutorPanel from '@/components/nexus/omega/NativeSkillFleetExecutorPanel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -129,6 +130,14 @@ export default function HermesHub() {
             </Button>
           </div>
         </div>
+
+        {/* Zero-Middleman Native 30-Skill In-App Executor + Sovereign Fleet Agent */}
+        <NativeSkillFleetExecutorPanel
+          skills={hermesSkills}
+          onJobCreated={(newJob) => {
+            setJobs((prev) => [newJob, ...prev.filter((j) => j.id !== newJob.id)]);
+          }}
+        />
 
         {/* Local & Free AI Song/Vocal Forge: HeartMuLa-oss-3B + ACE-Step 1.5 + YuE2 + DiffRhythm */}
         <HeartMuLaLocalMusicForgePanel
