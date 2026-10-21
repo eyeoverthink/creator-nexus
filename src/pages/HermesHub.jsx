@@ -7,6 +7,7 @@ import CloudModelTrainingDashboardPane from '@/components/nexus/omega/CloudModel
 import HostingerGpuBurstTrainerPanel from '@/components/nexus/omega/HostingerGpuBurstTrainerPanel';
 import SovereignAmbassadorGatekeeperPanel from '@/components/nexus/omega/SovereignAmbassadorGatekeeperPanel';
 import FraymusControlPlanePanel from '@/components/nexus/omega/FraymusControlPlanePanel';
+import HeartMuLaLocalMusicForgePanel from '@/components/nexus/loosescrew/HeartMuLaLocalMusicForgePanel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -128,6 +129,13 @@ export default function HermesHub() {
             </Button>
           </div>
         </div>
+
+        {/* Local & Free AI Song/Vocal Forge: HeartMuLa-oss-3B + ACE-Step 1.5 + YuE2 + DiffRhythm */}
+        <HeartMuLaLocalMusicForgePanel
+          onDispatchedJob={(newJob) => {
+            setJobs((prev) => [newJob, ...prev.filter((j) => j.id !== newJob.id)]);
+          }}
+        />
 
         {/* Canonical Fraymus Control Plane Contract v1.0 (VPS 1944678 + VPS 2067485 + Managed Hermes) */}
         <FraymusControlPlanePanel />

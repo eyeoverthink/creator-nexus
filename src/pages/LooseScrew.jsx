@@ -10,6 +10,7 @@ import AvatarHostStudio from '@/components/nexus/loosescrew/AvatarHostStudio';
 import BroadcastStageCanvas from '@/components/nexus/loosescrew/BroadcastStageCanvas';
 import IngestContentDialog from '@/components/nexus/loosescrew/IngestContentDialog';
 import AutonomousForgeBar from '@/components/nexus/loosescrew/AutonomousForgeBar';
+import HeartMuLaLocalMusicForgePanel from '@/components/nexus/loosescrew/HeartMuLaLocalMusicForgePanel';
 
 function normalizeItem(r){
  return {
@@ -183,7 +184,8 @@ export default function LooseScrew(){
    </div>
   </div>
 
-  <div className="mb-4">
+  <div className="mb-4 space-y-3">
+   <HeartMuLaLocalMusicForgePanel onDispatchedJob={job=>addLog(`Queued HeartMuLa GPU job ${job.job_id}`)}/>
    <AutonomousForgeBar activeItem={{...activeItem,code:codeValue,app_html:appHtmlValue}} onBuilt={rec=>{qc.invalidateQueries({queryKey:['loosescrew','items']});selectItem(rec);}} onEvolved={rec=>{qc.invalidateQueries({queryKey:['loosescrew','items']});selectItem(rec);}} onLog={addLog} onSpeak={speak}/>
   </div>
 

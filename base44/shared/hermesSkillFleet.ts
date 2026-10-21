@@ -409,6 +409,18 @@ export const HERMES_SKILL_FLEET = [
     summary: '3D-feeling scrollytelling viewport engine (scrollcraft.js/css) + Playwright visual verification (shoot.mjs, doctor.mjs).',
     sample_directive: '[Hermes /agent/run scrollcraft] Build an interactive Apple-grade 3D scrollytelling showcase page and verify frames with shoot.mjs.',
   },
+  {
+    id: 'heartmula-music',
+    category: 'Web Dev, REA & Deploy',
+    path: 'media/heartmula-music',
+    script_path: 'media/heartmula-music/scripts/heartmula_nexus_bridge.py',
+    zero_llm_capable: true,
+    verdict: 'SAFE ($0 LOCAL GPU)',
+    replaces: 'Suno Pro / Udio Subscriptions ($30/mo)',
+    savings_mo: 30,
+    summary: 'Local open-source full-song & vocal synthesis via HeartMuLa-oss-3B (HeartMuLa/heartlib), ACE-Step 1.5, YuE2-3B, and DiffRhythm on 8GB+ VRAM.',
+    sample_directive: '[Hermes /script/exec heartmula-music] Render full vocal & instrumental song with HeartMuLa-oss-3B (100 BPM alt-rock electronic) and sync MP3 to Creator Nexus.',
+  },
 ];
 
 export const HERMES_SUBAGENT_PIPELINES = [
@@ -598,6 +610,7 @@ ZERO_LLM_SCRIPTS = {
     "web-pentest":       "security/web-pentest/scripts/recon-scan.sh",
     "oss-forensics":     "security/oss-forensics/scripts/evidence-store.py",
     "godmode":           "security/godmode/scripts/godmode_race.py",
+    "heartmula-music":   "media/heartmula-music/scripts/heartmula_nexus_bridge.py",
 }
 
 def gw_headers():
