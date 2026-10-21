@@ -157,45 +157,65 @@ async function runNativeSherlock(rawInput) {
 
 // 3. Live Public Records & Corporate OSINT (osint-investigation)
 async function runNativeOsintInvestigation(query) {
-  const q = encodeURIComponent(query || 'OpenAI');
-  const [waybackRes, gdeltRes, crossrefRes, secRes] = await Promise.allSettled([
-    fetch(`https://web.archive.org/cdx/search/cdx?url=${q}*&output=json&limit=6`, {
+  const raw = String(query || 'eyeoverthink').trim();
+  const q = encodeURIComponent(raw);
+  const waybackTarget = raw.includes('.') ? `${raw}*` : `github.com/${raw}*`;
+
+  const [ghUserRes, ghReposRes, waybackRes, gdeltRes, crossrefRes, hnRes] = await Promise.allSettled([
+    fetch(`https://api.github.com/users/${q}`, {
+      headers: { 'User-Agent': UA, Accept: 'application/vnd.github+json' },
+      signal: AbortSignal.timeout(6000),
+    }).then((r) => (r.ok ? r.json() : null)),
+    fetch(`https://api.github.com/search/repositories?q=${q}&per_page=6`, {
+      headers: { 'User-Agent': UA, Accept: 'application/vnd.github+json' },
+      signal: AbortSignal.timeout(6000),
+    }).then((r) => (r.ok ? r.json() : null)),
+    fetch(`https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(waybackTarget)}&output=json&limit=6`, {
       headers: { 'User-Agent': UA },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(6000),
     }).then((r) => r.json()),
-    fetch(`https://api.gdeltproject.org/api/v2/doc/doc?query=${q}&mode=artlist&maxrecords=6&format=json`, {
+    fetch(`https://api.gdeltproject.org/api/v2/doc/doc?query=${q}&mode=artlist&maxrecords=5&format=json`, {
       headers: { 'User-Agent': UA },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(6000),
     }).then((r) => r.json()),
     fetch(`https://api.crossref.org/works?query=${q}&rows=5`, {
       headers: { 'User-Agent': UA },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(6000),
     }).then((r) => r.json()),
-    fetch(`https://efts.sec.gov/LATEST/search-index?q=${q}&dateRange=custom&startdt=2023-01-01`, {
+    fetch(`https://hn.algolia.com/api/v1/search?query=${q}&hitsPerPage=5`, {
       headers: { 'User-Agent': UA },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(6000),
     }).then((r) => r.json()),
   ]);
 
+  const ghUser = ghUserRes.status === 'fulfilled' ? ghUserRes.value : null;
+  const ghRepos = ghReposRes.status === 'fulfilled' ? ghReposRes.value?.items || [] : [];
   const waybackRows = waybackRes.status === 'fulfilled' && Array.isArray(waybackRes.value) ? waybackRes.value.slice(1, 6) : [];
   const gdeltArticles = gdeltRes.status === 'fulfilled' ? gdeltRes.value?.articles || [] : [];
   const crossrefItems = crossrefRes.status === 'fulfilled' ? crossrefRes.value?.message?.items || [] : [];
-  const secHits = secRes.status === 'fulfilled' ? secRes.value?.hits?.hits || [] : [];
+  const hnMentions = hnRes.status === 'fulfilled' ? hnRes.value?.hits || [] : [];
 
   return {
     engine: 'Native OSINT 14-Source Public Records & Entity Resolution Engine',
-    target_entity: query,
-    sec_edgar_filings: secHits.slice(0, 5).map((h) => ({
-      id: h._id,
-      form: h._source?.form,
-      entity: h._source?.display_names?.[0],
-      filed_at: h._source?.file_date,
-    })),
-    gdelt_global_intelligence: gdeltArticles.slice(0, 5).map((a) => ({
-      title: a.title,
-      url: a.url,
-      domain: a.domain,
-      seendate: a.seendate,
+    target_entity: raw,
+    github_entity_profile: ghUser
+      ? {
+          login: ghUser.login,
+          name: ghUser.name,
+          type: ghUser.type,
+          public_repos: ghUser.public_repos,
+          followers: ghUser.followers,
+          created_at: ghUser.created_at,
+          html_url: ghUser.html_url,
+        }
+      : null,
+    github_repositories: ghRepos.slice(0, 6).map((r) => ({
+      full_name: r.full_name,
+      description: r.description,
+      stars: r.stargazers_count,
+      language: r.language,
+      updated_at: r.updated_at,
+      url: r.html_url,
     })),
     wayback_cdx_snapshots: waybackRows.map((r) => ({
       timestamp: r[1],
@@ -203,10 +223,22 @@ async function runNativeOsintInvestigation(query) {
       mime: r[3],
       status: r[4],
     })),
+    gdelt_global_intelligence: gdeltArticles.slice(0, 5).map((a) => ({
+      title: a.title,
+      url: a.url,
+      domain: a.domain,
+      seendate: a.seendate,
+    })),
     crossref_ip_records: crossrefItems.slice(0, 5).map((c) => ({
       title: c.title?.[0],
       doi: c.DOI,
       publisher: c.publisher,
+    })),
+    public_tech_mentions: hnMentions.slice(0, 5).map((h) => ({
+      title: h.title || h.story_title,
+      author: h.author,
+      created_at: h.created_at,
+      url: h.url || `https://news.ycombinator.com/item?id=${h.objectID}`,
     })),
   };
 }
