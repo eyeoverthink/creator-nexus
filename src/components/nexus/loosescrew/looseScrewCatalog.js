@@ -1,4 +1,10 @@
 import { AI_WORKSHOP_OS_HTML } from '@/components/nexus/loosescrew/aiWorkshopOsHtml';
+import {
+  CSC300_MP3_URL,
+  CSC300_COVER_ART_URL,
+  CSC300_MUSIC_VIDEO_URL,
+  CSC300_MUSIC_STUDIO_HTML,
+} from '@/components/nexus/loosescrew/csc300MusicHtml';
 
 export const GITHUB_REPO_URL = 'https://github.com/eyeoverthink/looseScrew';
 
@@ -18,6 +24,24 @@ export function isVideoUrl(url = '', mime = '') {
 }
 
 export const INITIAL_TRANSMISSIONS = [
+  {
+    id: 'music-csc300-verifies',
+    channel: 'MUSIC',
+    title: 'CSC 300GW: "Nothing\'s True Until It Verifies" (Full Song + AI Video + Process Log)',
+    duration: '03:12',
+    screws: 1618,
+    bpm: 100,
+    tags: ['#CSC300GW', '#ProofOfReality', '#AltRockElectronic', '#100BPM', '#FullSongAndVideo'],
+    voice_intro:
+      'Broadcasting Nothing\'s True Until It Verifies by Vaughn Scott for CSC 300GW. Full vocals, 100 BPM alt-rock electronic production, AI album cover, Veo music video, and completed process log online.',
+    media_url: CSC300_MP3_URL,
+    mime_type: 'audio/mpeg',
+    external_link: CSC300_MUSIC_VIDEO_URL,
+    synth_notes: [110, 130.81, 146.83, 164.81, 196.0, 220.0],
+    code: `// CSC 300GW PROOF-OF-REALITY SONG & MULTI-MODAL VERIFICATION\nreturn JSON.stringify({\n  course: 'CSC 300GW (Prof. Kroll)',\n  artist: 'Vaughn Scott (EyeOverthink)',\n  title: "Nothing's True Until It Verifies",\n  bpm: 100,\n  mp3_master: '${CSC300_MP3_URL}',\n  cover_art: '${CSC300_COVER_ART_URL}',\n  music_video: '${CSC300_MUSIC_VIDEO_URL}',\n  workflow: 'propose -> verify -> approve -> act'\n}, null, 2);`,
+    rea_trace: `[CSC 300GW AI MUSIC DELIVERABLE TRACE]\n• Song: "Nothing's True Until It Verifies" (100 BPM Mid-Tempo Alt-Rock / Electronic)\n• Lyrics & Prompt Engineering: OpenClaw / SchoolOffice\n• Master Vocal Audio: NothingsTrueUntilIt.mp3\n• Visual Cover & 16:9 Music Video: Generated & Verified in Creator Nexus`,
+    app_html: CSC300_MUSIC_STUDIO_HTML,
+  },
   {
     id: 'code-fraymus-os',
     channel: 'CODE',
