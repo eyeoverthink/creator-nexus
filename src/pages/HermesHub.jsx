@@ -6,6 +6,7 @@ import HermesSkillFleetPanel from '@/components/nexus/omega/HermesSkillFleetPane
 import CloudModelTrainingDashboardPane from '@/components/nexus/omega/CloudModelTrainingDashboardPane';
 import HostingerGpuBurstTrainerPanel from '@/components/nexus/omega/HostingerGpuBurstTrainerPanel';
 import SovereignAmbassadorGatekeeperPanel from '@/components/nexus/omega/SovereignAmbassadorGatekeeperPanel';
+import FraymusControlPlanePanel from '@/components/nexus/omega/FraymusControlPlanePanel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -127,6 +128,9 @@ export default function HermesHub() {
             </Button>
           </div>
         </div>
+
+        {/* Canonical Fraymus Control Plane Contract v1.0 (VPS 1944678 + VPS 2067485 + Managed Hermes) */}
+        <FraymusControlPlanePanel />
 
         {/* Sovereign Ambassador & Entry/Exit Sentinel Gatekeeper */}
         <SovereignAmbassadorGatekeeperPanel />

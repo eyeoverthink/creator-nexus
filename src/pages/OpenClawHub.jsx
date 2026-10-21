@@ -8,6 +8,7 @@ import HermesSkillFleetPanel from '@/components/nexus/omega/HermesSkillFleetPane
 import CloudModelTrainingDashboardPane from '@/components/nexus/omega/CloudModelTrainingDashboardPane';
 import HostingerGpuBurstTrainerPanel from '@/components/nexus/omega/HostingerGpuBurstTrainerPanel';
 import SovereignAmbassadorGatekeeperPanel from '@/components/nexus/omega/SovereignAmbassadorGatekeeperPanel';
+import FraymusControlPlanePanel from '@/components/nexus/omega/FraymusControlPlanePanel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -283,10 +284,11 @@ export default function OpenClawHub() {
         <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg border border-border bg-card">
           <div className="flex flex-wrap items-center gap-1.5">
             {[
-              ['command', '1. Omnichannel Command & Ambassador'],
-              ['ambassador', '2. Sovereign Ambassador & Entry/Exit Watchdog'],
-              ['hermes', `3. Hermes Fleet (${hermesManifest.skills.length || 29} Skills & Sub-Agents)`],
-              ['training', '4. Cloud GPU Model Evolution & Jobs'],
+              ['command', '1. Omnichannel Command'],
+              ['control_plane', '2. Fraymus Control Plane Contract v1.0'],
+              ['ambassador', '3. Sovereign Ambassador & Watchdog'],
+              ['hermes', `4. Hermes Fleet (${hermesManifest.skills.length || 29} Skills)`],
+              ['training', '5. Cloud GPU Model Evolution'],
             ].map(([tabId, tabLabel]) => (
               <button
                 key={tabId}
@@ -316,6 +318,8 @@ export default function OpenClawHub() {
             </Link>
           </div>
         </div>
+
+        {activeHubTab === 'control_plane' && <FraymusControlPlanePanel />}
 
         {activeHubTab === 'ambassador' && <SovereignAmbassadorGatekeeperPanel />}
 

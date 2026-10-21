@@ -21,6 +21,13 @@ import {
   runAmbassadorDiplomaticGreeting,
   runEntryExitWatchdogSweep,
 } from '../../shared/sovereignAmbassador.ts';
+import {
+  buildCanonicalControlPlaneRegistry,
+  handleTwoStageNodeEnrollment,
+  handleMemoryProposalLifecycle,
+  handleDisagreementEscalation,
+  commitControlPlanePackToGithub,
+} from '../../shared/fraymusControlPlane.ts';
 
 function slugify(str) {
   return (
@@ -182,6 +189,11 @@ export default async function(req) {
       'enroll_node',
       'ambassador_greet',
       'ambassador_watchdog_sweep',
+      'control_plane_registry',
+      'control_plane_enroll',
+      'control_plane_memory',
+      'control_plane_disagreement',
+      'control_plane_commit_github',
       'orifice_spec',
       'orifice_ping',
       'orifice_absorb',
@@ -315,6 +327,37 @@ export default async function(req) {
         triggerInfo: body.log_sweep ? String(body.trigger_info || 'manual_or_workflow_audit') : null,
       });
       return Response.json(sweep);
+    }
+
+    if (action === 'control_plane_registry') {
+      const registry = await buildCanonicalControlPlaneRegistry({ db, workspaceId });
+      return Response.json({ ok: true, registry });
+    }
+
+    if (action === 'control_plane_enroll') {
+      const res = await handleTwoStageNodeEnrollment({
+        db,
+        ownerId,
+        workspaceId,
+        signingSecret: expectedKey || secrets.get('ACTOR_TOKEN_SECRET') || 'fraymus-control-plane',
+        body,
+      });
+      return Response.json(res);
+    }
+
+    if (action === 'control_plane_memory') {
+      const res = await handleMemoryProposalLifecycle({ db, ownerId, workspaceId, body });
+      return Response.json(res);
+    }
+
+    if (action === 'control_plane_disagreement') {
+      const res = await handleDisagreementEscalation({ db, ownerId, workspaceId, body });
+      return Response.json(res);
+    }
+
+    if (action === 'control_plane_commit_github') {
+      const res = await commitControlPlanePackToGithub({ db, workspaceId });
+      return Response.json(res);
     }
 
     // =========================================================================

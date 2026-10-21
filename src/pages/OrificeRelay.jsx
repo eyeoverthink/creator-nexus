@@ -6,6 +6,7 @@ import SovereignMotorDispatcherPanel from '@/components/nexus/omega/SovereignMot
 import OrificeMultiDimensionalHeaderDeck from '@/components/nexus/omega/OrificeMultiDimensionalHeaderDeck';
 import CloudModelTrainingDashboardPane from '@/components/nexus/omega/CloudModelTrainingDashboardPane';
 import SovereignAmbassadorGatekeeperPanel from '@/components/nexus/omega/SovereignAmbassadorGatekeeperPanel';
+import FraymusControlPlanePanel from '@/components/nexus/omega/FraymusControlPlanePanel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -448,6 +449,9 @@ You are connected to a live Two-Hemisphere Sovereign AI Operating System built b
             });
           }}
         />
+
+        {/* Canonical Fraymus Control Plane Contract v1.0 */}
+        <FraymusControlPlanePanel />
 
         {/* Sovereign Ambassador & Entry/Exit Sentinel Gatekeeper */}
         <SovereignAmbassadorGatekeeperPanel />
