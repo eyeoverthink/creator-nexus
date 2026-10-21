@@ -4,6 +4,9 @@ import ReactMarkdown from 'react-markdown';
 import { base44 } from '@/api/base44Client';
 import Sidebar from '@/components/nexus/Sidebar';
 import SynapticOrificeBridgePanel from '@/components/nexus/omega/SynapticOrificeBridgePanel';
+import HermesSkillFleetPanel from '@/components/nexus/omega/HermesSkillFleetPanel';
+import CloudModelTrainingDashboardPane from '@/components/nexus/omega/CloudModelTrainingDashboardPane';
+import HostingerGpuBurstTrainerPanel from '@/components/nexus/omega/HostingerGpuBurstTrainerPanel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -55,6 +58,12 @@ export default function OpenClawHub() {
   const [collapsed, setCollapsed] = useState(false);
   const [hubData, setHubData] = useState(null);
   const [loadingHub, setLoadingHub] = useState(true);
+  const [activeHubTab, setActiveHubTab] = useState('command'); // 'command' | 'hermes' | 'training'
+  const [hermesManifest, setHermesManifest] = useState({
+    skills: [],
+    pipelines: [],
+    daemon: '',
+  });
 
   // Dispatch Controls
   const [selectedAgent, setSelectedAgent] = useState(OPENCLAW_SPECIALISTS[0].id);
@@ -82,9 +91,19 @@ export default function OpenClawHub() {
   const loadHubStatus = async () => {
     setLoadingHub(true);
     try {
-      const res = await base44.functions.invoke('openclawGateway', { action: 'status' });
+      const [res, fleetRes] = await Promise.all([
+        base44.functions.invoke('openclawGateway', { action: 'status' }),
+        base44.functions.invoke('openclawGateway', { action: 'hermes_fleet_manifest' }),
+      ]);
       if (res?.data?.ok) {
         setHubData(res.data);
+      }
+      if (fleetRes?.data?.ok) {
+        setHermesManifest({
+          skills: fleetRes.data.hermesSkills || [],
+          pipelines: fleetRes.data.subagentPipelines || [],
+          daemon: fleetRes.data.unifiedHermesDaemon || '',
+        });
       }
     } catch {
       // Fallback empty state handled in UI
@@ -258,6 +277,73 @@ export default function OpenClawHub() {
             </Button>
           </div>
         </div>
+
+        {/* Hub Mode Tabs: Omnichannel Command | Hermes 29-Skill Fleet | Cloud GPU Training */}
+        <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg border border-border bg-card">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {[
+              ['command', '1. Omnichannel Command & Live Chat'],
+              ['hermes', `2. Hermes Fleet (${hermesManifest.skills.length || 29} Skills & Sub-Agents)`],
+              ['training', '3. Cloud GPU Model Evolution & Active Training Jobs'],
+            ].map(([tabId, tabLabel]) => (
+              <button
+                key={tabId}
+                type="button"
+                onClick={() => setActiveHubTab(tabId)}
+                className={`px-3 py-1.5 rounded text-xs font-bold border transition-colors ${
+                  activeHubTab === tabId
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-muted-foreground border-border hover:text-foreground'
+                }`}
+              >
+                {tabLabel}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <Link to="/hermes">
+              <Button size="sm" variant="outline" className="h-7 text-[10.5px] px-2.5 gap-1">
+                Full Hermes Hub (/hermes) <ExternalLink size={10} />
+              </Button>
+            </Link>
+            <Link to="/orifice-relay">
+              <Button size="sm" variant="outline" className="h-7 text-[10.5px] px-2.5 gap-1">
+                Orifice Relay (/orifice-relay) <ExternalLink size={10} />
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {activeHubTab === 'hermes' && hermesManifest.skills.length > 0 && (
+          <HermesSkillFleetPanel
+            skills={hermesManifest.skills}
+            pipelines={hermesManifest.pipelines}
+            unifiedDaemonCode={hermesManifest.daemon}
+            onSelectDirective={(d) => {
+              setDirective(d);
+              setActiveHubTab('command');
+            }}
+            onDispatchImmediate={async (d, qOnly) => {
+              await base44.functions.invoke('openclawGateway', {
+                action: 'dispatch_route_task',
+                directive: d,
+                preferred_node: 'srv1944678',
+                queue_only: qOnly,
+              });
+              loadHubStatus();
+            }}
+            onJobCreatedOrUpdated={() => loadHubStatus()}
+            busy={dispatching ? 'dispatch' : ''}
+          />
+        )}
+
+        {activeHubTab === 'training' && (
+          <div className="space-y-4">
+            <CloudModelTrainingDashboardPane />
+            <HostingerGpuBurstTrainerPanel onJobCreated={() => loadHubStatus()} />
+          </div>
+        )}
 
         {/* Live Bicameral Synaptic Orifice Bridge to fraymus-transmuter.base44.app */}
         <SynapticOrificeBridgePanel

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import Sidebar from '@/components/nexus/Sidebar';
 import SovereignMotorDispatcherPanel from '@/components/nexus/omega/SovereignMotorDispatcherPanel';
+import OrificeMultiDimensionalHeaderDeck from '@/components/nexus/omega/OrificeMultiDimensionalHeaderDeck';
+import CloudModelTrainingDashboardPane from '@/components/nexus/omega/CloudModelTrainingDashboardPane';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -79,6 +81,7 @@ export default function OrificeRelay() {
   const [githubSyncData, setGithubSyncData] = useState(null);
   const [bridgePacket, setBridgePacket] = useState(null);
   const [localSignals, setLocalSignals] = useState([]);
+  const [trainingStats, setTrainingStats] = useState({ activeJobs: 1, completedJobs: 0, modelsCount: 1 });
   const [txInput, setTxInput] = useState(
     'SYNC_BICAMERAL_SEEDS: Relay latest REA blueprint & Merkle root into Creator Nexus Polar Orbit.'
   );
@@ -424,6 +427,26 @@ You are connected to a live Two-Hemisphere Sovereign AI Operating System built b
             </Button>
           </div>
         </div>
+
+        {/* Top Screen: Real-Time Multi-Dimensional Nodular Graphical & Statistical Display */}
+        <OrificeMultiDimensionalHeaderDeck
+          signals={allSignals}
+          bridgePacket={bridgePacket}
+          activeJobsCount={trainingStats.activeJobs}
+          completedJobsCount={trainingStats.completedJobs}
+          modelArtifactsCount={trainingStats.modelsCount}
+        />
+
+        {/* Dedicated Cloud Model Training Progress & Active Training Job Management Pane */}
+        <CloudModelTrainingDashboardPane
+          onTrainingStateChange={({ jobs = [], models = [] }) => {
+            setTrainingStats({
+              activeJobs: jobs.filter((j) => j.status !== 'completed').length,
+              completedJobs: jobs.filter((j) => j.status === 'completed').length,
+              modelsCount: models.length,
+            });
+          }}
+        />
 
         {/* Motor Cortex: Task Queue with Accountability, Node Dispatcher & Persistent Artifact Vault */}
         <SovereignMotorDispatcherPanel />
