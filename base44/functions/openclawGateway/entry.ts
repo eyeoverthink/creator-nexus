@@ -15,6 +15,7 @@ import {
   handleHermesOrificePing,
   runDualSiteSubagentMission,
 } from '../../shared/hermesSkillFleet.ts';
+import { exportGpuTrainingBundle } from '../../shared/gpuBurstTrainer.ts';
 
 function slugify(str) {
   return (
@@ -186,6 +187,7 @@ export default async function(req) {
       'complete_dispatch_job',
       'dispatch_route_task',
       'spawn_dual_site_subagents',
+      'export_gpu_training_bundle',
       'opeg_verify',
       'status',
     ]);
@@ -261,6 +263,19 @@ export default async function(req) {
         goal: body.goal,
       });
       return Response.json({ ok: true, rSan });
+    }
+
+    if (action === 'export_gpu_training_bundle') {
+      const bundle = await exportGpuTrainingBundle({
+        db,
+        ownerId,
+        workspaceId,
+        gpuTier: body.gpu_tier,
+        baseModel: body.base_model,
+        outputModelName: body.output_model_name,
+        commitToGithub: body.commit_to_github !== false,
+      });
+      return Response.json(bundle);
     }
 
     // =========================================================================
