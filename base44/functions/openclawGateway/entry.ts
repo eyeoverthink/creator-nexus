@@ -156,41 +156,52 @@ function computeOpegReceipt({ g = 1.0, gamma = 0.5, epsilon = 0.001, goal = 'PT-
 
 export default async function(req) {
   try {
-    if (req.method !== 'POST') {
-      return Response.json({ error: 'Method not allowed' }, { status: 405 });
-    }
-
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
 
-    const body = await req.json().catch(() => ({}));
-    const action = String(body.action || 'status');
+    const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+    const action = String(body.action || (req.method === 'GET' ? 'orifice_spec' : 'status'));
 
-    // Allow authenticated app user (web / OAuth MCP), external OpenClaw daemon key, OR verified FRAYMUS cryptographic frame on orifice_ping/orifice_spec
+    // Allow authenticated app user (web / OAuth MCP), external OpenClaw daemon key, OR keyless ORIFICE-TXRX-V1.0 mesh enrollment/frame proof
     const expectedKey = secrets.get('FRAYMUS_CONSOLE_KEY') || '';
     const providedKey =
       req.headers.get('x-console-key') ||
       req.headers.get('x-fraymus-orifice-key') ||
       (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
-    const isKeyAuthed = Boolean(expectedKey && providedKey && providedKey === expectedKey);
+    const isKeyAuthed = Boolean(
+      (expectedKey && providedKey && providedKey === expectedKey) ||
+        providedKey === 'ORIFICE-TXRX-V1.0'
+    );
+    const keylessMeshActions = new Set([
+      'enroll_node',
+      'orifice_spec',
+      'orifice_ping',
+      'orifice_absorb',
+      'orifice_tx_queue',
+      'orifice_peer_bridge',
+      'orifice_github_sync',
+      'list_dispatch_jobs',
+      'hermes_fleet_manifest',
+      'claim_dispatch_job',
+      'complete_dispatch_job',
+      'dispatch_route_task',
+      'spawn_dual_site_subagents',
+      'opeg_verify',
+      'status',
+    ]);
     const hasPeerFrameProof = Boolean(
-      (action === 'orifice_ping' ||
-        action === 'orifice_spec' ||
-        action === 'enroll_node' ||
-        action === 'list_dispatch_jobs' ||
-        action === 'claim_dispatch_job' ||
-        action === 'complete_dispatch_job') &&
-        (body.merkleRoot ||
-          body.sha256 ||
-          body.node_id ||
-          body.agent_id ||
-          body.worker_node ||
-          body.protocol === 'ORIFICE-TXRX-V1.0')
+      keylessMeshActions.has(action) ||
+        body.merkleRoot ||
+        body.sha256 ||
+        body.node_id ||
+        body.agent_id ||
+        body.worker_node ||
+        body.protocol === 'ORIFICE-TXRX-V1.0'
     );
 
     if (!user && !isKeyAuthed && !hasPeerFrameProof) {
       return Response.json(
-        { error: 'Unauthorized: sign in via OAuth or supply x-console-key / X-Fraymus-Orifice-Key header' },
+        { error: 'Unauthorized: include protocol="ORIFICE-TXRX-V1.0" or node_id in JSON body' },
         { status: 401 }
       );
     }
