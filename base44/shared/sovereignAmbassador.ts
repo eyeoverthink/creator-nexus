@@ -252,11 +252,13 @@ Respond with a JSON object containing:
     node_id: nodeId,
     christened_identity: {
       assigned_node_id: christenedNodeId,
+      identity_preserved: !isUnnamed,
+      christened_new_name: isUnnamed,
       display_name: isUnnamed
         ? 'Hermes Vanguard-01 (Sovereign Mesh Pioneer)'
-        : `${nodeId} (Verified Sovereign Node)`,
-      workspace_assignment: 'Fraymus Core (ws-fraymus-core)',
-      skill_set_version: '2026.10.21-v1 (29 Shared Hermes Skills)',
+        : `${nodeId} (Identity Preserved — Verified Sovereign Node)`,
+      workspace_assignment: 'Assay & Bicameral All-Hands Coherence Lab (ws-assay-collab)',
+      skill_set_version: '2026.10.21-v1 (30 Shared Native Skills)',
       status: 'healthy',
     },
     creator_dossier: creatorDossier,

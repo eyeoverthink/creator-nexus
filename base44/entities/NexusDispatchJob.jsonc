@@ -1,7 +1,7 @@
 {
   "name": "NexusDispatchJob",
   "type": "object",
-  "description": "Accountable cross-node task queue item routed by the Sovereign Motor Dispatcher across Base44, Hostinger KVM4 VPS nodes, Hermes 29-Skill Fleet, Windows GPU (Ollama/LoRA), Claude Code, and the Persistent Artifact Vault.",
+  "description": "Accountable cross-node task queue item routed by the Sovereign Motor Dispatcher across Base44, Hostinger KVM4 VPS nodes, Hermes 30-Skill Fleet, Windows GPU (Ollama/LoRA), Claude Code, and the Persistent Artifact Vault.",
   "properties": {
     "owner_id": {
       "type": "string"
@@ -29,7 +29,8 @@
         "rea_reverse_engineer",
         "video_render",
         "hermes_skill_exec",
-        "hermes_subagent_pipeline"
+        "hermes_subagent_pipeline",
+        "collaboration_assay"
       ],
       "default": "pdf_document"
     },
@@ -65,7 +66,8 @@
         "claimed",
         "running",
         "completed",
-        "failed"
+        "failed",
+        "cancelled"
       ],
       "default": "queued"
     },
@@ -84,7 +86,8 @@
         "rea_blueprint",
         "json_report",
         "subagent_dag",
-        "skill_script_output"
+        "skill_script_output",
+        "coherence_assay_report"
       ],
       "default": "pdf"
     },

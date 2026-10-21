@@ -482,7 +482,7 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
               MANAGE ACTIVE CLOUD TRAINING &amp; DISPATCH JOBS ({trainingJobs.length})
             </span>
             <div className="flex flex-wrap gap-1">
-              {['ALL', 'TRAINING', 'QUEUED', 'CLAIMED', 'COMPLETED'].map((f) => (
+              {['ALL', 'TRAINING', 'QUEUED', 'CLAIMED', 'COMPLETED', 'CANCELLED'].map((f) => (
                 <button
                   key={f}
                   type="button"
@@ -510,6 +510,8 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
                 const badgeClass =
                   job.status === 'completed'
                     ? 'bg-success/15 text-success border-success/40'
+                    : job.status === 'cancelled'
+                    ? 'bg-destructive/15 text-destructive border-destructive/40'
                     : job.status === 'claimed' || job.status === 'running'
                     ? 'bg-primary/20 text-primary border-primary/40'
                     : 'bg-caution/15 text-caution border-caution/40';

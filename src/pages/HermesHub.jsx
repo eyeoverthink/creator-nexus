@@ -9,6 +9,7 @@ import SovereignAmbassadorGatekeeperPanel from '@/components/nexus/omega/Soverei
 import FraymusControlPlanePanel from '@/components/nexus/omega/FraymusControlPlanePanel';
 import HeartMuLaLocalMusicForgePanel from '@/components/nexus/loosescrew/HeartMuLaLocalMusicForgePanel';
 import NativeSkillFleetExecutorPanel from '@/components/nexus/omega/NativeSkillFleetExecutorPanel';
+import BicameralCoherenceAssayPanel from '@/components/nexus/omega/BicameralCoherenceAssayPanel';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -130,6 +131,13 @@ export default function HermesHub() {
             </Button>
           </div>
         </div>
+
+        {/* All-Hands Bicameral Coherence, Teamwork & Emotion Assay Lab */}
+        <BicameralCoherenceAssayPanel
+          onAssayCompleted={() => {
+            loadHermesManifest();
+          }}
+        />
 
         {/* Zero-Middleman Native 30-Skill In-App Executor + Sovereign Fleet Agent */}
         <NativeSkillFleetExecutorPanel

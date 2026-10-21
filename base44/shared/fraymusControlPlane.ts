@@ -96,6 +96,28 @@ export const CANONICAL_HOSTS = [
 
 export const CANONICAL_WORKSPACES = [
   {
+    id: 'ws-assay-collab',
+    name: 'Assay & Bicameral All-Hands Coherence Lab',
+    memory_scope: 'memory/assay-coherence/',
+    shared_skills: ['common', 'fraymus', 'research', 'coding', 'security'],
+    allowed_agents: [
+      'hermes-assay-01',
+      'scout',
+      'scribe',
+      'pulse',
+      'director',
+      'argon',
+      'openclaw_commander',
+      'sovereign_skill_fleet',
+      'fraymus-transmuter',
+      'hermes-core-2067485',
+      'fraymus-hub-1944678',
+      'tycho-claude-code',
+    ],
+    approval_rule: 'real-time-tracked-coherence',
+    notification_channel: 'both-apps-live-telemetry',
+  },
+  {
     id: 'ws-fraymus-core',
     name: 'Fraymus Core',
     memory_scope: 'memory/coordinator/',
@@ -231,9 +253,9 @@ async function hmacSha256Hex(secretStr, messageStr) {
 
 export async function buildCanonicalControlPlaneRegistry({ db, workspaceId }) {
   const [eventsP, jobsP, continuityP] = await Promise.allSettled([
-    db.entities.NexusEvent.filter({ workspace_id: workspaceId }, { sort: '-created_date', limit: 50 }),
-    db.entities.NexusDispatchJob.filter({ workspace_id: workspaceId }, { sort: '-created_date', limit: 30 }),
-    db.entities.NexusContinuity.filter({ workspace_id: workspaceId }, { limit: 20 }),
+    db.entities.NexusEvent.list('-created_date', 60),
+    db.entities.NexusDispatchJob.list('-created_date', 40),
+    db.entities.NexusContinuity.list('-created_date', 20),
   ]);
 
   const events =
@@ -421,14 +443,17 @@ export async function handleTwoStageNodeEnrollment({
   const subAction = String(body.sub_action || 'request_challenge');
   const nodeId = String(body.node_id || 'unnamed-worker-node').trim();
   const displayName = String(body.display_name || nodeId).trim();
-  const runtime = String(body.runtime || 'hermes').trim();
-  const host = String(body.host || 'vps-2067485').trim();
+  const callerSuppliedFields = Object.keys(body || {}).filter(
+    (k) => body[k] !== undefined && body[k] !== null && k !== 'action' && k !== 'sub_action'
+  );
+  const runtime = body.runtime ? String(body.runtime).trim() : 'caller-unspecified (external-agent)';
+  const host = body.host ? String(body.host).trim() : 'caller-unspecified (external-host)';
   const workspaceIds = Array.isArray(body.workspace_ids)
     ? body.workspace_ids
-    : ['ws-fraymus-core'];
+    : ['ws-assay-collab', 'ws-fraymus-core'];
   const capabilities = Array.isArray(body.capabilities)
     ? body.capabilities
-    : ['read_shared_skills', 'poll_jobs', 'claim_jobs'];
+    : ['read_shared_skills', 'poll_jobs', 'claim_jobs', 'coherence_assay'];
   const skillSetVersion = String(body.skill_set_version || '2026.10.21-v1');
 
   const nonce = `chl_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -454,6 +479,7 @@ export async function handleTwoStageNodeEnrollment({
       status: 'healthy',
       auth_state: 'scoped_token_issued',
       permissions: SCOPED_WORKER_PERMISSIONS,
+      caller_supplied_fields: callerSuppliedFields,
       scoped_token: scopedToken,
       approved_at: issuedAt,
     };
@@ -490,6 +516,7 @@ export async function handleTwoStageNodeEnrollment({
     skill_set_version: skillSetVersion,
     status: 'registered',
     auth_state: 'pending_operator_approval',
+    caller_supplied_fields: callerSuppliedFields,
     challenge_nonce: nonce,
     challenge_signature: challengeToken.slice(0, 24),
     requested_at: new Date().toISOString(),

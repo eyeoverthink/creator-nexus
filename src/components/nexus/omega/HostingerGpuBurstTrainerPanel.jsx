@@ -89,11 +89,11 @@ export default function HostingerGpuBurstTrainerPanel({ onJobCreated }) {
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2.5">
         <div className="space-y-0.5">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-success/20 text-success border border-success/40 text-[10px] font-bold">
-              1-HOUR HOSTINGER CLOUD GPU BURST TRAINER (~500 CREDITS)
+            <span className="px-2 py-0.5 rounded bg-caution/20 text-caution border border-caution/40 text-[10px] font-bold">
+              GPU RENTAL PAUSED — HOSTINGER GPUS OUT OF STOCK (0 CREDITS SPENT)
             </span>
             <span className="text-[11px] font-semibold text-foreground">
-              Pre-Stage Live JSONL Corpus + Unsloth QLoRA + Claude Code Supervisor Runbook
+              Active GPU Burst Jobs Cancelled · JSONL Kit Preserved in GitHub Vault for Later
             </span>
           </div>
           <p className="text-[10.5px] text-muted-foreground font-body">
