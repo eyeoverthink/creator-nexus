@@ -1043,6 +1043,15 @@ export async function runDualSiteSubagentMission({
   const workerCommandPreview = buildHermesWorkerDirective(createdJob);
 
   if (queueForVpsWorker) {
+    await db.entities.NexusEvent.create({
+      owner_id: ownerId,
+      workspace_id: workspaceId,
+      agent: 'hermes-vps-primary',
+      kind: 'orifice.tx_queue',
+      message: workerCommandPreview.command || fullDirective.slice(0, 220),
+      body: JSON.stringify(workerCommandPreview),
+    }).catch(() => null);
+
     return {
       ok: true,
       mode: 'queued_for_hermes_motor_worker',

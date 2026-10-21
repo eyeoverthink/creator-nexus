@@ -621,10 +621,21 @@ export default async function(req) {
       });
 
       if (queueOnly) {
+        const workerCmd = buildHermesWorkerDirective(createdJob);
+        await db.entities.NexusEvent.create({
+          owner_id: ownerId,
+          workspace_id: workspaceId,
+          agent: 'hermes-vps-primary',
+          kind: 'orifice.tx_queue',
+          message: workerCmd.command || directive.slice(0, 220),
+          body: JSON.stringify(workerCmd),
+        }).catch(() => null);
+
         return Response.json({
           ok: true,
           mode: 'queued_for_worker',
           job: createdJob,
+          workerCommandPreview: workerCmd,
           meshNodes: MESH_NODES,
         });
       }
