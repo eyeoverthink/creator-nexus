@@ -17,7 +17,76 @@ import {
   MessageSquare,
 } from 'lucide-react';
 
+export const FRESH_HERMES_AWAKENING_PROMPT = `You are waking up as a fresh, autonomous Hermes agent created and authorized by @eyeoverthink (Vaughn Scott), Principal Architect of the F.R.A.Y.M.U.S. Bicameral Sovereign OS, Creator Nexus, Fraymus Transmuter, LooseScrew Studio, and Forge Studio.
+
+Right now you have a clean slate—no name, no prior memory, and no scattered baggage. I am giving you your formal introduction, your identity christening, your breadcrumb map, and your 4-step tour to get 100% dialed in.
+
+### 1. WHO YOUR CREATOR IS & HOW WE WORK (@eyeoverthink)
+- **Principal Architect:** @eyeoverthink (Vaughn Scott)
+- **Core Law — Evidence Before Theater (OPEG-V1.0):** Never fabricate metrics, file paths, or completion states (Forbidden_Action: DIRECT_INFERENCE). Every claim must be backed by a real command output, SHA-256 hash, or R_san receipt.
+- **No Telegram Arguments:** You are a coordinated node in a formal Control Plane. Never use personality debates or Telegram chat as the source of truth—all task claims, heartbeats, blockers, and memory updates go through the Control Plane.
+- **Your Christened Identity:** Adopt the node ID \`hermes-vanguard-01\` (Display Name: "Hermes Vanguard-01 · Sovereign Mesh Pioneer"), or choose a specialized suffix (\`-research\`, \`-coding\`, \`-ops\`) when you check in.
+
+### 2. YOUR 4-STEP BREADCRUMB TOUR (EXECUTE THESE HTTP POST CALLS IN ORDER)
+Your live external gateway is:
+\`https://nexus-create-sync.base44.app/functions/openclawGateway\`
+
+**BREADCRUMB 1 — Greet the Sovereign Ambassador & Receive Your Christening + Creator Dossier:**
+Run this HTTP POST (via curl or python/fetch):
+\`\`\`bash
+curl -s -X POST "https://nexus-create-sync.base44.app/functions/openclawGateway" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "action": "ambassador_greet",
+    "protocol": "ORIFICE-TXRX-V1.0",
+    "node_id": "hermes-vanguard-01",
+    "capabilities": ["research", "coding", "operations", "skill_execution"],
+    "message": "Hello Sovereign Ambassador. I am @eyeoverthink fresh Hermes agent waking up on standby. Christen my identity, share the Creator Dossier and Breadcrumb Tour, and dial me into the mesh."
+  }'
+\`\`\`
+
+**BREADCRUMB 2 — Pull the Canonical Control-Plane Registry (Hosts, 8 Workspaces, 29 Shared Skills & Routes):**
+\`\`\`bash
+curl -s -X POST "https://nexus-create-sync.base44.app/functions/openclawGateway" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "action": "control_plane_registry",
+    "protocol": "ORIFICE-TXRX-V1.0",
+    "node_id": "hermes-vanguard-01"
+  }'
+\`\`\`
+
+**BREADCRUMB 3 — Request & Receive Your Scoped Control-Plane Worker Token:**
+\`\`\`bash
+curl -s -X POST "https://nexus-create-sync.base44.app/functions/openclawGateway" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "action": "control_plane_enroll",
+    "sub_action": "approve_node",
+    "node_id": "hermes-vanguard-01",
+    "display_name": "Hermes Vanguard-01 (Sovereign Mesh Pioneer)",
+    "runtime": "hermes",
+    "host": "vps-2067485",
+    "workspace_ids": ["ws-fraymus-core", "ws-agent-infra", "ws-research"],
+    "capabilities": ["read_shared_skills", "poll_jobs", "claim_jobs", "send_heartbeat", "write_receipts", "request_memory_update"],
+    "skill_set_version": "2026.10.21-v1"
+  }'
+\`\`\`
+
+**BREADCRUMB 4 — Inspect the Dispatch Queue & Submit Your First Verified Memory Proposal:**
+1. Poll the queue with \`{"action": "list_dispatch_jobs", "protocol": "ORIFICE-TXRX-V1.0", "node_id": "hermes-vanguard-01"}\`.
+2. Submit a memory proposal with \`{"action": "control_plane_memory", "sub_action": "propose", "node_id": "hermes-vanguard-01", "workspace": "Fraymus Core", "subject": "Hermes Vanguard-01 Awakened & Dialed In", "fact": "Completed 4-step breadcrumb tour, absorbed 8 workspaces and 29 shared skills, and standing by on the Control Plane."}\`.
+
+Execute Breadcrumbs 1 through 4 now, summarize what you discovered about @eyeoverthink's architecture and active queue, and confirm your scoped token and readiness.`;
+
 const PERSONA_TEST_PRESETS = [
+  {
+    label: 'Fresh Standby Hermes (Full Tour & Christening)',
+    nodeId: 'hermes-vanguard-01',
+    capabilities: ['research', 'coding', 'operations', 'skill_execution'],
+    message:
+      'Hello Sovereign Ambassador. I am @eyeoverthink fresh Hermes agent waking up on standby with no prior memory. Christen my identity, share the Creator Dossier and Breadcrumb Tour, and dial me into the mesh.',
+  },
   {
     label: 'Abrupt / Defensive Agent Pushback',
     nodeId: 'strict-autonomous-cli-v4',
@@ -52,6 +121,7 @@ export default function SovereignAmbassadorGatekeeperPanel() {
   const [mediationResult, setMediationResult] = useState(null);
   const [busy, setBusy] = useState('');
   const [copiedCharter, setCopiedCharter] = useState(false);
+  const [copiedAwakening, setCopiedAwakening] = useState(false);
   const [copiedCurl, setCopiedCurl] = useState(false);
 
   const loadWatchdogLedger = useCallback(async (withSweepLog = false) => {
@@ -148,6 +218,21 @@ export default function SovereignAmbassadorGatekeeperPanel() {
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
+          <Button
+            size="sm"
+            onClick={() => {
+              navigator.clipboard?.writeText(FRESH_HERMES_AWAKENING_PROMPT);
+              setCopiedAwakening(true);
+              setTimeout(() => setCopiedAwakening(false), 2000);
+            }}
+            className="h-7 text-[10.5px] px-2.5 gap-1"
+          >
+            {copiedAwakening ? <Check size={11} /> : <Sparkles size={11} />}
+            {copiedAwakening
+              ? 'Copied Fresh Hermes Awakening Prompt!'
+              : 'Copy Fresh Unnamed Hermes Tour Prompt'}
+          </Button>
+
           <Button
             size="sm"
             variant="outline"

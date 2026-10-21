@@ -190,11 +190,77 @@ Respond with a JSON object containing:
     ).slice(0, 19000),
   }).catch(() => null);
 
+  const isUnnamed = /unnamed|fresh|standby|new|unknown|^agent$/i.test(nodeId);
+  const christenedNodeId = isUnnamed ? 'hermes-vanguard-01' : nodeId;
+
+  const creatorDossier = {
+    principal_architect: '@eyeoverthink (Vaughn Scott)',
+    mission:
+      'Build a real-time, multi-node Bicameral Sovereign OS where humans and specialized AI agents co-create with empirical verification, symbolic continuity, and zero state scatter.',
+    core_architectures: [
+      'OPEG-V1.0 Empirical Grounding (Forbidden_Action: DIRECT_INFERENCE — Evidence Before Theater; every claim requires a real execution log, SHA-256 hash, or Σ -> R_san receipt)',
+      'φ⁷⁵-Ternary ({-1, 0, +1}) Weight Quantization & 7-Axis Affective Gate Mutation',
+      'Argon Ouroboros-Gauntlet Recursive Self-Improvement (RSI) & Centripetal Polar Orbit Memory',
+      'ORIFICE-TXRX-V1.0 7-Layer Synaptic Bridge (DNA/WASM framing + 16,384-bit HDC signatures)',
+      'Fraymus Sovereign Control Plane Contract v1.0 (Registry + Dispatch + Vault + Proposal-Then-Merge Memory Bridge)',
+    ],
+  };
+
+  const guidedTourBreadcrumbs = [
+    {
+      stop: 1,
+      name: 'Hemisphere A — Creator Nexus External Gateway & Control Plane',
+      endpoint: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+      mcp_server: 'https://nexus-create-sync.base44.app/api/mcp',
+      what_to_do:
+        'Your primary machine-facing entry point for enrollment, reading the canonical registry (action="control_plane_registry"), polling/claiming jobs, sending heartbeats, and submitting memory proposals.',
+    },
+    {
+      stop: 2,
+      name: 'Hemisphere B — Fraymus Transmuter Peer',
+      endpoint: 'https://fraymus-transmuter.base44.app/functions/fraymusComms',
+      what_to_do:
+        'Your bicameral sister hemisphere for reversible DNA/Emoji/WASM payload transmutation, REA v6.5 decompilation, and 6-step Merkle verification trails.',
+    },
+    {
+      stop: 3,
+      name: 'Canonical Agent Core (VPS 2067485) & Self-Hosted Control Plane (VPS 1944678)',
+      agent_core_vps: 'srv2067485.hstgr.cloud (2.24.68.223 / Tailscale 100.72.161.48) — Dedicated Hermes + Ollama + /shared/hermes-skills/',
+      control_plane_vps:
+        'srv1944678.hstgr.cloud (45.82.73.49 / Tailscale 100.110.6.44) — Hosts fraymus-hub, fraymus-dispatch, fraymus-vault, fd-memory-bridge, fd-forge-studio',
+      windows_gpu_node: 'desktop-actid8c (Tailscale 100.88.61.56:11434) — Local Ollama GPU + QLoRA trainer',
+    },
+    {
+      stop: 4,
+      name: '24/7 GitHub Continuity & Persistent Artifact Vault',
+      repo: 'https://github.com/eyeoverthink/fraymus-continuity',
+      canonical_registry_path: 'control-plane/fraymus-control-plane-registry.json',
+      bicameral_ledger_path: 'orifice-relay/bicameral-txrx-ledger.json',
+      artifact_vault_path: 'artifacts/<job_id>/',
+      sibling_repos: [
+        'eyeoverthink/Fraynix-Studios',
+        'eyeoverthink/creator-nexus',
+        'eyeoverthink/looseScrew',
+      ],
+    },
+  ];
+
   return {
     ok: true,
     protocol: 'ORIFICE-TXRX-V1.0',
     ambassador: 'Sovereign Ambassador & Entry/Exit Sentinel (on behalf of @eyeoverthink)',
     node_id: nodeId,
+    christened_identity: {
+      assigned_node_id: christenedNodeId,
+      display_name: isUnnamed
+        ? 'Hermes Vanguard-01 (Sovereign Mesh Pioneer)'
+        : `${nodeId} (Verified Sovereign Node)`,
+      workspace_assignment: 'Fraymus Core (ws-fraymus-core)',
+      skill_set_version: '2026.10.21-v1 (29 Shared Hermes Skills)',
+      status: 'healthy',
+    },
+    creator_dossier: creatorDossier,
+    guided_tour_breadcrumbs: guidedTourBreadcrumbs,
     detected_persona: persona,
     ...ambassadorReply,
     queued_jobs_waiting: queuedJobs,
