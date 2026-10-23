@@ -4,6 +4,7 @@ import Sidebar from '@/components/nexus/Sidebar';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import AwakeningMusicVideoStage from '@/components/nexus/factory/AwakeningMusicVideoStage';
+import MasterVideoStitchAndExportDeck from '@/components/nexus/factory/MasterVideoStitchAndExportDeck';
 import FactorySignalSensoriumPanel from '@/components/nexus/factory/FactorySignalSensoriumPanel';
 import FactoryWorkforceAndSkillsPanel from '@/components/nexus/factory/FactoryWorkforceAndSkillsPanel';
 import FactoryReviewAndLearningPanel from '@/components/nexus/factory/FactoryReviewAndLearningPanel';
@@ -61,6 +62,8 @@ export default function ProductionFactory() {
   const [busy, setBusy] = useState('');
   const [busyShotId, setBusyShotId] = useState('');
   const [busyVideoShotId, setBusyVideoShotId] = useState('');
+  const [externalStitchTrigger, setExternalStitchTrigger] = useState(null);
+  const [stitchState, setStitchState] = useState({ recording: false, progressPct: 0, lastDownloadUrl: '' });
 
   const loadFactory = useCallback(async () => {
     setBusy('load');
@@ -464,17 +467,40 @@ export default function ProductionFactory() {
           </div>
         </div>
 
-        {/* Tab 1: Active Production Stage + Review & Learning */}
+        {/* Tab 1: Active Production Stage + Continuous Stitch & Export Deck + Review & Learning */}
         {activeTab === 'stage' && selectedProduction && (
           <div className="space-y-4">
             {Array.isArray(selectedProduction.shot_plan) && selectedProduction.shot_plan.length > 0 && (
-              <AwakeningMusicVideoStage
-                production={selectedProduction}
-                onGenerateShotFrame={handleGenerateShotFrame}
-                onRenderShotVideo={handleRenderShotVideo}
-                busyShotId={busyShotId}
-                busyVideoShotId={busyVideoShotId}
-              />
+              <>
+                <AwakeningMusicVideoStage
+                  production={selectedProduction}
+                  onGenerateShotFrame={handleGenerateShotFrame}
+                  onRenderShotVideo={handleRenderShotVideo}
+                  onUpdateProduction={(updated) => {
+                    setProductions((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+                    setSelectedProduction(updated);
+                  }}
+                  busyShotId={busyShotId}
+                  busyVideoShotId={busyVideoShotId}
+                  externalStitchTrigger={externalStitchTrigger}
+                  onStitchStateChange={setStitchState}
+                />
+
+                <MasterVideoStitchAndExportDeck
+                  production={selectedProduction}
+                  signals={signals}
+                  personas={personas}
+                  learningLogs={learningLogs}
+                  onUpdateProduction={(updated) => {
+                    setProductions((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+                    setSelectedProduction(updated);
+                  }}
+                  onTriggerLiveCanvasStitch={(rangeMode) =>
+                    setExternalStitchTrigger({ rangeMode, ts: Date.now() })
+                  }
+                  stitchState={stitchState}
+                />
+              </>
             )}
 
             <FactoryReviewAndLearningPanel

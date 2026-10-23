@@ -639,6 +639,115 @@ ${updatedTreatment.slice(0, 6000)}
       return Response.json({ ok: true, production: updatedProd, video_url: vidRes?.url });
     }
 
+    if (action === 'suggest_shot_ideas') {
+      const productionId = String(body.production_id || '');
+      const existing = await db.entities.NexusFactoryProduction.get(productionId);
+      if (!existing) return Response.json({ error: 'Production not found' }, { status: 404 });
+
+      const llmRes = await db.integrations.Core.InvokeLLM({
+        prompt: `You are Vesper (Visual Director) and Lyra (Sonic Auteur) working on "${existing.title}".
+Brief: "${existing.brief}"
+Current Shot Plan (${(existing.shot_plan || []).length} sections):
+${JSON.stringify(
+  (existing.shot_plan || []).map((s) => ({
+    id: s.id,
+    section: s.section,
+    start: s.start,
+    end: s.end,
+    visual_direction: s.visual_direction,
+  }))
+)}
+
+Propose 4 concrete, high-impact creative ideas (camera movement, transition bridge, lighting cue, or visual motif) that make the stitched final video flow as one continuous cinematic piece rather than separate loops. Each idea should target a specific shot_id or section.`,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            ideas: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  target_shot_id: { type: 'string' },
+                  section: { type: 'string' },
+                  title: { type: 'string' },
+                  camera_motion: { type: 'string' },
+                  transition_into_next: { type: 'string' },
+                  visual_enhancement: { type: 'string' },
+                  agent: { type: 'string' },
+                },
+                required: ['section', 'title', 'camera_motion', 'transition_into_next', 'visual_enhancement'],
+              },
+            },
+          },
+          required: ['ideas'],
+        },
+      });
+
+      const newIdeas = (llmRes?.ideas || []).map((idea, i) => ({
+        id: idea.id || `idea_${Date.now().toString(36)}_${i}`,
+        target_shot_id: idea.target_shot_id || `sec-0${i + 1}`,
+        section: idea.section || `Section ${i + 1}`,
+        title: idea.title,
+        camera_motion: idea.camera_motion,
+        transition_into_next: idea.transition_into_next,
+        visual_enhancement: idea.visual_enhancement,
+        agent: idea.agent || 'Vesper & Lyra',
+        selected_for_final: true,
+        created_at: new Date().toISOString(),
+      }));
+
+      const prevMeta = existing.track_meta || {};
+      const mergedIdeas = [...newIdeas, ...(prevMeta.ai_suggested_ideas || [])].slice(0, 16);
+
+      const updatedProd = await db.entities.NexusFactoryProduction.update(existing.id, {
+        track_meta: {
+          ...prevMeta,
+          ai_suggested_ideas: mergedIdeas,
+        },
+      });
+
+      return Response.json({ ok: true, production: updatedProd, ideas: mergedIdeas });
+    }
+
+    if (action === 'save_final_cut_choices') {
+      const productionId = String(body.production_id || '');
+      const existing = await db.entities.NexusFactoryProduction.get(productionId);
+      if (!existing) return Response.json({ error: 'Production not found' }, { status: 404 });
+
+      const updatedShots = Array.isArray(body.shot_plan) ? body.shot_plan : existing.shot_plan;
+      const updatedIdeas = Array.isArray(body.ai_suggested_ideas)
+        ? body.ai_suggested_ideas
+        : existing.track_meta?.ai_suggested_ideas || [];
+      const stitchedVideoUrl = String(body.stitched_video_url || existing.track_meta?.stitched_video_url || '');
+
+      const updatedProd = await db.entities.NexusFactoryProduction.update(existing.id, {
+        shot_plan: updatedShots,
+        status: 'completed',
+        track_meta: {
+          ...(existing.track_meta || {}),
+          ai_suggested_ideas: updatedIdeas,
+          stitched_video_url: stitchedVideoUrl,
+          last_stitched_at: new Date().toISOString(),
+        },
+      });
+
+      if (stitchedVideoUrl) {
+        await db.entities.LooseScrewItem.create({
+          owner_id: ownerId,
+          channel: 'VIDEO',
+          title: `[FINAL STITCHED MASTER] ${existing.title}`,
+          duration: '3:38',
+          bpm: existing.track_meta?.bpm || 138,
+          tags: ['FINAL_CUT_STITCHED', 'NON_LOOPING_MASTER', 'CHECK_THE_SOURCE'],
+          media_url: stitchedVideoUrl,
+          mime_type: 'video/webm',
+        }).catch(() => null);
+      }
+
+      return Response.json({ ok: true, production: updatedProd });
+    }
+
     if (action === 'sync_production_github') {
       const productionId = String(body.production_id || '');
       const existing = await db.entities.NexusFactoryProduction.get(productionId);

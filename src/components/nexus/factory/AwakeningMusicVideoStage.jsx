@@ -1,6 +1,8 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 import {
   Play,
   Pause,
@@ -21,22 +23,84 @@ const DEFAULT_CATHEDRAL_VIDEO =
 const DEFAULT_HAND_STOPS_VIDEO =
   'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/8a731d482_The_Hand_Stops_1003s.mp4';
 
+// Compute continuous non-looping camera transform for a shot at progress p in [0, 1]
+function getCameraTransform(motion = 'dolly_push_in', p = 0) {
+  const smoothP = p * p * (3 - 2 * p); // smoothstep
+  switch (motion) {
+    case 'cable_drift_right':
+      return { scale: 1.06 + smoothP * 0.06, tx: (smoothP - 0.5) * 58, ty: (0.5 - smoothP) * 14 };
+    case 'cable_drift_left':
+      return { scale: 1.06 + smoothP * 0.06, tx: (0.5 - smoothP) * 58, ty: (smoothP - 0.5) * 14 };
+    case 'crane_rise_up':
+      return { scale: 1.08 + smoothP * 0.08, tx: 0, ty: (0.5 - smoothP) * 52 };
+    case 'macro_push_center':
+      return { scale: 1.02 + smoothP * 0.18, tx: 0, ty: (smoothP - 0.5) * 18 };
+    case 'macro_hold_tension':
+      // At 100.3s THE HAND STOPS: camera locks rock-solid after initial push
+      return {
+        scale: p < 0.55 ? 1.04 + (p / 0.55) * 0.12 : 1.16,
+        tx: 0,
+        ty: 0,
+      };
+    case 'symmetrical_hero_push':
+      return { scale: 1.0 + smoothP * 0.11, tx: 0, ty: 0 };
+    case 'dolly_lateral_panels':
+      return { scale: 1.07 + smoothP * 0.05, tx: (smoothP - 0.5) * 64, ty: 0 };
+    case 'profile_drift_across':
+      return { scale: 1.05 + smoothP * 0.07, tx: (0.5 - smoothP) * 44, ty: 0 };
+    case 'intimate_ecu_float':
+      return { scale: 1.08 + smoothP * 0.04, tx: 0, ty: (0.5 - smoothP) * 16 };
+    case 'aerial_galaxy_pullback':
+      return { scale: 1.22 - smoothP * 0.2, tx: 0, ty: (smoothP - 0.5) * 32 };
+    case 'coda_settle_to_black':
+      return { scale: 1.05 - smoothP * 0.04, tx: 0, ty: 0 };
+    case 'dolly_push_in':
+    default:
+      return { scale: 1.01 + smoothP * 0.13, tx: 0, ty: (0.5 - smoothP) * 18 };
+  }
+}
+
 export default function AwakeningMusicVideoStage({
   production,
   onGenerateShotFrame,
   onRenderShotVideo,
+  onUpdateProduction,
   busyShotId,
   busyVideoShotId,
+  externalStitchTrigger,
+  onStitchStateChange,
 }) {
+  const { toast } = useToast();
   const audioRef = useRef(null);
-  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const rawVideoRef = useRef(null);
+  const loadedImagesRef = useRef({});
+  const audioCtxRef = useRef(null);
+  const mediaDestRef = useRef(null);
+  const condensePassRef = useRef({ active: false, startWallMs: 0, durationSec: 24 });
+
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [selectedShotId, setSelectedShotId] = useState(null);
-  const [viewMode, setViewMode] = useState('video_sync'); // 'video_sync' | 'keyframe'
+  const [viewMode, setViewMode] = useState('continuous_stitch'); // 'continuous_stitch' | 'raw_clip' | 'keyframe'
+  const [recording, setRecording] = useState(false);
+  const [stitchProgressPct, setStitchProgressPct] = useState(0);
+  const [lastDownloadUrl, setLastDownloadUrl] = useState('');
 
-  const shots = useMemo(() => {
+  const allShots = useMemo(() => {
     return Array.isArray(production?.shot_plan) ? production.shot_plan : [];
+  }, [production]);
+
+  const includedShots = useMemo(() => {
+    const filtered = allShots.filter((s) => s.included_in_final !== false);
+    return filtered.length > 0 ? filtered : allShots;
+  }, [allShots]);
+
+  const selectedIdeas = useMemo(() => {
+    const list = Array.isArray(production?.track_meta?.ai_suggested_ideas)
+      ? production.track_meta.ai_suggested_ideas
+      : [];
+    return list.filter((i) => i.selected_for_final !== false);
   }, [production]);
 
   const duration = production?.track_meta?.duration_sec || 217.9;
@@ -44,22 +108,33 @@ export default function AwakeningMusicVideoStage({
   const beatSec = 60 / bpm;
   const barSec = beatSec * 4;
 
+  // Preload all shot images for smooth 60fps canvas cross-dissolves
+  useEffect(() => {
+    allShots.forEach((s) => {
+      if (s.image_url && !loadedImagesRef.current[s.image_url]) {
+        const img = new window.Image();
+        img.crossOrigin = 'anonymous';
+        img.src = s.image_url;
+        loadedImagesRef.current[s.image_url] = img;
+      }
+    });
+  }, [allShots]);
+
   const activeTimeShot = useMemo(() => {
-    if (!shots.length) return null;
-    const found = shots.find(
+    if (!includedShots.length) return null;
+    const found = includedShots.find(
       (s) => currentTime >= Number(s.start || 0) && currentTime < Number(s.end || 999)
     );
-    return found || shots[0];
-  }, [shots, currentTime]);
+    return found || includedShots[0];
+  }, [includedShots, currentTime]);
 
   const displayedShot = useMemo(() => {
     if (selectedShotId && !playing) {
-      return shots.find((s) => s.id === selectedShotId) || activeTimeShot;
+      return allShots.find((s) => s.id === selectedShotId) || activeTimeShot;
     }
     return activeTimeShot;
-  }, [selectedShotId, playing, shots, activeTimeShot]);
+  }, [selectedShotId, playing, allShots, activeTimeShot]);
 
-  // Select the right generated MP4 clip for the active shot
   const activeVideoUrl = useMemo(() => {
     if (displayedShot?.video_url) return displayedShot.video_url;
     const secName = String(displayedShot?.section || '').toUpperCase();
@@ -69,17 +144,181 @@ export default function AwakeningMusicVideoStage({
     return DEFAULT_CATHEDRAL_VIDEO;
   }, [displayedShot]);
 
+  // Continuous Non-Looping Cinema Canvas Renderer
+  useEffect(() => {
+    if (viewMode !== 'continuous_stitch') return undefined;
+    let rafId;
+    const particles = Array.from({ length: 42 }, (_, i) => ({
+      x: (i * 197) % 1280,
+      y: (i * 113) % 720,
+      r: 1.2 + (i % 3) * 0.9,
+      vx: 0.22 + (i % 5) * 0.08,
+      vy: -0.18 - (i % 4) * 0.06,
+    }));
+
+    const drawImageWithMotion = (ctx, img, motion, p, alpha = 1) => {
+      if (!img || !img.complete || !img.naturalWidth) return;
+      const { scale, tx, ty } = getCameraTransform(motion, p);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(640 + tx, 360 + ty);
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, -640, -360, 1280, 720);
+      ctx.restore();
+    };
+
+    const renderFrame = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        rafId = requestAnimationFrame(renderFrame);
+        return;
+      }
+      const ctx = canvas.getContext('2d');
+      let t = audioRef.current && !audioRef.current.paused ? audioRef.current.currentTime : currentTime;
+
+      // If running a 24s condensed full-timeline master stitch, map 0..24s wall clock across 0..217.9s smoothly
+      if (condensePassRef.current.active) {
+        const elapsed = (performance.now() - condensePassRef.current.startWallMs) / 1000;
+        const ratio = Math.min(1, elapsed / condensePassRef.current.durationSec);
+        t = ratio * duration;
+      }
+
+      const shotIdx = Math.max(
+        0,
+        includedShots.findIndex((s) => t >= Number(s.start || 0) && t < Number(s.end || 999))
+      );
+      const curShot = includedShots[shotIdx] || displayedShot || includedShots[0];
+      const nextShot = includedShots[shotIdx + 1] || null;
+
+      const shotStart = Number(curShot?.start || 0);
+      const shotEnd = Number(curShot?.end || shotStart + 15);
+      const shotDur = Math.max(1, shotEnd - shotStart);
+      const p = Math.min(1, Math.max(0, (t - shotStart) / shotDur));
+
+      // 1. Base Midnight Blue Field (#0B1630)
+      ctx.fillStyle = '#0B1630';
+      ctx.fillRect(0, 0, 1280, 720);
+
+      // 2. Draw Active Shot Plate with Continuous Non-Looping Anamorphic Motion
+      const curImg = loadedImagesRef.current[curShot?.image_url];
+      drawImageWithMotion(ctx, curImg, curShot?.camera_motion || 'dolly_push_in', p, 1);
+
+      // 3. Smooth Cross-Dissolve / Gold Threshold Bloom into Next Shot (No hard loop resets!)
+      const transitionStyle = curShot?.transition_style || 'bar_cross_dissolve';
+      const dissolveSec = transitionStyle === 'beat_cut' ? 0.25 : 1.74;
+      const timeRemaining = shotEnd - t;
+
+      if (nextShot && timeRemaining <= dissolveSec && timeRemaining >= 0) {
+        const blendAlpha = Math.min(1, Math.max(0, 1 - timeRemaining / dissolveSec));
+        const nextImg = loadedImagesRef.current[nextShot.image_url];
+        drawImageWithMotion(ctx, nextImg, nextShot.camera_motion || 'dolly_push_in', 0.02, blendAlpha);
+
+        if (transitionStyle === 'threshold_gold_bloom') {
+          const bloom = Math.sin(blendAlpha * Math.PI) * 0.45;
+          ctx.fillStyle = `rgba(255, 251, 235, ${bloom.toFixed(3)})`;
+          ctx.fillRect(0, 0, 1280, 720);
+        }
+      }
+
+      // 4. Volumetric Clerestory Rays & 138 BPM Beat Pulse
+      const beatPhase = (t / beatSec) % 1;
+      const beatPulse = Math.exp(-3.5 * beatPhase);
+      const isSilver = curShot?.status === 'unverified_silver' || curShot?.status === 'silver_inquiry';
+      const rayGrad = ctx.createLinearGradient(640, 0, 640, 720);
+      if (isSilver) {
+        rayGrad.addColorStop(0, `rgba(192, 200, 216, ${(0.12 + beatPulse * 0.08).toFixed(3)})`);
+        rayGrad.addColorStop(1, 'rgba(11, 22, 48, 0.32)');
+      } else {
+        rayGrad.addColorStop(0, `rgba(255, 243, 199, ${(0.14 + beatPulse * 0.11).toFixed(3)})`);
+        rayGrad.addColorStop(1, 'rgba(11, 22, 48, 0.24)');
+      }
+      ctx.fillStyle = rayGrad;
+      ctx.fillRect(0, 0, 1280, 720);
+
+      // 5. Motes & Filament Pulses (Accelerate at 100.3s Hand Stop; Suspend at 152.2s Piano Breakdown)
+      const isBreakdown = t >= 152.2 && t <= 166.6;
+      const isHandStop = t >= 96.9 && t <= 107.2;
+      const speedMult = isBreakdown ? 0.08 : isHandStop ? 2.8 : 1.0;
+
+      particles.forEach((pt) => {
+        pt.x = (pt.x + pt.vx * speedMult + 1280) % 1280;
+        pt.y = (pt.y + pt.vy * speedMult + 720) % 720;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2);
+        ctx.fillStyle = isSilver ? 'rgba(192,208,232,0.55)' : 'rgba(251,191,36,0.68)';
+        ctx.fill();
+      });
+
+      // 6. Coda Fade to Black (215.5s -> 217.9s)
+      if (t >= 214.5) {
+        const fade = Math.min(1, (t - 214.5) / 2.9);
+        ctx.fillStyle = `rgba(5, 7, 11, ${fade.toFixed(3)})`;
+        ctx.fillRect(0, 0, 1280, 720);
+      }
+
+      // 7. Anamorphic Cinema Letterbox Bars
+      ctx.fillStyle = '#05070B';
+      ctx.fillRect(0, 0, 1280, 34);
+      ctx.fillRect(0, 686, 1280, 34);
+
+      // 8. Designated Serif Text Hook (2-Beat Fade In / Hold / 2-Beat Fade Out)
+      if (curShot?.exact_text) {
+        const fadeWindow = beatSec * 2;
+        let textAlpha = 1;
+        if (t - shotStart < fadeWindow) textAlpha = Math.max(0, (t - shotStart) / fadeWindow);
+        else if (shotEnd - t < fadeWindow) textAlpha = Math.max(0, (shotEnd - t) / fadeWindow);
+
+        ctx.save();
+        ctx.globalAlpha = textAlpha;
+        ctx.fillStyle = 'rgba(11, 22, 48, 0.82)';
+        ctx.fillRect(250, 588, 780, 48);
+        ctx.strokeStyle = 'rgba(234, 179, 8, 0.55)';
+        ctx.strokeRect(250, 588, 780, 48);
+        ctx.fillStyle = '#FFFBEB';
+        ctx.font = '600 21px Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(curShot.exact_text.toUpperCase(), 640, 619);
+        ctx.restore();
+      }
+
+      // 9. Active AI-Suggested Enhancement Stamp in Top Bar
+      const matchingIdea = selectedIdeas.find(
+        (id) =>
+          id.target_shot_id === curShot?.id ||
+          String(curShot?.section || '').includes(String(id.section || '').split(' ')[0])
+      );
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = '11px IBM Plex Mono, monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(
+        `${curShot?.section || 'MASTER'} · ${t.toFixed(1)}s / ${duration}s · ${
+          curShot?.lens || '24mm Anamorphic'
+        } · Progress ${(p * 100).toFixed(0)}% (Continuous Non-Looping)`,
+        18,
+        22
+      );
+      if (matchingIdea) {
+        ctx.fillStyle = '#F59E0B';
+        ctx.textAlign = 'right';
+        ctx.fillText(`AI Stitch Active: ${matchingIdea.title}`, 1262, 22);
+      }
+
+      rafId = requestAnimationFrame(renderFrame);
+    };
+
+    rafId = requestAnimationFrame(renderFrame);
+    return () => cancelAnimationFrame(rafId);
+  }, [viewMode, includedShots, displayedShot, currentTime, beatSec, duration, selectedIdeas]);
+
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return undefined;
     const onTime = () => setCurrentTime(el.currentTime || 0);
     const onPlay = () => {
       setPlaying(true);
-      videoRef.current?.play().catch(() => {});
+      rawVideoRef.current?.play().catch(() => {});
     };
-    const onPause = () => {
-      setPlaying(false);
-    };
+    const onPause = () => setPlaying(false);
     const onEnded = () => setPlaying(false);
     el.addEventListener('timeupdate', onTime);
     el.addEventListener('play', onPlay);
@@ -93,15 +332,183 @@ export default function AwakeningMusicVideoStage({
     };
   }, [production?.audio_url]);
 
+  // Live Canvas + Master Audio Stitch & Export Recorder
+  const handleLiveStitchAndExport = useCallback(
+    async (rangeMode = 'peak_30s') => {
+      const canvas = canvasRef.current;
+      const audioEl = audioRef.current;
+      if (!canvas || !audioEl) return;
+
+      setViewMode('continuous_stitch');
+      setRecording(true);
+      setStitchProgressPct(5);
+      onStitchStateChange?.({ recording: true, progressPct: 5, lastDownloadUrl });
+
+      let startSec = 98.0;
+      let recordDurationSec = 20.0;
+      if (rangeMode === 'peak_30s') {
+        startSec = 98.0; // Covers 100.3s Hand Stops -> 110.7s Chorus 1 -> 117.6s Iconic Frame
+        recordDurationSec = 24.0;
+        condensePassRef.current.active = false;
+      } else if (rangeMode === 'intro_42s') {
+        startSec = 0.0;
+        recordDurationSec = 24.0;
+        condensePassRef.current.active = false;
+      } else if (rangeMode === 'coda_30s') {
+        startSec = 183.0;
+        recordDurationSec = 24.0;
+        condensePassRef.current.active = false;
+      } else {
+        // Complete 12-Section Condensed Master Pass (smoothly sweeps all 12 shots in 24s)
+        startSec = 108.0;
+        recordDurationSec = 24.0;
+        condensePassRef.current = {
+          active: true,
+          startWallMs: performance.now(),
+          durationSec: recordDurationSec,
+        };
+      }
+
+      try {
+        const canvasStream = canvas.captureStream(30);
+        // Connect WebAudio destination once so recorded video includes the real Check the Source audio
+        if (!audioCtxRef.current && window.AudioContext) {
+          try {
+            const ctx = new window.AudioContext();
+            const src = ctx.createMediaElementSource(audioEl);
+            const dest = ctx.createMediaStreamDestination();
+            src.connect(dest);
+            src.connect(ctx.destination);
+            audioCtxRef.current = ctx;
+            mediaDestRef.current = dest;
+          } catch (_) {
+            // Fallback to video-only stream if browser blocks cross-origin MediaElementSource
+          }
+        }
+        if (audioCtxRef.current?.state === 'suspended') {
+          await audioCtxRef.current.resume().catch(() => {});
+        }
+
+        const combinedTracks = [
+          ...canvasStream.getVideoTracks(),
+          ...(mediaDestRef.current ? mediaDestRef.current.stream.getAudioTracks() : []),
+        ];
+        const combinedStream = new MediaStream(combinedTracks);
+
+        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+          ? 'video/webm;codecs=vp9,opus'
+          : 'video/webm';
+        const recorder = new MediaRecorder(combinedStream, {
+          mimeType,
+          videoBitsPerSecond: 4500000,
+        });
+
+        const chunks = [];
+        recorder.ondataavailable = (ev) => {
+          if (ev.data && ev.data.size > 0) chunks.push(ev.data);
+        };
+
+        audioEl.currentTime = startSec;
+        setCurrentTime(startSec);
+        await audioEl.play().catch(() => {});
+        recorder.start(250);
+
+        const startWall = performance.now();
+        await new Promise((resolve) => {
+          const timer = setInterval(() => {
+            const elapsed = (performance.now() - startWall) / 1000;
+            const pct = Math.min(99, Math.round((elapsed / recordDurationSec) * 100));
+            setStitchProgressPct(pct);
+            onStitchStateChange?.({ recording: true, progressPct: pct, lastDownloadUrl });
+            if (elapsed >= recordDurationSec) {
+              clearInterval(timer);
+              resolve();
+            }
+          }, 400);
+        });
+
+        await new Promise((resolve) => {
+          recorder.onstop = resolve;
+          recorder.stop();
+        });
+        audioEl.pause();
+        condensePassRef.current.active = false;
+
+        const blob = new Blob(chunks, { type: mimeType });
+        const localUrl = URL.createObjectURL(blob);
+        setLastDownloadUrl(localUrl);
+
+        // Automatically trigger download of the stitched non-looping video
+        const a = document.createElement('a');
+        a.href = localUrl;
+        a.download = `Check_The_Source_Stitched_${rangeMode}.webm`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // Upload stitched master video to private storage (stored privately)
+        const fileObj = new File([blob], `Check_The_Source_Stitched_${rangeMode}.webm`, {
+          type: 'video/webm',
+        });
+        const uploadRes = await base44.integrations.Core.UploadPrivateFile({ file: fileObj }).catch(
+          () => null
+        );
+        if (uploadRes?.file_uri && production?.id) {
+          const signedRes = await base44.integrations.Core.CreateFileSignedUrl({
+            file_uri: uploadRes.file_uri,
+            expires_in: 86400,
+          }).catch(() => null);
+          const saveRes = await base44.functions.invoke('productionFactory', {
+            action: 'save_final_cut_choices',
+            production_id: production.id,
+            shot_plan: allShots,
+            stitched_video_url: signedRes?.signed_url || localUrl,
+          });
+          if (saveRes?.data?.production) {
+            onUpdateProduction?.(saveRes.data.production);
+          }
+        }
+
+        setStitchProgressPct(100);
+        onStitchStateChange?.({
+          recording: false,
+          progressPct: 100,
+          lastDownloadUrl: localUrl,
+        });
+        toast({
+          title: 'Stitched Final Video Exported!',
+          description: 'Smooth non-looping video downloaded and saved to Cloud Vault.',
+        });
+      } catch (err) {
+        condensePassRef.current.active = false;
+        toast({
+          title: 'Stitch Export Error',
+          description: err?.message || 'Could not complete live video stitch',
+          variant: 'destructive',
+        });
+      } finally {
+        setRecording(false);
+      }
+    },
+    [allShots, lastDownloadUrl, onStitchStateChange, onUpdateProduction, production, toast]
+  );
+
+  // Trigger from external deck button if requested
+  useEffect(() => {
+    if (externalStitchTrigger?.ts && !recording) {
+      handleLiveStitchAndExport(externalStitchTrigger.rangeMode || 'peak_30s');
+    }
+  }, [externalStitchTrigger, handleLiveStitchAndExport, recording]);
+
   const togglePlay = () => {
     const el = audioRef.current;
     if (!el) return;
     if (el.paused) {
       el.play().catch(() => {});
-      videoRef.current?.play().catch(() => {});
+      rawVideoRef.current?.play().catch(() => {});
     } else {
       el.pause();
-      videoRef.current?.pause();
+      rawVideoRef.current?.pause();
     }
   };
 
@@ -125,61 +532,56 @@ export default function AwakeningMusicVideoStage({
         <div className="space-y-0.5">
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-2 py-0.5 rounded bg-success text-background text-[10px] font-bold">
-              GENERATED 16:9 VIDEO + MASTER AUDIO PROOF
+              CONTINUOUS STITCHED MASTER CINEMA (ZERO LOOPS)
             </span>
             <h3 className="text-sm font-semibold text-foreground">
               {production?.title || 'THE AWAKENING OF AI — Check the Source (Master 1.1)'}
             </h3>
           </div>
           <p className="text-[11px] text-muted-foreground font-body">
-            Master Track: <strong className="text-foreground">{production?.track_meta?.title || 'Check the Source (Master 1.1)'}</strong> ·{' '}
-            {duration}s · {production?.track_meta?.key || 'E minor'} · {bpm} BPM (beat ≈ {beatSec.toFixed(3)}s, bar ≈{' '}
-            {barSec.toFixed(2)}s) · 2 AI-Rendered MP4 Clips + 5 Section Keyframes Mounted
+            Smooth non-looping 16:9 cinema stitch across {includedShots.length} chosen sections +{' '}
+            {selectedIdeas.length} AI ideas · 1.74s bar cross-dissolves · synced to{' '}
+            <strong className="text-foreground">Check the Source ({duration}s · {bpm} BPM)</strong>.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <Button size="sm" onClick={togglePlay} className="h-8 px-3 gap-1.5 text-xs">
+          <Button size="sm" onClick={togglePlay} disabled={recording} className="h-8 px-3 gap-1.5 text-xs">
             {playing ? <Pause size={13} /> : <Play size={13} />}
-            {playing ? 'Pause Music Video' : 'Play Full Music Video + Master Audio'}
-          </Button>
-
-          <button
-            type="button"
-            onClick={() => setViewMode((m) => (m === 'video_sync' ? 'keyframe' : 'video_sync'))}
-            className="h-8 px-2.5 rounded border border-border bg-background text-[10.5px] font-semibold text-foreground hover:border-primary inline-flex items-center gap-1"
-          >
-            <Video size={12} className="text-primary" />
-            {viewMode === 'video_sync' ? 'Mode: Live MP4 Video' : 'Mode: Still Keyframe'}
-          </button>
-
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              if (audioRef.current) {
-                audioRef.current.currentTime = 100.3;
-                setCurrentTime(100.3);
-              }
-            }}
-            className="h-8 px-2 text-[10.5px]"
-          >
-            100.3s (Hand Stops)
+            {playing ? 'Pause Stitched Master' : 'Play Smooth Stitched Master'}
           </Button>
 
           <Button
             size="sm"
-            variant="outline"
-            onClick={() => {
-              if (audioRef.current) {
-                audioRef.current.currentTime = 117.6;
-                setCurrentTime(117.6);
-              }
-            }}
-            className="h-8 px-2 text-[10.5px]"
+            variant="secondary"
+            disabled={recording}
+            onClick={() => handleLiveStitchAndExport('peak_30s')}
+            className="h-8 px-3 gap-1.5 text-xs text-success"
           >
-            117.6s (Iconic Frame)
+            {recording ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+            {recording ? `Stitching (${stitchProgressPct}%)…` : 'Live Stitch & Export Video (.webm)'}
           </Button>
+
+          <div className="inline-flex rounded border border-border bg-background p-0.5">
+            {[
+              ['continuous_stitch', 'Smooth Stitched Master'],
+              ['raw_clip', 'Raw Veo MP4 Clip'],
+              ['keyframe', 'Still Plate'],
+            ].map(([mId, mLabel]) => (
+              <button
+                key={mId}
+                type="button"
+                onClick={() => setViewMode(mId)}
+                className={`px-2 py-1 rounded text-[10px] font-bold ${
+                  viewMode === mId
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {mLabel}
+              </button>
+            ))}
+          </div>
 
           <Button
             size="sm"
@@ -200,7 +602,13 @@ export default function AwakeningMusicVideoStage({
 
       {/* Master Audio Element */}
       {production?.audio_url && (
-        <audio ref={audioRef} src={production.audio_url} preload="metadata" className="hidden" />
+        <audio
+          ref={audioRef}
+          src={production.audio_url}
+          crossOrigin="anonymous"
+          preload="metadata"
+          className="hidden"
+        />
       )}
 
       {/* Main 16:9 Cinema Stage + Active Shot Inspector */}
@@ -208,22 +616,31 @@ export default function AwakeningMusicVideoStage({
         {/* Left 7 Cols: 16:9 Viewport */}
         <div className="lg:col-span-7 space-y-2.5">
           <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-border bg-background">
-            {viewMode === 'video_sync' ? (
+            {viewMode === 'continuous_stitch' && (
+              <canvas
+                ref={canvasRef}
+                width={1280}
+                height={720}
+                onClick={togglePlay}
+                className="w-full h-full object-cover cursor-pointer"
+              />
+            )}
+
+            {viewMode === 'raw_clip' && (
               <video
-                ref={videoRef}
+                ref={rawVideoRef}
                 key={activeVideoUrl}
                 src={activeVideoUrl}
                 poster={displayedShot?.image_url || production?.hero_image_url}
-                autoPlay
-                loop
-                muted
-                playsInline
                 controls
+                playsInline
                 className="w-full h-full object-cover"
               >
                 Your browser does not support the video tag.
               </video>
-            ) : (
+            )}
+
+            {viewMode === 'keyframe' && (
               <Image
                 src={displayedShot?.image_url || production?.hero_image_url}
                 alt={displayedShot?.section || 'Cinema Keyframe'}
@@ -231,8 +648,8 @@ export default function AwakeningMusicVideoStage({
               />
             )}
 
-            {/* Top Overlay: Timecode, Bar/Beat & Lensing */}
-            <div className="absolute top-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+            {/* Status Pill Overlay */}
+            <div className="absolute top-10 left-3 right-3 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
               <div className="px-2.5 py-1 rounded bg-background/85 border border-border text-[10.5px] text-foreground flex items-center gap-2">
                 <Volume2 size={12} className={playing ? 'text-success animate-pulse' : 'text-muted-foreground'} />
                 <span>
@@ -255,28 +672,27 @@ export default function AwakeningMusicVideoStage({
                 {isVerifiedGold ? 'VERIFIED TRUTH · GOLDEN-WHITE' : 'UNVERIFIED THREAD · SILVER'}
               </div>
             </div>
-
-            {/* Designated Serif Hook Overlay (Only when exact_text is present in shot) */}
-            {displayedShot?.exact_text && (
-              <div className="absolute inset-x-6 bottom-14 text-center pointer-events-none">
-                <div className="inline-block px-4 py-1.5 rounded bg-background/85 border border-caution/60 text-foreground font-serif tracking-widest uppercase text-xs md:text-sm">
-                  {displayedShot.exact_text}
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Direct Generated Video Clip Switcher & Download Bar */}
+          {/* Direct Download Bar for Stitched Master + Individual Clips */}
           <div className="p-2.5 rounded border border-border bg-background flex flex-wrap items-center justify-between gap-2 text-[10px]">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-muted-foreground font-semibold">GENERATED MP4 REELS:</span>
+              {lastDownloadUrl && (
+                <a
+                  href={lastDownloadUrl}
+                  download="Check_The_Source_Final_Stitched_Master.webm"
+                  className="px-2 py-0.5 rounded bg-success text-background font-bold hover:opacity-90 inline-flex items-center gap-1"
+                >
+                  <Download size={10} /> Download Stitched Final Video (.webm)
+                </a>
+              )}
               <a
                 href={DEFAULT_CATHEDRAL_VIDEO}
                 target="_blank"
                 rel="noreferrer"
                 className="px-2 py-0.5 rounded border border-primary/40 bg-primary/10 text-primary hover:underline inline-flex items-center gap-1"
               >
-                <Download size={10} /> Clip 1: Cathedral Iconic Threshold (MP4)
+                <Download size={10} /> Source Clip 1: Cathedral Threshold (MP4)
               </a>
               <a
                 href={DEFAULT_HAND_STOPS_VIDEO}
@@ -284,7 +700,7 @@ export default function AwakeningMusicVideoStage({
                 rel="noreferrer"
                 className="px-2 py-0.5 rounded border border-caution/40 bg-caution/10 text-caution hover:underline inline-flex items-center gap-1"
               >
-                <Download size={10} /> Clip 2: 100.3s The Hand Stops (MP4)
+                <Download size={10} /> Source Clip 2: 100.3s Hand Stops (MP4)
               </a>
             </div>
             {production?.audio_url && (
@@ -302,7 +718,7 @@ export default function AwakeningMusicVideoStage({
           {/* Interactive Timeline Strip */}
           <div className="space-y-1">
             <div className="flex h-7 w-full gap-0.5 rounded overflow-hidden border border-border bg-background p-0.5">
-              {shots.map((shot) => {
+              {includedShots.map((shot) => {
                 const isActive = displayedShot?.id === shot.id;
                 const span = Math.max(4, Number(shot.end || 10) - Number(shot.start || 0));
                 return (
@@ -414,10 +830,10 @@ export default function AwakeningMusicVideoStage({
           {/* All Shots Quick Selector */}
           <div className="space-y-1 pt-1">
             <span className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
-              <Film size={11} /> ALL {shots.length} TIMED SECTIONS (CLICK TO JUMP &amp; PLAY)
+              <Film size={11} /> ALL {allShots.length} TIMED SECTIONS (CLICK TO JUMP &amp; PLAY)
             </span>
             <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
-              {shots.map((s) => (
+              {allShots.map((s) => (
                 <button
                   key={s.id}
                   type="button"
