@@ -1,0 +1,184 @@
+{
+  "name": "NexusFactoryProduction",
+  "type": "object",
+  "description": "End-to-end creative media (music video, timed shot plan) or software production run orchestrated by the Creator Nexus Production Factory across Cloud, Local PC/Windows, VPS, and GitHub.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "brief": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "deliverable_kind": {
+      "type": "string",
+      "enum": [
+        "music_video",
+        "software_product",
+        "hybrid_flagship"
+      ],
+      "default": "music_video"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planning",
+        "in_production",
+        "awaiting_worker",
+        "review",
+        "approved",
+        "completed"
+      ],
+      "default": "review"
+    },
+    "lead_agent": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "assigned_worker_location": {
+      "type": "string",
+      "enum": [
+        "base44_cloud",
+        "local_pc_windows",
+        "vps_hermes",
+        "github_vault"
+      ],
+      "default": "base44_cloud"
+    },
+    "worker_handoff_note": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "mood_receptor_snapshot": {
+      "type": "object"
+    },
+    "treatment_markdown": {
+      "type": "string",
+      "maxLength": 19500
+    },
+    "audio_url": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "hero_image_url": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "track_meta": {
+      "type": "object"
+    },
+    "shot_plan": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "software_artifact_html": {
+      "type": "string",
+      "maxLength": 19500
+    },
+    "software_artifact_url": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "github_url": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "skills_used": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "feedback_history": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "title",
+    "brief",
+    "deliverable_kind",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
