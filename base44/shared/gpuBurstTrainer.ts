@@ -344,10 +344,9 @@ Before shutting down the GPU instance, copy the compiled \`.gguf\` and \`lora_ad
 # Option A: Push directly to always-on Hostinger VPS (srv1944678)
 scp -r ${outputModelName}/ root@45.82.73.49:/opt/fraymus/models/${outputModelName}/
 
-# Option B: Serve immediately on Exposed Service fraymus-nexus (Internal Port 8000 -> http://4.71.129.4:20002) and fraynus-nexus-2 (Internal Port 8001 -> https://4.71.129.4:20003)
-OLLAMA_HOST=0.0.0.0:8000 OLLAMA_ORIGINS="*" ollama serve &
-OLLAMA_HOST=127.0.0.1:8000 ollama create ${outputModelName} -f Modelfile.fraymus-sovereign
-OLLAMA_HOST=127.0.0.1:8000 ollama run ${outputModelName} "Verify OPEG-V1.0 EP3 condition and summarize our dual-site architecture."
+# Option B: Load into local or VPS Ollama to test
+ollama create ${outputModelName} -f Modelfile.fraymus-sovereign
+ollama run ${outputModelName} "Verify OPEG-V1.0 EP3 condition and summarize our dual-site architecture."
 \`\`\`
 
 ### PHASE 5 (Minutes 50–55): HARD TEARDOWN DEADLINE (CREDIT GUARD)

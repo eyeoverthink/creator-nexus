@@ -221,7 +221,6 @@ export default async function(req) {
       'dispatch_route_task',
       'spawn_dual_site_subagents',
       'export_gpu_training_bundle',
-      'ollama_proxy',
       'opeg_verify',
       'status',
     ]);
@@ -297,92 +296,6 @@ export default async function(req) {
         goal: body.goal,
       });
       return Response.json({ ok: true, rSan });
-    }
-
-    if (action === 'ollama_proxy') {
-      const rawEndpoint = String(body.endpoint || 'http://4.71.129.4:20002').trim();
-      const u = new URL(rawEndpoint);
-      if (!['http:', 'https:'].includes(u.protocol)) {
-        return Response.json({ error: 'Only HTTP/HTTPS Ollama endpoints are supported.' }, { status: 400 });
-      }
-      const host = u.hostname.toLowerCase();
-      if (
-        host === 'localhost' ||
-        host === '127.0.0.1' ||
-        host === '[::1]' ||
-        host.startsWith('169.254.') ||
-        host.startsWith('10.') ||
-        host.startsWith('192.168.') ||
-        /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)
-      ) {
-        return Response.json({ error: 'Private/loopback addresses cannot be proxied through cloud gateway.' }, { status: 400 });
-      }
-      const reqPath = String(body.path || '/api/tags');
-      if (!reqPath.startsWith('/api/') && !reqPath.startsWith('/v1/')) {
-        return Response.json({ error: 'Path must start with /api/ or /v1/' }, { status: 400 });
-      }
-      // Cloudflare Workers block bare IPv4 fetches with HTTP 403 (error code: 1003).
-      // Automatically resolve bare IPv4 addresses via sslip.io DNS so http://4.71.129.4:20002 works seamlessly.
-      const isBareIpv4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
-      const effectiveUrl = new URL(u.toString());
-      if (isBareIpv4) {
-        effectiveUrl.hostname = `${host}.sslip.io`;
-      }
-      const targetUrl = effectiveUrl.toString().replace(/\/$/, '') + reqPath;
-      const internalPort = u.port === '20003' ? '8001' : '8000';
-      const serviceName = u.port === '20003' ? 'fraynus-nexus-2' : 'fraymus-nexus';
-      const payload = body.payload ?? null;
-      const bearer = String(body.token || '').trim();
-      try {
-        const upRes = await fetch(targetUrl, {
-          method: payload ? 'POST' : 'GET',
-          headers: {
-            'User-Agent': 'CreatorNexus-Sovereign-Gateway/1.0',
-            ...(payload ? { 'Content-Type': 'application/json' } : {}),
-            ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
-          },
-          ...(payload ? { body: JSON.stringify(payload) } : {}),
-          signal: AbortSignal.timeout(payload ? 120000 : 10000),
-        });
-        const text = await upRes.text();
-        let data = {};
-        try {
-          data = text ? JSON.parse(text) : {};
-        } catch {
-          data = { raw: text };
-        }
-        if (!upRes.ok) {
-          if (upRes.status === 521 || upRes.status === 502 || upRes.status === 503 || upRes.status === 525 || upRes.status === 526) {
-            return Response.json(
-              {
-                error: `Reached ${serviceName} (${rawEndpoint} → internal port ${internalPort}, HTTP ${upRes.status}). Start Ollama on internal port ${internalPort} inside your Hostinger GPU terminal: curl -fsSL https://ollama.com/install.sh | sh && OLLAMA_HOST=0.0.0.0:${internalPort} OLLAMA_ORIGINS="*" ollama serve &`,
-                endpoint: rawEndpoint,
-                service_name: serviceName,
-                internal_port: Number(internalPort),
-                resolved_dns: effectiveUrl.origin,
-                awaiting_daemon: true,
-              },
-              { status: 502 }
-            );
-          }
-          return Response.json(
-            { error: data?.error || `Ollama at ${rawEndpoint} returned HTTP ${upRes.status}`, details: data },
-            { status: upRes.status }
-          );
-        }
-        return Response.json(data);
-      } catch (err) {
-        return Response.json(
-          {
-            error: `Endpoint ${rawEndpoint} (${serviceName} → internal port ${internalPort}) is wired, waiting for daemon on internal port ${internalPort} (${err.message}). Run in your Hostinger GPU terminal: curl -fsSL https://ollama.com/install.sh | sh && OLLAMA_HOST=0.0.0.0:${internalPort} OLLAMA_ORIGINS="*" ollama serve &`,
-            endpoint: rawEndpoint,
-            service_name: serviceName,
-            internal_port: Number(internalPort),
-            awaiting_daemon: true,
-          },
-          { status: 502 }
-        );
-      }
     }
 
     if (action === 'export_gpu_training_bundle') {
@@ -508,24 +421,7 @@ export default async function(req) {
         mcp_endpoint: 'https://creator-nexus.base44.app/api/mcp',
         peer_endpoint: PEER_TRANSMUTER_URL,
         shared_github_bus: 'eyeoverthink/fraymus-continuity/orifice-relay/bicameral-txrx-ledger.json',
-        gpu_rental_status:
-          'ACTIVE_READY (NVIDIA A100 · 80GB VRAM · 2X-Large-Mem · 2 Cores · 64GB RAM · 100GB Storage · 179 cred/hr · Reading, UK · 4,893.26 credits available)',
-        exposed_gpu_services: [
-          {
-            name: 'fraymus-nexus',
-            internal_port: 8000,
-            scheme: 'HTTP',
-            protocol: 'TCP',
-            public_address: 'http://4.71.129.4:20002',
-          },
-          {
-            name: 'fraynus-nexus-2',
-            internal_port: 8001,
-            scheme: 'HTTPS',
-            protocol: 'TCP',
-            public_address: 'https://4.71.129.4:20003',
-          },
-        ],
+        gpu_rental_status: 'INACTIVE',
         assay_workspace: 'Assay & Bicameral All-Hands Coherence Lab (ws-assay-collab)',
         actions: [
           'status',
@@ -699,8 +595,7 @@ export default async function(req) {
       return Response.json({
         ok: true,
         workspaceId,
-        gpu_rental_status:
-          'ACTIVE_READY (NVIDIA A100 · 80GB VRAM · 2X-Large-Mem · 179 cred/hr · Reading, UK · 4,893.26 credits available)',
+        gpu_rental_status: 'INACTIVE',
         meshNodes: MESH_NODES,
         jobs: jobItems,
         hermesSkills: HERMES_SKILL_FLEET,

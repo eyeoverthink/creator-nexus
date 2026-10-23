@@ -4,7 +4,6 @@ import { base44 } from '@/api/base44Client';
 import Sidebar from '@/components/nexus/Sidebar';
 import HermesSkillFleetPanel from '@/components/nexus/omega/HermesSkillFleetPanel';
 import CloudModelTrainingDashboardPane from '@/components/nexus/omega/CloudModelTrainingDashboardPane';
-import HostingerGpuBurstTrainerPanel from '@/components/nexus/omega/HostingerGpuBurstTrainerPanel';
 import SovereignAmbassadorGatekeeperPanel from '@/components/nexus/omega/SovereignAmbassadorGatekeeperPanel';
 import FraymusControlPlanePanel from '@/components/nexus/omega/FraymusControlPlanePanel';
 import HeartMuLaLocalMusicForgePanel from '@/components/nexus/loosescrew/HeartMuLaLocalMusicForgePanel';
@@ -181,9 +180,6 @@ export default function HermesHub() {
 
         {/* Dedicated Cloud Model Training Progress & Active Job Manager */}
         <CloudModelTrainingDashboardPane />
-
-        {/* 1-Hour Hostinger GPU Burst Kit Compiler */}
-        <HostingerGpuBurstTrainerPanel />
       </main>
     </div>
   );

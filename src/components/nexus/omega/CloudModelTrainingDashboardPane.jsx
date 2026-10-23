@@ -362,8 +362,8 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
                 <Activity size={13} /> REAL-TIME SFT LOSS CONVERGENCE &amp; GRADIENT NORM
               </span>
               <div className="text-[10px] text-muted-foreground">
-                Active Target: <strong className="text-foreground">{selectedJob?.job_id || 'job_gpu_burst'}</strong> ·{' '}
-                {selectedJob?.assigned_node || 'NVIDIA A100 (80GB VRAM · 2X-Large-Mem · 179 cred/hr · Reading, UK)'}
+                Active Target: <strong className="text-foreground">{selectedJob?.job_id || 'standard_mesh'}</strong> ·{' '}
+                {selectedJob?.assigned_node || 'srv1944678 (45.82.73.49) / desktop-actid8c (100.88.61.56)'}
               </div>
             </div>
 
@@ -460,14 +460,14 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
             </ResponsiveContainer>
           </div>
 
-          {/* 60-Minute Hostinger Credit Guard */}
+          {/* Persistent Mesh Status */}
           <div className="p-2 rounded border border-success/40 bg-card flex flex-wrap items-center justify-between gap-2 text-[10px]">
             <div className="flex items-center gap-1.5">
               <Clock size={12} className="text-success" />
-              <span>A100 (80GB · Reading UK) Credit Guard:</span>
+              <span>Persistent Mesh Mode:</span>
             </div>
             <span className="text-foreground font-semibold">
-              179 cred/hr · Est. 25m (~75 / 4,893.26 credits) · Teardown @ Min 50
+              VPS-1 (45.82.73.49) · VPS-2 (2.24.68.223) · Local Ollama (11434)
             </span>
           </div>
         </div>

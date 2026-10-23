@@ -6,7 +6,6 @@ import Sidebar from '@/components/nexus/Sidebar';
 import SynapticOrificeBridgePanel from '@/components/nexus/omega/SynapticOrificeBridgePanel';
 import HermesSkillFleetPanel from '@/components/nexus/omega/HermesSkillFleetPanel';
 import CloudModelTrainingDashboardPane from '@/components/nexus/omega/CloudModelTrainingDashboardPane';
-import HostingerGpuBurstTrainerPanel from '@/components/nexus/omega/HostingerGpuBurstTrainerPanel';
 import SovereignAmbassadorGatekeeperPanel from '@/components/nexus/omega/SovereignAmbassadorGatekeeperPanel';
 import FraymusControlPlanePanel from '@/components/nexus/omega/FraymusControlPlanePanel';
 import { Button } from '@/components/ui/button';
@@ -349,7 +348,6 @@ export default function OpenClawHub() {
         {activeHubTab === 'training' && (
           <div className="space-y-4">
             <CloudModelTrainingDashboardPane />
-            <HostingerGpuBurstTrainerPanel onJobCreated={() => loadHubStatus()} />
           </div>
         )}
 

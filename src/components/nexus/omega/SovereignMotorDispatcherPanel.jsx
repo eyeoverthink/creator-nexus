@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
 import HermesSkillFleetPanel from '@/components/nexus/omega/HermesSkillFleetPanel';
-import HostingerGpuBurstTrainerPanel from '@/components/nexus/omega/HostingerGpuBurstTrainerPanel';
 import {
   Cpu,
   HardDrive,
@@ -341,14 +340,6 @@ while True:
           </pre>
         </div>
       )}
-
-      {/* Hostinger GPU 1-Hour Burst Trainer */}
-      <HostingerGpuBurstTrainerPanel
-        onJobCreated={(newJob) => {
-          setJobs((prev) => [newJob, ...prev.filter((j) => j.id !== newJob.id)]);
-          setSelectedJob(newJob);
-        }}
-      />
 
       {/* Hermes 29-Skill Fleet & Sub-Agent Meta-Orchestrator Panel */}
       {hermesSkills.length > 0 && (
