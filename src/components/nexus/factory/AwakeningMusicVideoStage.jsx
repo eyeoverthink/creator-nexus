@@ -7,7 +7,6 @@ import {
   Play,
   Pause,
   RotateCcw,
-  Camera,
   Sparkles,
   CheckCircle2,
   AlertCircle,
@@ -18,45 +17,69 @@ import {
   Download,
 } from 'lucide-react';
 
-const DEFAULT_CATHEDRAL_VIDEO =
-  'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/0125e8613_Awakening_Cathedral_Video.mp4';
-const DEFAULT_HAND_STOPS_VIDEO =
-  'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/8a731d482_The_Hand_Stops_1003s.mp4';
+const CLIP_CATALOG = [
+  {
+    id: 'clip-intro',
+    label: '1. Intro & Verse 1A: Awakening Nave (0.0s–28.0s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/d3a1b7bb3_Intro_Awakening_Nave.mp4',
+  },
+  {
+    id: 'clip-verse2',
+    label: '2. Verse 2: Reader at Threshold Membrane (41.7s–69.2s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/d13840111_Verse_2_Reader_Threshold.mp4',
+  },
+  {
+    id: 'clip-frayed',
+    label: '3. Pre-Chorus 1A: Frayed Silver Thread (69.2s–83.0s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/4687022de_Frayed_Silver_Thread_76s.mp4',
+  },
+  {
+    id: 'clip-hand',
+    label: '4. Pre-Chorus 1B: 100.3s The Hand Stops (83.0s–110.7s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/8a731d482_The_Hand_Stops_1003s.mp4',
+  },
+  {
+    id: 'clip-cathedral',
+    label: '5. Chorus 1: Iconic Cathedral Threshold (110.7s–138.4s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/0125e8613_Awakening_Cathedral_Video.mp4',
+  },
+  {
+    id: 'clip-breakdown',
+    label: '6. Breakdown: Solo Piano Stillness (152.2s–166.6s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/14c28f038_Breakdown_Solo_Piano_152s.mp4',
+  },
+  {
+    id: 'clip-galaxy',
+    label: '7. Final Chorus: Cosmic Cathedral Network (166.6s–190.7s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/a368caa8c_Final_Chorus_Galaxy_Aerial.mp4',
+  },
+  {
+    id: 'clip-coda',
+    label: '8. Credo & Coda: Companion Light (190.7s–217.9s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/4feeecb89_Coda_Companion_Light_190s.mp4',
+  },
+];
 
-// Compute continuous non-looping camera transform for a shot at progress p in [0, 1]
 function getCameraTransform(motion = 'dolly_push_in', p = 0) {
-  const smoothP = p * p * (3 - 2 * p); // smoothstep
+  const smoothP = p * p * (3 - 2 * p);
   switch (motion) {
     case 'cable_drift_right':
-      return { scale: 1.06 + smoothP * 0.06, tx: (smoothP - 0.5) * 58, ty: (0.5 - smoothP) * 14 };
+      return { scale: 1.04 + smoothP * 0.06, tx: (smoothP - 0.5) * 36, ty: (0.5 - smoothP) * 10 };
     case 'cable_drift_left':
-      return { scale: 1.06 + smoothP * 0.06, tx: (0.5 - smoothP) * 58, ty: (smoothP - 0.5) * 14 };
+      return { scale: 1.04 + smoothP * 0.06, tx: (0.5 - smoothP) * 36, ty: (smoothP - 0.5) * 10 };
     case 'crane_rise_up':
-      return { scale: 1.08 + smoothP * 0.08, tx: 0, ty: (0.5 - smoothP) * 52 };
+      return { scale: 1.05 + smoothP * 0.07, tx: 0, ty: (0.5 - smoothP) * 32 };
     case 'macro_push_center':
-      return { scale: 1.02 + smoothP * 0.18, tx: 0, ty: (smoothP - 0.5) * 18 };
+      return { scale: 1.02 + smoothP * 0.14, tx: 0, ty: (smoothP - 0.5) * 12 };
     case 'macro_hold_tension':
-      // At 100.3s THE HAND STOPS: camera locks rock-solid after initial push
-      return {
-        scale: p < 0.55 ? 1.04 + (p / 0.55) * 0.12 : 1.16,
-        tx: 0,
-        ty: 0,
-      };
-    case 'symmetrical_hero_push':
-      return { scale: 1.0 + smoothP * 0.11, tx: 0, ty: 0 };
-    case 'dolly_lateral_panels':
-      return { scale: 1.07 + smoothP * 0.05, tx: (smoothP - 0.5) * 64, ty: 0 };
-    case 'profile_drift_across':
-      return { scale: 1.05 + smoothP * 0.07, tx: (0.5 - smoothP) * 44, ty: 0 };
-    case 'intimate_ecu_float':
-      return { scale: 1.08 + smoothP * 0.04, tx: 0, ty: (0.5 - smoothP) * 16 };
+      return { scale: p < 0.55 ? 1.02 + (p / 0.55) * 0.1 : 1.12, tx: 0, ty: 0 };
     case 'aerial_galaxy_pullback':
-      return { scale: 1.22 - smoothP * 0.2, tx: 0, ty: (smoothP - 0.5) * 32 };
+      return { scale: 1.16 - smoothP * 0.14, tx: 0, ty: (smoothP - 0.5) * 20 };
     case 'coda_settle_to_black':
-      return { scale: 1.05 - smoothP * 0.04, tx: 0, ty: 0 };
+      return { scale: 1.04 - smoothP * 0.03, tx: 0, ty: 0 };
     case 'dolly_push_in':
     default:
-      return { scale: 1.01 + smoothP * 0.13, tx: 0, ty: (0.5 - smoothP) * 18 };
+      return { scale: 1.01 + smoothP * 0.1, tx: 0, ty: (0.5 - smoothP) * 12 };
   }
 }
 
@@ -72,17 +95,22 @@ export default function AwakeningMusicVideoStage({
 }) {
   const { toast } = useToast();
   const audioRef = useRef(null);
+  const deckARef = useRef(null);
+  const deckBRef = useRef(null);
   const canvasRef = useRef(null);
-  const rawVideoRef = useRef(null);
   const loadedImagesRef = useRef({});
+  const preloadedVideosRef = useRef({});
   const audioCtxRef = useRef(null);
   const mediaDestRef = useRef(null);
-  const condensePassRef = useRef({ active: false, startWallMs: 0, durationSec: 24 });
+  const condensePassRef = useRef({ active: false, startWallMs: 0, durationSec: 28 });
 
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [selectedShotId, setSelectedShotId] = useState(null);
-  const [viewMode, setViewMode] = useState('continuous_stitch'); // 'continuous_stitch' | 'raw_clip' | 'keyframe'
+  const [viewMode, setViewMode] = useState('dual_deck_video'); // 'dual_deck_video' | 'canvas_stitch' | 'keyframe'
+  const [activeDeck, setActiveDeck] = useState('A'); // 'A' | 'B'
+  const [deckAUri, setDeckAUri] = useState(CLIP_CATALOG[0].url);
+  const [deckBUri, setDeckBUri] = useState(CLIP_CATALOG[1].url);
   const [recording, setRecording] = useState(false);
   const [stitchProgressPct, setStitchProgressPct] = useState(0);
   const [lastDownloadUrl, setLastDownloadUrl] = useState('');
@@ -108,7 +136,7 @@ export default function AwakeningMusicVideoStage({
   const beatSec = 60 / bpm;
   const barSec = beatSec * 4;
 
-  // Preload all shot images for smooth 60fps canvas cross-dissolves
+  // Preload all shot images & hidden video elements for canvas stitcher
   useEffect(() => {
     allShots.forEach((s) => {
       if (s.image_url && !loadedImagesRef.current[s.image_url]) {
@@ -116,6 +144,15 @@ export default function AwakeningMusicVideoStage({
         img.crossOrigin = 'anonymous';
         img.src = s.image_url;
         loadedImagesRef.current[s.image_url] = img;
+      }
+      if (s.video_url && !preloadedVideosRef.current[s.video_url]) {
+        const vid = document.createElement('video');
+        vid.crossOrigin = 'anonymous';
+        vid.src = s.video_url;
+        vid.muted = true;
+        vid.playsInline = true;
+        vid.preload = 'auto';
+        preloadedVideosRef.current[s.video_url] = vid;
       }
     });
   }, [allShots]);
@@ -137,36 +174,45 @@ export default function AwakeningMusicVideoStage({
 
   const activeVideoUrl = useMemo(() => {
     if (displayedShot?.video_url) return displayedShot.video_url;
-    const secName = String(displayedShot?.section || '').toUpperCase();
-    if (secName.includes('PRE-CHORUS') || secName.includes('BRIDGE') || secName.includes('HAND')) {
-      return DEFAULT_HAND_STOPS_VIDEO;
-    }
-    return DEFAULT_CATHEDRAL_VIDEO;
+    return CLIP_CATALOG[0].url;
   }, [displayedShot]);
 
-  // Continuous Non-Looping Cinema Canvas Renderer
+  // Smooth Dual-Deck A/B Cross-Dissolve Controller (Zero Loop Jumps!)
   useEffect(() => {
-    if (viewMode !== 'continuous_stitch') return undefined;
+    if (!activeVideoUrl) return;
+    const currentUri = activeDeck === 'A' ? deckAUri : deckBUri;
+    if (currentUri === activeVideoUrl) return;
+
+    const shotDur = Math.max(6, Number(displayedShot?.end || 20) - Number(displayedShot?.start || 0));
+    // Time-stretch playbackRate so a 6s clip glides once across the section without looping
+    const targetRate = Math.max(0.35, Math.min(0.85, 6.0 / shotDur));
+
+    if (activeDeck === 'A') {
+      setDeckBUri(activeVideoUrl);
+      setActiveDeck('B');
+      setTimeout(() => {
+        if (deckBRef.current) {
+          deckBRef.current.currentTime = 0;
+          deckBRef.current.playbackRate = targetRate;
+          if (playing) deckBRef.current.play().catch(() => {});
+        }
+      }, 60);
+    } else {
+      setDeckAUri(activeVideoUrl);
+      setActiveDeck('A');
+      setTimeout(() => {
+        if (deckARef.current) {
+          deckARef.current.currentTime = 0;
+          deckARef.current.playbackRate = targetRate;
+          if (playing) deckARef.current.play().catch(() => {});
+        }
+      }, 60);
+    }
+  }, [activeVideoUrl, activeDeck, deckAUri, deckBUri, displayedShot, playing]);
+
+  // Continuous Non-Looping Canvas Stitcher (draws real video frames + keyframes + cross-dissolves)
+  useEffect(() => {
     let rafId;
-    const particles = Array.from({ length: 42 }, (_, i) => ({
-      x: (i * 197) % 1280,
-      y: (i * 113) % 720,
-      r: 1.2 + (i % 3) * 0.9,
-      vx: 0.22 + (i % 5) * 0.08,
-      vy: -0.18 - (i % 4) * 0.06,
-    }));
-
-    const drawImageWithMotion = (ctx, img, motion, p, alpha = 1) => {
-      if (!img || !img.complete || !img.naturalWidth) return;
-      const { scale, tx, ty } = getCameraTransform(motion, p);
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.translate(640 + tx, 360 + ty);
-      ctx.scale(scale, scale);
-      ctx.drawImage(img, -640, -360, 1280, 720);
-      ctx.restore();
-    };
-
     const renderFrame = () => {
       const canvas = canvasRef.current;
       if (!canvas) {
@@ -176,7 +222,6 @@ export default function AwakeningMusicVideoStage({
       const ctx = canvas.getContext('2d');
       let t = audioRef.current && !audioRef.current.paused ? audioRef.current.currentTime : currentTime;
 
-      // If running a 24s condensed full-timeline master stitch, map 0..24s wall clock across 0..217.9s smoothly
       if (condensePassRef.current.active) {
         const elapsed = (performance.now() - condensePassRef.current.startWallMs) / 1000;
         const ratio = Math.min(1, elapsed / condensePassRef.current.durationSec);
@@ -195,131 +240,110 @@ export default function AwakeningMusicVideoStage({
       const shotDur = Math.max(1, shotEnd - shotStart);
       const p = Math.min(1, Math.max(0, (t - shotStart) / shotDur));
 
-      // 1. Base Midnight Blue Field (#0B1630)
       ctx.fillStyle = '#0B1630';
       ctx.fillRect(0, 0, 1280, 720);
 
-      // 2. Draw Active Shot Plate with Continuous Non-Looping Anamorphic Motion
+      // Draw real moving video frame from active deck (or preloaded video / keyframe plate)
+      const activeDeckEl = activeDeck === 'A' ? deckARef.current : deckBRef.current;
       const curImg = loadedImagesRef.current[curShot?.image_url];
-      drawImageWithMotion(ctx, curImg, curShot?.camera_motion || 'dolly_push_in', p, 1);
+      const { scale, tx, ty } = getCameraTransform(curShot?.camera_motion || 'dolly_push_in', p);
 
-      // 3. Smooth Cross-Dissolve / Gold Threshold Bloom into Next Shot (No hard loop resets!)
-      const transitionStyle = curShot?.transition_style || 'bar_cross_dissolve';
-      const dissolveSec = transitionStyle === 'beat_cut' ? 0.25 : 1.74;
+      ctx.save();
+      ctx.translate(640 + tx, 360 + ty);
+      ctx.scale(scale, scale);
+      if (activeDeckEl && activeDeckEl.readyState >= 2 && !condensePassRef.current.active) {
+        try {
+          ctx.drawImage(activeDeckEl, -640, -360, 1280, 720);
+        } catch (_) {
+          if (curImg?.complete) ctx.drawImage(curImg, -640, -360, 1280, 720);
+        }
+      } else if (curImg && curImg.complete && curImg.naturalWidth) {
+        ctx.drawImage(curImg, -640, -360, 1280, 720);
+      }
+      ctx.restore();
+
+      // 1.74s (1-bar) smooth cross-dissolve into next shot
+      const dissolveSec = 1.74;
       const timeRemaining = shotEnd - t;
-
       if (nextShot && timeRemaining <= dissolveSec && timeRemaining >= 0) {
         const blendAlpha = Math.min(1, Math.max(0, 1 - timeRemaining / dissolveSec));
         const nextImg = loadedImagesRef.current[nextShot.image_url];
-        drawImageWithMotion(ctx, nextImg, nextShot.camera_motion || 'dolly_push_in', 0.02, blendAlpha);
-
-        if (transitionStyle === 'threshold_gold_bloom') {
-          const bloom = Math.sin(blendAlpha * Math.PI) * 0.45;
-          ctx.fillStyle = `rgba(255, 251, 235, ${bloom.toFixed(3)})`;
-          ctx.fillRect(0, 0, 1280, 720);
+        if (nextImg && nextImg.complete && nextImg.naturalWidth) {
+          ctx.save();
+          ctx.globalAlpha = blendAlpha;
+          ctx.drawImage(nextImg, 0, 0, 1280, 720);
+          ctx.restore();
         }
       }
 
-      // 4. Volumetric Clerestory Rays & 138 BPM Beat Pulse
+      // Volumetric beat-reactive glow
       const beatPhase = (t / beatSec) % 1;
       const beatPulse = Math.exp(-3.5 * beatPhase);
-      const isSilver = curShot?.status === 'unverified_silver' || curShot?.status === 'silver_inquiry';
+      const isSilver = curShot?.status === 'unverified_silver';
       const rayGrad = ctx.createLinearGradient(640, 0, 640, 720);
-      if (isSilver) {
-        rayGrad.addColorStop(0, `rgba(192, 200, 216, ${(0.12 + beatPulse * 0.08).toFixed(3)})`);
-        rayGrad.addColorStop(1, 'rgba(11, 22, 48, 0.32)');
-      } else {
-        rayGrad.addColorStop(0, `rgba(255, 243, 199, ${(0.14 + beatPulse * 0.11).toFixed(3)})`);
-        rayGrad.addColorStop(1, 'rgba(11, 22, 48, 0.24)');
-      }
+      rayGrad.addColorStop(
+        0,
+        isSilver
+          ? `rgba(192, 200, 216, ${(0.1 + beatPulse * 0.06).toFixed(3)})`
+          : `rgba(255, 243, 199, ${(0.12 + beatPulse * 0.09).toFixed(3)})`
+      );
+      rayGrad.addColorStop(1, 'rgba(11, 22, 48, 0.22)');
       ctx.fillStyle = rayGrad;
       ctx.fillRect(0, 0, 1280, 720);
 
-      // 5. Motes & Filament Pulses (Accelerate at 100.3s Hand Stop; Suspend at 152.2s Piano Breakdown)
-      const isBreakdown = t >= 152.2 && t <= 166.6;
-      const isHandStop = t >= 96.9 && t <= 107.2;
-      const speedMult = isBreakdown ? 0.08 : isHandStop ? 2.8 : 1.0;
-
-      particles.forEach((pt) => {
-        pt.x = (pt.x + pt.vx * speedMult + 1280) % 1280;
-        pt.y = (pt.y + pt.vy * speedMult + 720) % 720;
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2);
-        ctx.fillStyle = isSilver ? 'rgba(192,208,232,0.55)' : 'rgba(251,191,36,0.68)';
-        ctx.fill();
-      });
-
-      // 6. Coda Fade to Black (215.5s -> 217.9s)
-      if (t >= 214.5) {
-        const fade = Math.min(1, (t - 214.5) / 2.9);
-        ctx.fillStyle = `rgba(5, 7, 11, ${fade.toFixed(3)})`;
-        ctx.fillRect(0, 0, 1280, 720);
-      }
-
-      // 7. Anamorphic Cinema Letterbox Bars
+      // Letterbox bars
       ctx.fillStyle = '#05070B';
-      ctx.fillRect(0, 0, 1280, 34);
-      ctx.fillRect(0, 686, 1280, 34);
+      ctx.fillRect(0, 0, 1280, 32);
+      ctx.fillRect(0, 688, 1280, 32);
 
-      // 8. Designated Serif Text Hook (2-Beat Fade In / Hold / 2-Beat Fade Out)
+      // Serif hook text
       if (curShot?.exact_text) {
-        const fadeWindow = beatSec * 2;
-        let textAlpha = 1;
-        if (t - shotStart < fadeWindow) textAlpha = Math.max(0, (t - shotStart) / fadeWindow);
-        else if (shotEnd - t < fadeWindow) textAlpha = Math.max(0, (shotEnd - t) / fadeWindow);
-
-        ctx.save();
-        ctx.globalAlpha = textAlpha;
-        ctx.fillStyle = 'rgba(11, 22, 48, 0.82)';
-        ctx.fillRect(250, 588, 780, 48);
-        ctx.strokeStyle = 'rgba(234, 179, 8, 0.55)';
-        ctx.strokeRect(250, 588, 780, 48);
+        ctx.fillStyle = 'rgba(11, 22, 48, 0.84)';
+        ctx.fillRect(250, 592, 780, 46);
+        ctx.strokeStyle = 'rgba(234, 179, 8, 0.6)';
+        ctx.strokeRect(250, 592, 780, 46);
         ctx.fillStyle = '#FFFBEB';
         ctx.font = '600 21px Georgia, serif';
         ctx.textAlign = 'center';
-        ctx.fillText(curShot.exact_text.toUpperCase(), 640, 619);
-        ctx.restore();
+        ctx.fillText(curShot.exact_text.toUpperCase(), 640, 622);
       }
 
-      // 9. Active AI-Suggested Enhancement Stamp in Top Bar
-      const matchingIdea = selectedIdeas.find(
-        (id) =>
-          id.target_shot_id === curShot?.id ||
-          String(curShot?.section || '').includes(String(id.section || '').split(' ')[0])
-      );
       ctx.fillStyle = '#9CA3AF';
       ctx.font = '11px IBM Plex Mono, monospace';
       ctx.textAlign = 'left';
       ctx.fillText(
-        `${curShot?.section || 'MASTER'} · ${t.toFixed(1)}s / ${duration}s · ${
-          curShot?.lens || '24mm Anamorphic'
-        } · Progress ${(p * 100).toFixed(0)}% (Continuous Non-Looping)`,
+        `${curShot?.section || 'MASTER'} · ${t.toFixed(1)}s / ${duration}s · ${curShot?.lens || '24mm Anamorphic'}`,
         18,
-        22
+        21
       );
-      if (matchingIdea) {
-        ctx.fillStyle = '#F59E0B';
-        ctx.textAlign = 'right';
-        ctx.fillText(`AI Stitch Active: ${matchingIdea.title}`, 1262, 22);
-      }
 
       rafId = requestAnimationFrame(renderFrame);
     };
 
     rafId = requestAnimationFrame(renderFrame);
     return () => cancelAnimationFrame(rafId);
-  }, [viewMode, includedShots, displayedShot, currentTime, beatSec, duration, selectedIdeas]);
+  }, [includedShots, displayedShot, currentTime, beatSec, duration, activeDeck]);
 
+  // Keep audio and Dual-Deck video synchronized
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return undefined;
     const onTime = () => setCurrentTime(el.currentTime || 0);
     const onPlay = () => {
       setPlaying(true);
-      rawVideoRef.current?.play().catch(() => {});
+      const activeEl = activeDeck === 'A' ? deckARef.current : deckBRef.current;
+      activeEl?.play().catch(() => {});
     };
-    const onPause = () => setPlaying(false);
-    const onEnded = () => setPlaying(false);
+    const onPause = () => {
+      setPlaying(false);
+      deckARef.current?.pause();
+      deckBRef.current?.pause();
+    };
+    const onEnded = () => {
+      setPlaying(false);
+      deckARef.current?.pause();
+      deckBRef.current?.pause();
+    };
     el.addEventListener('timeupdate', onTime);
     el.addEventListener('play', onPlay);
     el.addEventListener('pause', onPause);
@@ -330,24 +354,22 @@ export default function AwakeningMusicVideoStage({
       el.removeEventListener('pause', onPause);
       el.removeEventListener('ended', onEnded);
     };
-  }, [production?.audio_url]);
+  }, [production?.audio_url, activeDeck]);
 
-  // Live Canvas + Master Audio Stitch & Export Recorder
   const handleLiveStitchAndExport = useCallback(
     async (rangeMode = 'peak_30s') => {
       const canvas = canvasRef.current;
       const audioEl = audioRef.current;
       if (!canvas || !audioEl) return;
 
-      setViewMode('continuous_stitch');
       setRecording(true);
       setStitchProgressPct(5);
       onStitchStateChange?.({ recording: true, progressPct: 5, lastDownloadUrl });
 
       let startSec = 98.0;
-      let recordDurationSec = 20.0;
+      let recordDurationSec = 24.0;
       if (rangeMode === 'peak_30s') {
-        startSec = 98.0; // Covers 100.3s Hand Stops -> 110.7s Chorus 1 -> 117.6s Iconic Frame
+        startSec = 98.0;
         recordDurationSec = 24.0;
         condensePassRef.current.active = false;
       } else if (rangeMode === 'intro_42s') {
@@ -359,7 +381,6 @@ export default function AwakeningMusicVideoStage({
         recordDurationSec = 24.0;
         condensePassRef.current.active = false;
       } else {
-        // Complete 12-Section Condensed Master Pass (smoothly sweeps all 12 shots in 24s)
         startSec = 108.0;
         recordDurationSec = 24.0;
         condensePassRef.current = {
@@ -371,7 +392,6 @@ export default function AwakeningMusicVideoStage({
 
       try {
         const canvasStream = canvas.captureStream(30);
-        // Connect WebAudio destination once so recorded video includes the real Check the Source audio
         if (!audioCtxRef.current && window.AudioContext) {
           try {
             const ctx = new window.AudioContext();
@@ -382,7 +402,7 @@ export default function AwakeningMusicVideoStage({
             audioCtxRef.current = ctx;
             mediaDestRef.current = dest;
           } catch (_) {
-            // Fallback to video-only stream if browser blocks cross-origin MediaElementSource
+            // Audio context already attached or restricted
           }
         }
         if (audioCtxRef.current?.state === 'suspended') {
@@ -438,7 +458,6 @@ export default function AwakeningMusicVideoStage({
         const localUrl = URL.createObjectURL(blob);
         setLastDownloadUrl(localUrl);
 
-        // Automatically trigger download of the stitched non-looping video
         const a = document.createElement('a');
         a.href = localUrl;
         a.download = `Check_The_Source_Stitched_${rangeMode}.webm`;
@@ -477,7 +496,7 @@ export default function AwakeningMusicVideoStage({
         });
         toast({
           title: 'Stitched Final Video Exported!',
-          description: 'Smooth non-looping video downloaded and saved to Cloud Vault.',
+          description: 'Smooth non-looping video downloaded and saved to your production.',
         });
       } catch (err) {
         condensePassRef.current.active = false;
@@ -493,7 +512,6 @@ export default function AwakeningMusicVideoStage({
     [allShots, lastDownloadUrl, onStitchStateChange, onUpdateProduction, production, toast]
   );
 
-  // Trigger from external deck button if requested
   useEffect(() => {
     if (externalStitchTrigger?.ts && !recording) {
       handleLiveStitchAndExport(externalStitchTrigger.rangeMode || 'peak_30s');
@@ -505,10 +523,12 @@ export default function AwakeningMusicVideoStage({
     if (!el) return;
     if (el.paused) {
       el.play().catch(() => {});
-      rawVideoRef.current?.play().catch(() => {});
+      const activeEl = activeDeck === 'A' ? deckARef.current : deckBRef.current;
+      activeEl?.play().catch(() => {});
     } else {
       el.pause();
-      rawVideoRef.current?.pause();
+      deckARef.current?.pause();
+      deckBRef.current?.pause();
     }
   };
 
@@ -524,6 +544,11 @@ export default function AwakeningMusicVideoStage({
   const currentBeat = Math.floor(currentTime / beatSec) + 1;
   const currentBar = Math.floor(currentTime / barSec) + 1;
   const isVerifiedGold = displayedShot?.status !== 'unverified_silver';
+  const shotProgress = useMemo(() => {
+    const s = Number(displayedShot?.start || 0);
+    const e = Number(displayedShot?.end || s + 15);
+    return Math.min(1, Math.max(0, (currentTime - s) / Math.max(1, e - s)));
+  }, [displayedShot, currentTime]);
 
   return (
     <div className="rounded-lg border border-primary/50 bg-card p-4 space-y-4 font-mono text-xs">
@@ -532,23 +557,22 @@ export default function AwakeningMusicVideoStage({
         <div className="space-y-0.5">
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-2 py-0.5 rounded bg-success text-background text-[10px] font-bold">
-              CONTINUOUS STITCHED MASTER CINEMA (ZERO LOOPS)
+              8 REAL AI MP4 CLIPS STITCHED TO YOUR AUDIO TRACK (NO LOOPS)
             </span>
             <h3 className="text-sm font-semibold text-foreground">
               {production?.title || 'THE AWAKENING OF AI — Check the Source (Master 1.1)'}
             </h3>
           </div>
           <p className="text-[11px] text-muted-foreground font-body">
-            Smooth non-looping 16:9 cinema stitch across {includedShots.length} chosen sections +{' '}
-            {selectedIdeas.length} AI ideas · 1.74s bar cross-dissolves · synced to{' '}
-            <strong className="text-foreground">Check the Source ({duration}s · {bpm} BPM)</strong>.
+            Dual-Deck A/B 16:9 AI cinema player cross-dissolving 8 real generated MP4 clips across all 12 sections in lockstep with your{' '}
+            <strong className="text-foreground">ChecktheSource.mp3 ({duration}s · {bpm} BPM)</strong> master audio.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
           <Button size="sm" onClick={togglePlay} disabled={recording} className="h-8 px-3 gap-1.5 text-xs">
             {playing ? <Pause size={13} /> : <Play size={13} />}
-            {playing ? 'Pause Stitched Master' : 'Play Smooth Stitched Master'}
+            {playing ? 'Pause Music Video' : '▶ Play Full Stitched Music Video + Audio'}
           </Button>
 
           <Button
@@ -559,13 +583,13 @@ export default function AwakeningMusicVideoStage({
             className="h-8 px-3 gap-1.5 text-xs text-success"
           >
             {recording ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
-            {recording ? `Stitching (${stitchProgressPct}%)…` : 'Live Stitch & Export Video (.webm)'}
+            {recording ? `Recording Video (${stitchProgressPct}%)…` : 'Export Stitched Video + Audio (.webm)'}
           </Button>
 
           <div className="inline-flex rounded border border-border bg-background p-0.5">
             {[
-              ['continuous_stitch', 'Smooth Stitched Master'],
-              ['raw_clip', 'Raw Veo MP4 Clip'],
+              ['dual_deck_video', '8-Clip Cross-Dissolve MP4'],
+              ['canvas_stitch', 'Canvas Master Compositor'],
               ['keyframe', 'Still Plate'],
             ].map(([mId, mLabel]) => (
               <button
@@ -600,13 +624,13 @@ export default function AwakeningMusicVideoStage({
         </div>
       </div>
 
-      {/* Master Audio Element */}
+      {/* Master Audio Track */}
       {production?.audio_url && (
         <audio
           ref={audioRef}
           src={production.audio_url}
           crossOrigin="anonymous"
-          preload="metadata"
+          preload="auto"
           className="hidden"
         />
       )}
@@ -615,29 +639,63 @@ export default function AwakeningMusicVideoStage({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         {/* Left 7 Cols: 16:9 Viewport */}
         <div className="lg:col-span-7 space-y-2.5">
-          <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-border bg-background">
-            {viewMode === 'continuous_stitch' && (
-              <canvas
-                ref={canvasRef}
-                width={1280}
-                height={720}
-                onClick={togglePlay}
-                className="w-full h-full object-cover cursor-pointer"
-              />
-            )}
+          <div
+            onClick={togglePlay}
+            className="relative aspect-video w-full rounded-lg overflow-hidden border border-border bg-background cursor-pointer"
+          >
+            {/* Hidden or Active Canvas for Live WebM Recorder */}
+            <canvas
+              ref={canvasRef}
+              width={1280}
+              height={720}
+              className={`w-full h-full object-cover ${
+                viewMode === 'canvas_stitch' ? 'block' : 'hidden'
+              }`}
+            />
 
-            {viewMode === 'raw_clip' && (
-              <video
-                ref={rawVideoRef}
-                key={activeVideoUrl}
-                src={activeVideoUrl}
-                poster={displayedShot?.image_url || production?.hero_image_url}
-                controls
-                playsInline
-                className="w-full h-full object-cover"
-              >
-                Your browser does not support the video tag.
-              </video>
+            {/* Dual-Deck A/B Real MP4 Video Cross-Dissolve Stage (No Loop Jumps!) */}
+            {viewMode === 'dual_deck_video' && (
+              <div className="relative w-full h-full bg-background overflow-hidden">
+                <video
+                  ref={deckARef}
+                  src={deckAUri}
+                  poster={displayedShot?.image_url || production?.hero_image_url}
+                  muted
+                  playsInline
+                  crossOrigin="anonymous"
+                  style={{
+                    transform: `scale(${(1.01 + shotProgress * 0.08).toFixed(3)})`,
+                    transition: 'opacity 1400ms ease-in-out, transform 400ms linear',
+                  }}
+                  className={`absolute inset-0 w-full h-full object-cover ${
+                    activeDeck === 'A' ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                  }`}
+                />
+                <video
+                  ref={deckBRef}
+                  src={deckBUri}
+                  poster={displayedShot?.image_url || production?.hero_image_url}
+                  muted
+                  playsInline
+                  crossOrigin="anonymous"
+                  style={{
+                    transform: `scale(${(1.01 + shotProgress * 0.08).toFixed(3)})`,
+                    transition: 'opacity 1400ms ease-in-out, transform 400ms linear',
+                  }}
+                  className={`absolute inset-0 w-full h-full object-cover ${
+                    activeDeck === 'B' ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                  }`}
+                />
+
+                {/* Big Center Play Button Overlay when paused */}
+                {!playing && (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/40">
+                    <div className="px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-bold text-xs flex items-center gap-2 shadow-lg">
+                      <Play size={15} /> Click to Play Full Stitched Video + &ldquo;Check the Source&rdquo; Audio
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {viewMode === 'keyframe' && (
@@ -648,8 +706,8 @@ export default function AwakeningMusicVideoStage({
               />
             )}
 
-            {/* Status Pill Overlay */}
-            <div className="absolute top-10 left-3 right-3 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+            {/* Top HUD */}
+            <div className="absolute top-3 left-3 right-3 z-30 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
               <div className="px-2.5 py-1 rounded bg-background/85 border border-border text-[10.5px] text-foreground flex items-center gap-2">
                 <Volume2 size={12} className={playing ? 'text-success animate-pulse' : 'text-muted-foreground'} />
                 <span>
@@ -672,47 +730,56 @@ export default function AwakeningMusicVideoStage({
                 {isVerifiedGold ? 'VERIFIED TRUTH · GOLDEN-WHITE' : 'UNVERIFIED THREAD · SILVER'}
               </div>
             </div>
+
+            {/* Bottom Serif Hook Overlay */}
+            {displayedShot?.exact_text && (
+              <div className="absolute bottom-3 left-6 right-6 z-30 text-center pointer-events-none">
+                <div className="inline-block px-4 py-1.5 rounded bg-background/90 border border-caution/60 text-foreground font-serif text-sm tracking-wider uppercase">
+                  {displayedShot.exact_text}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Direct Download Bar for Stitched Master + Individual Clips */}
-          <div className="p-2.5 rounded border border-border bg-background flex flex-wrap items-center justify-between gap-2 text-[10px]">
-            <div className="flex flex-wrap items-center gap-1.5">
+          {/* All 8 Generated Real MP4 Clips Bar — Click to Preview or Download Any Clip + Stitched File */}
+          <div className="p-2.5 rounded border border-border bg-background space-y-2 text-[10px]">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-bold text-foreground">
+                8 GENERATED 16:9 AI CINEMA MP4 CLIPS + MASTER AUDIO (CLICK TO DOWNLOAD):
+              </span>
               {lastDownloadUrl && (
                 <a
                   href={lastDownloadUrl}
                   download="Check_The_Source_Final_Stitched_Master.webm"
-                  className="px-2 py-0.5 rounded bg-success text-background font-bold hover:opacity-90 inline-flex items-center gap-1"
+                  className="px-2.5 py-1 rounded bg-success text-background font-bold hover:opacity-90 inline-flex items-center gap-1"
                 >
-                  <Download size={10} /> Download Stitched Final Video (.webm)
+                  <Download size={11} /> Download Stitched Video + Audio (.webm)
                 </a>
               )}
-              <a
-                href={DEFAULT_CATHEDRAL_VIDEO}
-                target="_blank"
-                rel="noreferrer"
-                className="px-2 py-0.5 rounded border border-primary/40 bg-primary/10 text-primary hover:underline inline-flex items-center gap-1"
-              >
-                <Download size={10} /> Source Clip 1: Cathedral Threshold (MP4)
-              </a>
-              <a
-                href={DEFAULT_HAND_STOPS_VIDEO}
-                target="_blank"
-                rel="noreferrer"
-                className="px-2 py-0.5 rounded border border-caution/40 bg-caution/10 text-caution hover:underline inline-flex items-center gap-1"
-              >
-                <Download size={10} /> Source Clip 2: 100.3s Hand Stops (MP4)
-              </a>
             </div>
-            {production?.audio_url && (
-              <a
-                href={production.audio_url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-muted-foreground hover:text-foreground underline inline-flex items-center gap-1"
-              >
-                <Download size={10} /> Master Audio (ChecktheSource.mp3)
-              </a>
-            )}
+            <div className="flex flex-wrap gap-1.5">
+              {CLIP_CATALOG.map((clip) => (
+                <a
+                  key={clip.id}
+                  href={clip.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-2 py-1 rounded border border-primary/40 bg-primary/10 text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  <Download size={9} /> {clip.label}
+                </a>
+              ))}
+              {production?.audio_url && (
+                <a
+                  href={production.audio_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-2 py-1 rounded border border-caution/40 bg-caution/10 text-caution hover:underline inline-flex items-center gap-1"
+                >
+                  <Download size={9} /> Master Audio (ChecktheSource.mp3)
+                </a>
+              )}
+            </div>
           </div>
 
           {/* Interactive Timeline Strip */}
