@@ -16,6 +16,9 @@ import {
   Check,
 } from 'lucide-react';
 
+const FALLBACK_AUDIO_MASTER =
+  'https://media.base44.com/files/public/6ad00af14909c671e73bb835/79561d060_ChecktheSource.mp3';
+
 const CAMERA_MOTION_LABELS = {
   cable_drift_right: '24mm Cable-Cam Drift Right',
   dolly_push_in: '40mm Slow Anamorphic Dolly Push',
@@ -228,7 +231,11 @@ export default function MasterVideoStitchAndExportDeck({
     <span id="tc">0.0s / 217.9s · Bar 1 · Beat 1</span>
     <span>${includedShots.length} Stitched Shots · ${selectedIdeas.length} AI Ideas Active</span>
   </div>
-  <audio id="audio" src="${production.audio_url}" crossorigin="anonymous"></audio>
+  <audio id="audio" src="${
+    production.audio_url && !production.audio_url.includes('6be084021')
+      ? production.audio_url
+      : FALLBACK_AUDIO_MASTER
+  }" controls crossorigin="anonymous"></audio>
   <div class="ideas">
     ${selectedIdeas
       .map(

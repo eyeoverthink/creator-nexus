@@ -17,6 +17,9 @@ import {
   Download,
 } from 'lucide-react';
 
+const FALLBACK_AUDIO_MASTER =
+  'https://media.base44.com/files/public/6ad00af14909c671e73bb835/79561d060_ChecktheSource.mp3';
+
 const CLIP_CATALOG = [
   {
     id: 'clip-intro',
