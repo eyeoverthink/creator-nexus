@@ -136,7 +136,9 @@ export default function HostingerGpuBurstTrainerPanel({ onJobCreated }) {
     }
   };
 
-  const oneLinerBootstrap = `curl -fsSL https://ollama.com/install.sh | sh && OLLAMA_HOST=0.0.0.0:8000 OLLAMA_ORIGINS="*" nohup ollama serve > ~/ollama_8000.log 2>&1 & mkdir -p ~/fraymus-gpu && cd ~/fraymus-gpu && git clone --depth 1 https://github.com/eyeoverthink/fraymus-continuity.git && cp fraymus-continuity/gpu-training/* . && pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git" --no-deps trl peft accelerate bitsandbytes datasets && python3 train_fraymus_gpu_burst.py 2>&1 | tee train_burst.log`;
+  const instantOllamaPort8000Cmd = `curl -fsSL https://ollama.com/install.sh | sh && sudo systemctl stop ollama 2>/dev/null || true && pkill -f "ollama serve" 2>/dev/null || true && OLLAMA_HOST=0.0.0.0:8000 OLLAMA_ORIGINS="*" nohup ollama serve > ~/ollama_8000.log 2>&1 & sleep 4 && OLLAMA_HOST=127.0.0.1:8000 ollama pull qwen2.5-coder:7b && printf 'FROM qwen2.5-coder:7b\\nPARAMETER temperature 0.62\\nSYSTEM "You are FRAYMUS-SOVEREIGN-V25 running on Hostinger NVIDIA A100 (80GB VRAM) at 4.71.129.4:20002. Enforce OPEG-V1.0 Empirical Grounding and phi^75-Ternary discipline."\\n' > ~/Modelfile.fraymus && OLLAMA_HOST=127.0.0.1:8000 ollama create fraymus-sovereign-v25-a100 -f ~/Modelfile.fraymus && curl -sS -X POST https://creator-nexus.base44.app/functions/openclawGateway -H "Content-Type: application/json" -d '{"action":"orifice_ping","protocol":"ORIFICE-TXRX-V1.0","node_id":"hostinger-a100-4.71.129.4","payload":"A100_LIVE_ON_PORT_8000 // model=fraymus-sovereign-v25-a100 // endpoint=http://4.71.129.4:20002"}'`;
+
+  const oneLinerBootstrap = `mkdir -p ~/fraymus-gpu && cd ~/fraymus-gpu && rm -rf fraymus-continuity && git clone --depth 1 https://github.com/eyeoverthink/fraymus-continuity.git && cp fraymus-continuity/gpu-training/* . && pip install --break-system-packages "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git" --no-deps trl peft accelerate bitsandbytes datasets && python3 train_fraymus_gpu_burst.py 2>&1 | tee train_burst.log`;
 
   return (
     <div className="p-3.5 rounded-lg border border-success/50 bg-background space-y-3 font-mono text-xs">
@@ -245,11 +247,31 @@ export default function HostingerGpuBurstTrainerPanel({ onJobCreated }) {
         </div>
       </div>
 
-      {/* 1-Liner GPU Terminal Bootstrap */}
-      <div className="p-2.5 rounded border border-border bg-card space-y-1.5">
+      {/* STEP 1: Instant Port 8000 Ollama + Orifice Handshake for ssh ubuntu@4.71.129.4 -p 30435 */}
+      <div className="p-2.5 rounded border border-success/60 bg-card space-y-1.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-[10.5px] font-semibold text-success flex items-center gap-1.5">
-            <Terminal size={12} /> ONE-LINE GPU TERMINAL BOOTSTRAP (RUN ONCE GPU BOOTS)
+            <Terminal size={12} /> STEP 1 — PASTE INTO YOUR OPEN SSH TERMINAL (<code>ssh ubuntu@4.71.129.4 -p 30435</code>) TO LIGHT UP PORT 8000
+          </span>
+          <button
+            type="button"
+            onClick={() => copyText('instant8000', instantOllamaPort8000Cmd)}
+            className="text-[10px] text-primary hover:underline inline-flex items-center gap-1 font-semibold"
+          >
+            {copiedKey === 'instant8000' ? <Check size={11} /> : <Copy size={11} />}
+            {copiedKey === 'instant8000' ? 'Copied Step 1!' : 'Copy Step 1 (Start Port 8000 + Model + Ping)'}
+          </button>
+        </div>
+        <pre className="p-2 rounded bg-background border border-border text-[9.5px] overflow-x-auto text-foreground/90">
+          {instantOllamaPort8000Cmd}
+        </pre>
+      </div>
+
+      {/* STEP 2: Full Unsloth QLoRA Fine-Tune 1-Liner */}
+      <div className="p-2.5 rounded border border-border bg-card space-y-1.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-[10.5px] font-semibold text-primary flex items-center gap-1.5">
+            <Terminal size={12} /> STEP 2 — FULL UNSLOTH QLoRA + GGUF BURST TRAINER (UBUNTU 24.04 A100)
           </span>
           <button
             type="button"
@@ -257,7 +279,7 @@ export default function HostingerGpuBurstTrainerPanel({ onJobCreated }) {
             className="text-[10px] text-primary hover:underline inline-flex items-center gap-1"
           >
             {copiedKey === 'bootstrap' ? <Check size={11} /> : <Copy size={11} />}
-            {copiedKey === 'bootstrap' ? 'Copied 1-Liner!' : 'Copy GPU 1-Liner'}
+            {copiedKey === 'bootstrap' ? 'Copied Step 2!' : 'Copy Step 2 (QLoRA Training)'}
           </button>
         </div>
         <pre className="p-2 rounded bg-background border border-border text-[9.5px] overflow-x-auto text-foreground/90">
