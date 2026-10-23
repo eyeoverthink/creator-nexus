@@ -20,6 +20,7 @@ import AiWorkshopOs from '@/pages/AiWorkshopOs';
 import OpenClawHub from '@/pages/OpenClawHub';
 import OrificeRelay from '@/pages/OrificeRelay';
 import HermesHub from '@/pages/HermesHub';
+import ProductionFactory from '@/pages/ProductionFactory';
 import Connect from '@/pages/Connect';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
@@ -61,7 +62,7 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/oauth/consent" element={<OAuthConsent />} />
-      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}><Route path="/" element={<Home />} /><Route path="/studio" element={<Studio />} /><Route path="/origin" element={<Origin />} /><Route path="/knowledge" element={<Knowledge />} /><Route path="/spark" element={<Spark />} /><Route path="/library" element={<Library />} /><Route path="/watch/:jobId" element={<Watch />} /><Route path="/director-lab" element={<DirectorLab />} /><Route path="/argon" element={<ArgonEngine />} /><Route path="/loose-screw" element={<LooseScrew />} /><Route path="/ai-workshop" element={<AiWorkshopOs />} /><Route path="/openclaw" element={<OpenClawHub />} /><Route path="/orifice-relay" element={<OrificeRelay />} /><Route path="/hermes" element={<HermesHub />} /><Route path="/connect" element={<Connect />} /></Route>
+      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}><Route path="/" element={<Home />} /><Route path="/studio" element={<Studio />} /><Route path="/origin" element={<Origin />} /><Route path="/knowledge" element={<Knowledge />} /><Route path="/spark" element={<Spark />} /><Route path="/library" element={<Library />} /><Route path="/watch/:jobId" element={<Watch />} /><Route path="/director-lab" element={<DirectorLab />} /><Route path="/argon" element={<ArgonEngine />} /><Route path="/loose-screw" element={<LooseScrew />} /><Route path="/ai-workshop" element={<AiWorkshopOs />} /><Route path="/openclaw" element={<OpenClawHub />} /><Route path="/orifice-relay" element={<OrificeRelay />} /><Route path="/hermes" element={<HermesHub />} /><Route path="/factory" element={<ProductionFactory />} /><Route path="/connect" element={<Connect />} /></Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
