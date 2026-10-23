@@ -591,6 +591,54 @@ ${updatedTreatment.slice(0, 6000)}
       return Response.json({ ok: true, production: updatedProd, image_url: imgRes?.url });
     }
 
+    if (action === 'render_shot_video') {
+      const productionId = String(body.production_id || '');
+      const shotId = String(body.shot_id || '');
+      const existing = await db.entities.NexusFactoryProduction.get(productionId);
+      if (!existing) return Response.json({ error: 'Production not found' }, { status: 404 });
+
+      const shots = Array.isArray(existing.shot_plan) ? [...existing.shot_plan] : [];
+      const idx = shots.findIndex((s) => s.id === shotId);
+      const targetShot = idx >= 0 ? shots[idx] : shots[0];
+      if (!targetShot) return Response.json({ error: 'Shot not found' }, { status: 404 });
+
+      const videoPrompt = `Anamorphic 16:9 cinema shot for "${existing.title}" (${targetShot.section}, ${targetShot.start}s-${targetShot.end}s). Camera/Lens: ${targetShot.lens}. Volumetric lighting: ${targetShot.light}. Action: ${targetShot.visual_direction}. Midnight-blue stone gothic cathedral of information with golden-white and silver filaments, slow deliberate motion, photorealistic, no text.`;
+
+      const vidRes = await db.integrations.Core.GenerateVideo({
+        prompt: videoPrompt,
+        duration: 6,
+        aspect_ratio: '16:9',
+        generate_audio: false,
+      });
+
+      if (idx >= 0 && vidRes?.url) {
+        shots[idx] = {
+          ...targetShot,
+          video_url: vidRes.url,
+        };
+      }
+
+      const updatedProd = await db.entities.NexusFactoryProduction.update(existing.id, {
+        shot_plan: shots,
+        status: 'completed',
+      });
+
+      if (vidRes?.url) {
+        await db.entities.LooseScrewItem.create({
+          owner_id: ownerId,
+          channel: 'VIDEO',
+          title: `${existing.title} — ${targetShot.section} (${targetShot.start}s–${targetShot.end}s)`,
+          duration: '0:06',
+          bpm: 138,
+          tags: ['AWAKENING_OF_AI', 'CHECK_THE_SOURCE', targetShot.section],
+          media_url: vidRes.url,
+          mime_type: 'video/mp4',
+        }).catch(() => null);
+      }
+
+      return Response.json({ ok: true, production: updatedProd, video_url: vidRes?.url });
+    }
+
     if (action === 'sync_production_github') {
       const productionId = String(body.production_id || '');
       const existing = await db.entities.NexusFactoryProduction.get(productionId);

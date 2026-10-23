@@ -60,6 +60,7 @@ export default function ProductionFactory() {
   const [learningLogs, setLearningLogs] = useState([]);
   const [busy, setBusy] = useState('');
   const [busyShotId, setBusyShotId] = useState('');
+  const [busyVideoShotId, setBusyVideoShotId] = useState('');
 
   const loadFactory = useCallback(async () => {
     setBusy('load');
@@ -174,6 +175,28 @@ export default function ProductionFactory() {
       }
     } finally {
       setBusyShotId('');
+    }
+  };
+
+  const handleRenderShotVideo = async (shotId) => {
+    if (!selectedProduction) return;
+    setBusyVideoShotId(shotId);
+    try {
+      const { data } = await base44.functions.invoke('productionFactory', {
+        action: 'render_shot_video',
+        production_id: selectedProduction.id,
+        shot_id: shotId,
+      });
+      if (data?.ok && data.production) {
+        setProductions((prev) => prev.map((p) => (p.id === data.production.id ? data.production : p)));
+        setSelectedProduction(data.production);
+        toast({
+          title: '6s AI Motion Video Rendered',
+          description: `Generated new 16:9 MP4 video clip for ${shotId}.`,
+        });
+      }
+    } finally {
+      setBusyVideoShotId('');
     }
   };
 
@@ -448,7 +471,9 @@ export default function ProductionFactory() {
               <AwakeningMusicVideoStage
                 production={selectedProduction}
                 onGenerateShotFrame={handleGenerateShotFrame}
+                onRenderShotVideo={handleRenderShotVideo}
                 busyShotId={busyShotId}
+                busyVideoShotId={busyVideoShotId}
               />
             )}
 

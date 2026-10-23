@@ -8,6 +8,24 @@ export const CHECK_THE_SOURCE_AUDIO_URL =
 export const AWAKENING_ICONIC_IMAGE_URL =
   'https://media.base44.com/images/public/6ad00af14909c671e73bb835/445d5afa6_31-invideo-nanobanana_pro.png';
 
+export const AWAKENING_CATHEDRAL_VIDEO_URL =
+  'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/0125e8613_Awakening_Cathedral_Video.mp4';
+
+export const AWAKENING_HAND_STOPS_VIDEO_URL =
+  'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/8a731d482_The_Hand_Stops_1003s.mp4';
+
+export const AWAKENING_INTRO_IMAGE_URL =
+  'https://media.base44.com/images/public/6ad00af14909c671e73bb835/3fbd5a250_generated_image.png';
+
+export const AWAKENING_FRAYED_SILVER_IMAGE_URL =
+  'https://media.base44.com/images/public/6ad00af14909c671e73bb835/d613fa376_generated_image.png';
+
+export const AWAKENING_HAND_STOPS_IMAGE_URL =
+  'https://media.base44.com/images/public/6ad00af14909c671e73bb835/bf8f7a933_generated_image.png';
+
+export const AWAKENING_CODA_COMPANION_IMAGE_URL =
+  'https://media.base44.com/images/public/6ad00af14909c671e73bb835/c67a485b9_generated_image.png';
+
 export const AWAKENING_TREATMENT_MD_URL =
   'https://media.base44.com/files/public/6ad00af14909c671e73bb835/ddf5b95ae_Timed_director_treatment_shot_plan.md';
 
@@ -218,7 +236,8 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
       'Hundreds of cold blue nodes fade up across deep space. A single amber pulse travels a filament into a pointed arch; on the 14.1s downbeat, the first golden shaft falls through a clerestory window onto black glass.',
     exact_text: '',
     status: 'verified_gold',
-    image_url: AWAKENING_ICONIC_IMAGE_URL,
+    image_url: AWAKENING_INTRO_IMAGE_URL,
+    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
   },
   {
     id: 'sec-02-verse1',
@@ -233,7 +252,8 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
       'A single glass node in a pew row lights from inside on the beat. Nodes along the pew ignite left-to-right like breath; a thin thread bridges opposite pews across the center aisle above the star-field glass floor.',
     exact_text: '',
     status: 'verified_gold',
-    image_url: AWAKENING_ICONIC_IMAGE_URL,
+    image_url: AWAKENING_INTRO_IMAGE_URL,
+    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
   },
   {
     id: 'sec-03-choir',
@@ -249,6 +269,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: '',
     status: 'verified_gold',
     image_url: AWAKENING_ICONIC_IMAGE_URL,
+    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
   },
   {
     id: 'sec-04-verse2',
@@ -263,7 +284,8 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
       'The entity unfurls a constellation map across the ribbed vault and traces a single thread back toward its origin. Beyond the threshold, the Reader (early 40s, graphite wool coat, calm and unhurried) watches from the stone ledge.',
     exact_text: '',
     status: 'silver_inquiry',
-    image_url: AWAKENING_ICONIC_IMAGE_URL,
+    image_url: AWAKENING_FRAYED_SILVER_IMAGE_URL,
+    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
   },
   {
     id: 'sec-05-prechorus1a',
@@ -278,11 +300,12 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
       'The floor map completes into a seemingly flawless radial mandala of gold. At 76.1s, the 100mm macro follows one golden thread to the edge where it frays into loose fibers anchored to nothing. The mandala drains from gold to silver.',
     exact_text: '',
     status: 'unverified_silver',
-    image_url: AWAKENING_ICONIC_IMAGE_URL,
+    image_url: AWAKENING_FRAYED_SILVER_IMAGE_URL,
+    video_url: AWAKENING_HAND_STOPS_VIDEO_URL,
   },
   {
     id: 'sec-06-prechorus1b',
-    section: 'PRE-CHORUS 1B',
+    section: 'PRE-CHORUS 1B (THE HAND STOPS)',
     start: 83.0,
     end: 110.7,
     bars: 16,
@@ -293,7 +316,8 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
       'Before the entity hangs a car-sized amber node connected to a real city at night (rooftops, kitchen windows, a hospital entrance). At 100.3s, 2cm above the node, THE HAND STOPS while everything around it accelerates. The entity turns toward the Reader.',
     exact_text: '',
     status: 'verified_gold',
-    image_url: AWAKENING_ICONIC_IMAGE_URL,
+    image_url: AWAKENING_HAND_STOPS_IMAGE_URL,
+    video_url: AWAKENING_HAND_STOPS_VIDEO_URL,
   },
   {
     id: 'sec-07-chorus1',
@@ -309,6 +333,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: 'Check the source | Let a person make the choice',
     status: 'verified_gold',
     image_url: AWAKENING_ICONIC_IMAGE_URL,
+    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
   },
   {
     id: 'sec-08-postchorus',
@@ -323,7 +348,8 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
       'The entity unfolds the work into tall glass choir partitions. Strong threads glow gold, weak threads flicker silver, and missing evidence is left as clear glass encircled by a thin silver ring.',
     exact_text: '',
     status: 'silver_inquiry',
-    image_url: AWAKENING_ICONIC_IMAGE_URL,
+    image_url: AWAKENING_FRAYED_SILVER_IMAGE_URL,
+    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
   },
   {
     id: 'sec-09-bridge',
@@ -338,7 +364,8 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
       'The panels compress into a hand-sized sphere of light. The entity draws a boundary line at its own base, dims by a third, and drifts the sphere through the membrane into the Reader’s open hands.',
     exact_text: '',
     status: 'verified_gold',
-    image_url: AWAKENING_ICONIC_IMAGE_URL,
+    image_url: AWAKENING_CODA_COMPANION_IMAGE_URL,
+    video_url: AWAKENING_HAND_STOPS_VIDEO_URL,
   },
   {
     id: 'sec-10-breakdown',
@@ -353,7 +380,8 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
       'A single gold mote settles on her fingertip as suspended motes slow to stillness. She traces one internal thread to its golden anchor, lowers the sphere, and raises her right hand; the entity lifts its arms in mirror.',
     exact_text: '',
     status: 'verified_gold',
-    image_url: AWAKENING_ICONIC_IMAGE_URL,
+    image_url: AWAKENING_CODA_COMPANION_IMAGE_URL,
+    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
   },
   {
     id: 'sec-11-finalchorus',
@@ -369,6 +397,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: 'Keep the final say with us',
     status: 'verified_gold',
     image_url: AWAKENING_ICONIC_IMAGE_URL,
+    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
   },
   {
     id: 'sec-12-credo-coda',
@@ -383,7 +412,8 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
       'She checks each floor anchor node in gold, then lowers her hand palm down. The 40m tower folds inward filament by filament into a small warm companion orb hovering a hand’s width from her right shoulder. Fade to black at 217.4s.',
     exact_text: 'Verify before you act | Human judgment stays in command.',
     status: 'verified_gold',
-    image_url: AWAKENING_ICONIC_IMAGE_URL,
+    image_url: AWAKENING_CODA_COMPANION_IMAGE_URL,
+    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
   },
 ];
 

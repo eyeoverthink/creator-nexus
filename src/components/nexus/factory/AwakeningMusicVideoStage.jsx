@@ -12,17 +12,28 @@ import {
   Volume2,
   Loader2,
   Film,
+  Video,
+  Download,
 } from 'lucide-react';
+
+const DEFAULT_CATHEDRAL_VIDEO =
+  'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/0125e8613_Awakening_Cathedral_Video.mp4';
+const DEFAULT_HAND_STOPS_VIDEO =
+  'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/8a731d482_The_Hand_Stops_1003s.mp4';
 
 export default function AwakeningMusicVideoStage({
   production,
   onGenerateShotFrame,
+  onRenderShotVideo,
   busyShotId,
+  busyVideoShotId,
 }) {
   const audioRef = useRef(null);
+  const videoRef = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [selectedShotId, setSelectedShotId] = useState(null);
+  const [viewMode, setViewMode] = useState('video_sync'); // 'video_sync' | 'keyframe'
 
   const shots = useMemo(() => {
     return Array.isArray(production?.shot_plan) ? production.shot_plan : [];
@@ -48,12 +59,27 @@ export default function AwakeningMusicVideoStage({
     return activeTimeShot;
   }, [selectedShotId, playing, shots, activeTimeShot]);
 
+  // Select the right generated MP4 clip for the active shot
+  const activeVideoUrl = useMemo(() => {
+    if (displayedShot?.video_url) return displayedShot.video_url;
+    const secName = String(displayedShot?.section || '').toUpperCase();
+    if (secName.includes('PRE-CHORUS') || secName.includes('BRIDGE') || secName.includes('HAND')) {
+      return DEFAULT_HAND_STOPS_VIDEO;
+    }
+    return DEFAULT_CATHEDRAL_VIDEO;
+  }, [displayedShot]);
+
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return undefined;
     const onTime = () => setCurrentTime(el.currentTime || 0);
-    const onPlay = () => setPlaying(true);
-    const onPause = () => setPlaying(false);
+    const onPlay = () => {
+      setPlaying(true);
+      videoRef.current?.play().catch(() => {});
+    };
+    const onPause = () => {
+      setPlaying(false);
+    };
     const onEnded = () => setPlaying(false);
     el.addEventListener('timeupdate', onTime);
     el.addEventListener('play', onPlay);
@@ -72,8 +98,10 @@ export default function AwakeningMusicVideoStage({
     if (!el) return;
     if (el.paused) {
       el.play().catch(() => {});
+      videoRef.current?.play().catch(() => {});
     } else {
       el.pause();
+      videoRef.current?.pause();
     }
   };
 
@@ -91,30 +119,54 @@ export default function AwakeningMusicVideoStage({
   const isVerifiedGold = displayedShot?.status !== 'unverified_silver';
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 space-y-4 font-mono text-xs">
+    <div className="rounded-lg border border-primary/50 bg-card p-4 space-y-4 font-mono text-xs">
       {/* Top Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
         <div className="space-y-0.5">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-primary text-primary-foreground text-[10px] font-bold">
-              ANAMORPHIC 16:9 TIMED SHOT STAGE
+            <span className="px-2 py-0.5 rounded bg-success text-background text-[10px] font-bold">
+              GENERATED 16:9 VIDEO + MASTER AUDIO PROOF
             </span>
             <h3 className="text-sm font-semibold text-foreground">
-              {production?.title || 'THE AWAKENING OF AI — Check the Source'}
+              {production?.title || 'THE AWAKENING OF AI — Check the Source (Master 1.1)'}
             </h3>
           </div>
           <p className="text-[11px] text-muted-foreground font-body">
-            Track: <strong className="text-foreground">{production?.track_meta?.title || 'Check the Source (Master 1.1)'}</strong> ·{' '}
+            Master Track: <strong className="text-foreground">{production?.track_meta?.title || 'Check the Source (Master 1.1)'}</strong> ·{' '}
             {duration}s · {production?.track_meta?.key || 'E minor'} · {bpm} BPM (beat ≈ {beatSec.toFixed(3)}s, bar ≈{' '}
-            {barSec.toFixed(2)}s)
+            {barSec.toFixed(2)}s) · 2 AI-Rendered MP4 Clips + 5 Section Keyframes Mounted
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <Button size="sm" onClick={togglePlay} className="h-8 px-3 gap-1.5 text-xs">
             {playing ? <Pause size={13} /> : <Play size={13} />}
-            {playing ? 'Pause Master Track' : 'Play "Check the Source" Sync'}
+            {playing ? 'Pause Music Video' : 'Play Full Music Video + Master Audio'}
           </Button>
+
+          <button
+            type="button"
+            onClick={() => setViewMode((m) => (m === 'video_sync' ? 'keyframe' : 'video_sync'))}
+            className="h-8 px-2.5 rounded border border-border bg-background text-[10.5px] font-semibold text-foreground hover:border-primary inline-flex items-center gap-1"
+          >
+            <Video size={12} className="text-primary" />
+            {viewMode === 'video_sync' ? 'Mode: Live MP4 Video' : 'Mode: Still Keyframe'}
+          </button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              if (audioRef.current) {
+                audioRef.current.currentTime = 100.3;
+                setCurrentTime(100.3);
+              }
+            }}
+            className="h-8 px-2 text-[10.5px]"
+          >
+            100.3s (Hand Stops)
+          </Button>
+
           <Button
             size="sm"
             variant="outline"
@@ -124,10 +176,11 @@ export default function AwakeningMusicVideoStage({
                 setCurrentTime(117.6);
               }
             }}
-            className="h-8 px-2.5 text-[11px]"
+            className="h-8 px-2 text-[10.5px]"
           >
-            Jump to Iconic Frame (117.6s)
+            117.6s (Iconic Frame)
           </Button>
+
           <Button
             size="sm"
             variant="ghost"
@@ -145,7 +198,7 @@ export default function AwakeningMusicVideoStage({
         </div>
       </div>
 
-      {/* Hidden/Accessible Audio Element */}
+      {/* Master Audio Element */}
       {production?.audio_url && (
         <audio ref={audioRef} src={production.audio_url} preload="metadata" className="hidden" />
       )}
@@ -153,13 +206,30 @@ export default function AwakeningMusicVideoStage({
       {/* Main 16:9 Cinema Stage + Active Shot Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         {/* Left 7 Cols: 16:9 Viewport */}
-        <div className="lg:col-span-7 space-y-2">
+        <div className="lg:col-span-7 space-y-2.5">
           <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-border bg-background">
-            <Image
-              src={displayedShot?.image_url || production?.hero_image_url}
-              alt={displayedShot?.section || 'Cinema Keyframe'}
-              className="w-full h-full object-cover"
-            />
+            {viewMode === 'video_sync' ? (
+              <video
+                ref={videoRef}
+                key={activeVideoUrl}
+                src={activeVideoUrl}
+                poster={displayedShot?.image_url || production?.hero_image_url}
+                autoPlay
+                loop
+                muted
+                playsInline
+                controls
+                className="w-full h-full object-cover"
+              >
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <Image
+                src={displayedShot?.image_url || production?.hero_image_url}
+                alt={displayedShot?.section || 'Cinema Keyframe'}
+                className="w-full h-full object-cover"
+              />
+            )}
 
             {/* Top Overlay: Timecode, Bar/Beat & Lensing */}
             <div className="absolute top-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
@@ -188,23 +258,45 @@ export default function AwakeningMusicVideoStage({
 
             {/* Designated Serif Hook Overlay (Only when exact_text is present in shot) */}
             {displayedShot?.exact_text && (
-              <div className="absolute inset-x-6 bottom-12 text-center pointer-events-none">
-                <div className="inline-block px-4 py-1.5 rounded bg-background/80 border border-caution/50 text-foreground font-serif tracking-widest uppercase text-xs md:text-sm">
+              <div className="absolute inset-x-6 bottom-14 text-center pointer-events-none">
+                <div className="inline-block px-4 py-1.5 rounded bg-background/85 border border-caution/60 text-foreground font-serif tracking-widest uppercase text-xs md:text-sm">
                   {displayedShot.exact_text}
                 </div>
               </div>
             )}
+          </div>
 
-            {/* Bottom Overlay: Active Section Banner */}
-            <div className="absolute bottom-2.5 left-3 right-3 px-3 py-1.5 rounded bg-background/90 border border-border flex flex-wrap items-center justify-between gap-2 text-[10.5px]">
-              <span className="font-bold text-primary">
-                {displayedShot?.section || 'SECTION'} ({displayedShot?.start}s–{displayedShot?.end}s)
-              </span>
-              <span className="text-muted-foreground truncate">
-                <Camera size={11} className="inline mr-1" />
-                {displayedShot?.lens || '24mm Anamorphic'}
-              </span>
+          {/* Direct Generated Video Clip Switcher & Download Bar */}
+          <div className="p-2.5 rounded border border-border bg-background flex flex-wrap items-center justify-between gap-2 text-[10px]">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-muted-foreground font-semibold">GENERATED MP4 REELS:</span>
+              <a
+                href={DEFAULT_CATHEDRAL_VIDEO}
+                target="_blank"
+                rel="noreferrer"
+                className="px-2 py-0.5 rounded border border-primary/40 bg-primary/10 text-primary hover:underline inline-flex items-center gap-1"
+              >
+                <Download size={10} /> Clip 1: Cathedral Iconic Threshold (MP4)
+              </a>
+              <a
+                href={DEFAULT_HAND_STOPS_VIDEO}
+                target="_blank"
+                rel="noreferrer"
+                className="px-2 py-0.5 rounded border border-caution/40 bg-caution/10 text-caution hover:underline inline-flex items-center gap-1"
+              >
+                <Download size={10} /> Clip 2: 100.3s The Hand Stops (MP4)
+              </a>
             </div>
+            {production?.audio_url && (
+              <a
+                href={production.audio_url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-muted-foreground hover:text-foreground underline inline-flex items-center gap-1"
+              >
+                <Download size={10} /> Master Audio (ChecktheSource.mp3)
+              </a>
+            )}
           </div>
 
           {/* Interactive Timeline Strip */}
@@ -246,29 +338,46 @@ export default function AwakeningMusicVideoStage({
 
         {/* Right 5 Cols: Active Shot Camera, Light & Direction Inspector */}
         <div className="lg:col-span-5 p-3.5 rounded-lg border border-border bg-background space-y-3">
-          <div className="flex items-center justify-between border-b border-border pb-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
             <div>
               <span className="text-[10px] text-muted-foreground block">ACTIVE SHOT SPECIFICATION</span>
               <h4 className="text-xs font-bold text-foreground">
                 {displayedShot?.section} · {displayedShot?.start}s to {displayedShot?.end}s
               </h4>
             </div>
-            {displayedShot && onGenerateShotFrame && (
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={busyShotId === displayedShot.id}
-                onClick={() => onGenerateShotFrame(displayedShot.id)}
-                className="h-7 px-2.5 text-[10px] gap-1"
-              >
-                {busyShotId === displayedShot.id ? (
-                  <Loader2 size={11} className="animate-spin" />
-                ) : (
-                  <Sparkles size={11} />
-                )}
-                Render Shot Keyframe
-              </Button>
-            )}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {displayedShot && onGenerateShotFrame && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busyShotId === displayedShot.id}
+                  onClick={() => onGenerateShotFrame(displayedShot.id)}
+                  className="h-7 px-2 text-[10px] gap-1"
+                >
+                  {busyShotId === displayedShot.id ? (
+                    <Loader2 size={10} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={10} />
+                  )}
+                  New Keyframe
+                </Button>
+              )}
+              {displayedShot && onRenderShotVideo && (
+                <Button
+                  size="sm"
+                  disabled={busyVideoShotId === displayedShot.id}
+                  onClick={() => onRenderShotVideo(displayedShot.id)}
+                  className="h-7 px-2.5 text-[10px] gap-1"
+                >
+                  {busyVideoShotId === displayedShot.id ? (
+                    <Loader2 size={10} className="animate-spin" />
+                  ) : (
+                    <Video size={10} />
+                  )}
+                  Render 6s AI Video
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2 text-[11px] font-body">
@@ -305,7 +414,7 @@ export default function AwakeningMusicVideoStage({
           {/* All Shots Quick Selector */}
           <div className="space-y-1 pt-1">
             <span className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
-              <Film size={11} /> ALL {shots.length} TIMED SECTIONS (CLICK TO INSPECT)
+              <Film size={11} /> ALL {shots.length} TIMED SECTIONS (CLICK TO JUMP &amp; PLAY)
             </span>
             <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
               {shots.map((s) => (
