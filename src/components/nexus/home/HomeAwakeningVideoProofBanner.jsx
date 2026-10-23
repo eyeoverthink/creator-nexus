@@ -8,71 +8,107 @@ const AUDIO_MASTER =
 
 const STITCHED_CLIPS = [
   {
-    id: 'intro',
-    label: '1. Intro & Verse 1: Awakening Nave (0.0s–28.0s)',
-    start: 0,
-    end: 28.0,
-    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/d3a1b7bb3_Intro_Awakening_Nave.mp4',
+    id: 'sec-01-intro',
+    label: '1. INTRO: Awakening Nave (0.0s–14.1s)',
+    start: 0.0,
+    end: 14.1,
+    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/b9bdcbcbe_generated_video.mp4',
     poster: 'https://media.base44.com/images/public/6ad00af14909c671e73bb835/3fbd5a250_generated_image.png',
     hook: 'Check the source',
   },
   {
-    id: 'verse2',
-    label: '2. Verse 2: Reader at Threshold (28.0s–69.2s)',
-    start: 28.0,
+    id: 'sec-02-verse1',
+    label: '2. VERSE 1: Pew Nodes Ignite (14.1s–27.9s)',
+    start: 14.1,
+    end: 27.9,
+    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/715cbb381_generated_video.mp4',
+    poster: 'https://media.base44.com/images/public/6ad00af14909c671e73bb835/c67a485b9_generated_image.png',
+    hook: 'Check the source',
+  },
+  {
+    id: 'sec-03-choir',
+    label: '3. CHOIR INTERLUDE: 40m Lattice Lift (27.9s–41.7s)',
+    start: 27.9,
+    end: 41.7,
+    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/bfd5d4d22_generated_video.mp4',
+    poster: 'https://media.base44.com/images/public/6ad00af14909c671e73bb835/445d5afa6_31-invideo-nanobanana_pro.png',
+    hook: 'Let a person make the choice',
+  },
+  {
+    id: 'sec-04-verse2',
+    label: '4. VERSE 2: Reader at Threshold (41.7s–69.2s)',
+    start: 41.7,
     end: 69.2,
-    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/d13840111_Verse_2_Reader_Threshold.mp4',
+    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/7326ab4f9_generated_video.mp4',
     poster: 'https://media.base44.com/images/public/6ad00af14909c671e73bb835/838f92f5b_generated_image.png',
     hook: 'Let a person make the choice',
   },
   {
-    id: 'frayed',
-    label: '3. Pre-Chorus 1A: Frayed Silver Thread (69.2s–83.0s)',
+    id: 'sec-05-prechorus1a',
+    label: '5. PRE-CHORUS 1A: Frayed Silver Thread (69.2s–83.0s)',
     start: 69.2,
     end: 83.0,
-    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/4687022de_Frayed_Silver_Thread_76s.mp4',
+    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/de20c2592_generated_video.mp4',
     poster: 'https://media.base44.com/images/public/6ad00af14909c671e73bb835/d613fa376_generated_image.png',
     hook: 'Verify before you act',
   },
   {
-    id: 'hand-stops',
-    label: '4. Pre-Chorus 1B: 100.3s The Hand Stops (83.0s–110.7s)',
+    id: 'sec-06-prechorus1b',
+    label: '6. PRE-CHORUS 1B: 100.3s The Hand Stops (83.0s–110.7s)',
     start: 83.0,
     end: 110.7,
-    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/8a731d482_The_Hand_Stops_1003s.mp4',
+    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/e54ca34fe_generated_video.mp4',
     poster: 'https://media.base44.com/images/public/6ad00af14909c671e73bb835/bf8f7a933_generated_image.png',
     hook: 'Keep the final say with us',
   },
   {
-    id: 'cathedral-iconic',
-    label: '5. Chorus 1: Iconic Cathedral Threshold (110.7s–152.2s)',
+    id: 'sec-07-chorus1',
+    label: '7. CHORUS 1: Iconic Cathedral Frame (110.7s–124.5s)',
     start: 110.7,
-    end: 152.2,
-    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/0125e8613_Awakening_Cathedral_Video.mp4',
+    end: 124.5,
+    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/efeb90b70_generated_video.mp4',
     poster: 'https://media.base44.com/images/public/6ad00af14909c671e73bb835/445d5afa6_31-invideo-nanobanana_pro.png',
-    hook: 'Check the source',
+    hook: 'Check the source | Let a person make the choice',
   },
   {
-    id: 'breakdown',
-    label: '6. Breakdown: Solo Piano Stillness (152.2s–166.6s)',
-    start: 152.2,
-    end: 166.6,
-    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/14c28f038_Breakdown_Solo_Piano_152s.mp4',
-    poster: 'https://media.base44.com/images/public/6ad00af14909c671e73bb835/c67a485b9_generated_image.png',
+    id: 'sec-08-postchorus',
+    label: '8. POST-CHORUS: Glass Partitions (124.5s–138.2s)',
+    start: 124.5,
+    end: 138.2,
+    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/242d0a56d_generated_video.mp4',
+    poster: 'https://media.base44.com/images/public/6ad00af14909c671e73bb835/d613fa376_generated_image.png',
+    hook: 'Verify before you act',
+  },
+  {
+    id: 'sec-09-bridge',
+    label: '9. BRIDGE: Sphere Handoff (138.2s–152.2s)',
+    start: 138.2,
+    end: 152.2,
+    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/8a731d482_The_Hand_Stops_1003s.mp4',
+    poster: 'https://media.base44.com/images/public/6ad00af14909c671e73bb835/bf8f7a933_generated_image.png',
     hook: 'Let a person make the choice',
   },
   {
-    id: 'galaxy',
-    label: '7. Final Chorus: Cosmic Cathedral Network (166.6s–190.7s)',
-    start: 166.6,
+    id: 'sec-10-breakdown',
+    label: '10. BREAKDOWN & BUILD: Solo Piano (152.2s–177.0s)',
+    start: 152.2,
+    end: 177.0,
+    video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/d78ea4930_generated_video.mp4',
+    poster: 'https://media.base44.com/images/public/6ad00af14909c671e73bb835/c67a485b9_generated_image.png',
+    hook: 'Verify before you act',
+  },
+  {
+    id: 'sec-11-finalchorus',
+    label: '11. FINAL CHORUS: Galaxy Network (177.0s–190.7s)',
+    start: 177.0,
     end: 190.7,
     video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/a368caa8c_Final_Chorus_Galaxy_Aerial.mp4',
     poster: 'https://media.base44.com/images/public/6ad00af14909c671e73bb835/f398432a7_generated_image.png',
     hook: 'Keep the final say with us',
   },
   {
-    id: 'coda',
-    label: '8. Credo & Coda: Companion Light (190.7s–217.9s)',
+    id: 'sec-12-credo-coda',
+    label: '12. CREDO & CODA: Companion Light (190.7s–217.9s)',
     start: 190.7,
     end: 217.9,
     video: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/4feeecb89_Coda_Companion_Light_190s.mp4',
@@ -226,7 +262,7 @@ export default function HomeAwakeningVideoProofBanner() {
 
         <div className="lg:col-span-5 space-y-1.5">
           <div className="text-[10.5px] font-bold text-primary">
-            JUMP TO ANY OF THE 8 STITCHED AI VIDEO MOVEMENTS:
+            ALL 12 STITCHED MP4 SECTIONS (0.0s–217.9s FULL SONG):
           </div>
           <div className="space-y-1 max-h-60 overflow-y-auto pr-1">
             {STITCHED_CLIPS.map((c, idx) => (
@@ -241,11 +277,37 @@ export default function HomeAwakeningVideoProofBanner() {
                 }`}
               >
                 <span className="truncate">{c.label}</span>
-                <span className="text-[9.5px] text-caution shrink-0">{c.start}s</span>
+                <span className="text-[9.5px] text-caution shrink-0">
+                  {c.start}s–{c.end}s
+                </span>
               </button>
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Permanent Save Locations & Direct Full-Movie Access Bar */}
+      <div className="p-2.5 rounded border border-border bg-background flex flex-wrap items-center justify-between gap-2 text-[10.5px]">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-bold text-success">PERMANENT SAVE LOCATIONS:</span>
+          <span className="text-muted-foreground">
+            1. Local <strong className="text-foreground">~/Downloads</strong> · 2.{' '}
+            <strong className="text-foreground">Base44 Public Media CDN</strong> (12 MP4s + 4.84MB MP3) · 3.{' '}
+            <Link to="/library" className="text-link underline">
+              Library (/library)
+            </Link>{' '}
+            · 4.{' '}
+            <Link to="/loose-screw" className="text-link underline">
+              looseScrew (/loose-screw)
+            </Link>
+          </span>
+        </div>
+        <Link
+          to="/factory"
+          className="px-2.5 py-1 rounded bg-primary text-primary-foreground font-bold hover:opacity-90"
+        >
+          Stitch &amp; Download Entire 12-Clip Video + View History →
+        </Link>
       </div>
     </section>
   );

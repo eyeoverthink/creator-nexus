@@ -22,43 +22,63 @@ const FALLBACK_AUDIO_MASTER =
 
 const CLIP_CATALOG = [
   {
-    id: 'clip-intro',
-    label: '1. Intro & Verse 1A: Awakening Nave (0.0s–28.0s)',
-    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/d3a1b7bb3_Intro_Awakening_Nave.mp4',
+    id: 'sec-01-intro',
+    label: '1. INTRO: Awakening Nave (0.0s–14.1s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/b9bdcbcbe_generated_video.mp4',
   },
   {
-    id: 'clip-verse2',
-    label: '2. Verse 2: Reader at Threshold Membrane (41.7s–69.2s)',
-    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/d13840111_Verse_2_Reader_Threshold.mp4',
+    id: 'sec-02-verse1',
+    label: '2. VERSE 1: Pew Nodes Ignite (14.1s–27.9s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/715cbb381_generated_video.mp4',
   },
   {
-    id: 'clip-frayed',
-    label: '3. Pre-Chorus 1A: Frayed Silver Thread (69.2s–83.0s)',
-    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/4687022de_Frayed_Silver_Thread_76s.mp4',
+    id: 'sec-03-choir',
+    label: '3. CHOIR INTERLUDE: 40m Lattice Lift (27.9s–41.7s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/bfd5d4d22_generated_video.mp4',
   },
   {
-    id: 'clip-hand',
-    label: '4. Pre-Chorus 1B: 100.3s The Hand Stops (83.0s–110.7s)',
+    id: 'sec-04-verse2',
+    label: '4. VERSE 2: Reader at Threshold (41.7s–69.2s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/7326ab4f9_generated_video.mp4',
+  },
+  {
+    id: 'sec-05-prechorus1a',
+    label: '5. PRE-CHORUS 1A: Frayed Silver Thread (69.2s–83.0s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/de20c2592_generated_video.mp4',
+  },
+  {
+    id: 'sec-06-prechorus1b',
+    label: '6. PRE-CHORUS 1B: 100.3s The Hand Stops (83.0s–110.7s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/e54ca34fe_generated_video.mp4',
+  },
+  {
+    id: 'sec-07-chorus1',
+    label: '7. CHORUS 1: Iconic Cathedral Frame (110.7s–124.5s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/efeb90b70_generated_video.mp4',
+  },
+  {
+    id: 'sec-08-postchorus',
+    label: '8. POST-CHORUS: Glass Partitions (124.5s–138.2s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/242d0a56d_generated_video.mp4',
+  },
+  {
+    id: 'sec-09-bridge',
+    label: '9. BRIDGE: Sphere Handoff (138.2s–152.2s)',
     url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/8a731d482_The_Hand_Stops_1003s.mp4',
   },
   {
-    id: 'clip-cathedral',
-    label: '5. Chorus 1: Iconic Cathedral Threshold (110.7s–138.4s)',
-    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/0125e8613_Awakening_Cathedral_Video.mp4',
+    id: 'sec-10-breakdown',
+    label: '10. BREAKDOWN & BUILD: Solo Piano (152.2s–177.0s)',
+    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/d78ea4930_generated_video.mp4',
   },
   {
-    id: 'clip-breakdown',
-    label: '6. Breakdown: Solo Piano Stillness (152.2s–166.6s)',
-    url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/14c28f038_Breakdown_Solo_Piano_152s.mp4',
-  },
-  {
-    id: 'clip-galaxy',
-    label: '7. Final Chorus: Cosmic Cathedral Network (166.6s–190.7s)',
+    id: 'sec-11-finalchorus',
+    label: '11. FINAL CHORUS: Galaxy Network (177.0s–190.7s)',
     url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/a368caa8c_Final_Chorus_Galaxy_Aerial.mp4',
   },
   {
-    id: 'clip-coda',
-    label: '8. Credo & Coda: Companion Light (190.7s–217.9s)',
+    id: 'sec-12-credo-coda',
+    label: '12. CREDO & CODA: Companion Light (190.7s–217.9s)',
     url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/4feeecb89_Coda_Companion_Light_190s.mp4',
   },
 ];
@@ -105,7 +125,8 @@ export default function AwakeningMusicVideoStage({
   const preloadedVideosRef = useRef({});
   const audioCtxRef = useRef(null);
   const mediaDestRef = useRef(null);
-  const condensePassRef = useRef({ active: false, startWallMs: 0, durationSec: 28 });
+  const stopEarlyRef = useRef(false);
+  const condensePassRef = useRef({ active: false, startWallMs: 0, durationSec: 60 });
 
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -153,8 +174,10 @@ export default function AwakeningMusicVideoStage({
         vid.crossOrigin = 'anonymous';
         vid.src = s.video_url;
         vid.muted = true;
+        vid.loop = true;
         vid.playsInline = true;
         vid.preload = 'auto';
+        vid.load();
         preloadedVideosRef.current[s.video_url] = vid;
       }
     });
@@ -225,38 +248,64 @@ export default function AwakeningMusicVideoStage({
       const ctx = canvas.getContext('2d');
       let t = audioRef.current && !audioRef.current.paused ? audioRef.current.currentTime : currentTime;
 
-      if (condensePassRef.current.active) {
+      let shotIdx = 0;
+      let curShot = includedShots[0];
+      let nextShot = includedShots[1] || null;
+      let p = 0;
+      let timeRemaining = 10;
+      let dissolveSec = 1.2;
+
+      if (condensePassRef.current.active && includedShots.length > 0) {
         const elapsed = (performance.now() - condensePassRef.current.startWallMs) / 1000;
-        const ratio = Math.min(1, elapsed / condensePassRef.current.durationSec);
-        t = ratio * duration;
+        const perClipSec = condensePassRef.current.durationSec / includedShots.length;
+        shotIdx = Math.min(includedShots.length - 1, Math.floor(elapsed / perClipSec));
+        curShot = includedShots[shotIdx] || includedShots[0];
+        nextShot = includedShots[shotIdx + 1] || null;
+        const clipElapsed = elapsed - shotIdx * perClipSec;
+        p = Math.min(1, Math.max(0, clipElapsed / perClipSec));
+        timeRemaining = Math.max(0, perClipSec - clipElapsed);
+        dissolveSec = 1.0;
+        t = Number(curShot?.start || 0) + p * Math.max(1, Number(curShot?.end || 15) - Number(curShot?.start || 0));
+      } else {
+        shotIdx = Math.max(
+          0,
+          includedShots.findIndex((s) => t >= Number(s.start || 0) && t < Number(s.end || 999))
+        );
+        curShot = includedShots[shotIdx] || displayedShot || includedShots[0];
+        nextShot = includedShots[shotIdx + 1] || null;
+        const shotStart = Number(curShot?.start || 0);
+        const shotEnd = Number(curShot?.end || shotStart + 15);
+        const shotDur = Math.max(1, shotEnd - shotStart);
+        p = Math.min(1, Math.max(0, (t - shotStart) / shotDur));
+        timeRemaining = shotEnd - t;
+        dissolveSec = 1.74;
       }
-
-      const shotIdx = Math.max(
-        0,
-        includedShots.findIndex((s) => t >= Number(s.start || 0) && t < Number(s.end || 999))
-      );
-      const curShot = includedShots[shotIdx] || displayedShot || includedShots[0];
-      const nextShot = includedShots[shotIdx + 1] || null;
-
-      const shotStart = Number(curShot?.start || 0);
-      const shotEnd = Number(curShot?.end || shotStart + 15);
-      const shotDur = Math.max(1, shotEnd - shotStart);
-      const p = Math.min(1, Math.max(0, (t - shotStart) / shotDur));
 
       ctx.fillStyle = '#0B1630';
       ctx.fillRect(0, 0, 1280, 720);
 
-      // Draw real moving video frame from active deck (or preloaded video / keyframe plate)
+      // Always draw real moving MP4 video frames from preloadedVideosRef or activeDeckEl
       const activeDeckEl = activeDeck === 'A' ? deckARef.current : deckBRef.current;
+      const preloadedCurVid = curShot?.video_url ? preloadedVideosRef.current[curShot.video_url] : null;
+      if (preloadedCurVid && preloadedCurVid.paused && (!audioRef.current?.paused || condensePassRef.current.active)) {
+        preloadedCurVid.play().catch(() => {});
+      }
+      const videoSourceEl =
+        preloadedCurVid && preloadedCurVid.readyState >= 2
+          ? preloadedCurVid
+          : activeDeckEl && activeDeckEl.readyState >= 2
+          ? activeDeckEl
+          : null;
+
       const curImg = loadedImagesRef.current[curShot?.image_url];
       const { scale, tx, ty } = getCameraTransform(curShot?.camera_motion || 'dolly_push_in', p);
 
       ctx.save();
       ctx.translate(640 + tx, 360 + ty);
       ctx.scale(scale, scale);
-      if (activeDeckEl && activeDeckEl.readyState >= 2 && !condensePassRef.current.active) {
+      if (videoSourceEl) {
         try {
-          ctx.drawImage(activeDeckEl, -640, -360, 1280, 720);
+          ctx.drawImage(videoSourceEl, -640, -360, 1280, 720);
         } catch (_) {
           if (curImg?.complete) ctx.drawImage(curImg, -640, -360, 1280, 720);
         }
@@ -265,18 +314,26 @@ export default function AwakeningMusicVideoStage({
       }
       ctx.restore();
 
-      // 1.74s (1-bar) smooth cross-dissolve into next shot
-      const dissolveSec = 1.74;
-      const timeRemaining = shotEnd - t;
+      // Smooth video-to-video cross-dissolve into next shot's MP4 clip
       if (nextShot && timeRemaining <= dissolveSec && timeRemaining >= 0) {
         const blendAlpha = Math.min(1, Math.max(0, 1 - timeRemaining / dissolveSec));
-        const nextImg = loadedImagesRef.current[nextShot.image_url];
-        if (nextImg && nextImg.complete && nextImg.naturalWidth) {
-          ctx.save();
-          ctx.globalAlpha = blendAlpha;
-          ctx.drawImage(nextImg, 0, 0, 1280, 720);
-          ctx.restore();
+        const nextVid = nextShot.video_url ? preloadedVideosRef.current[nextShot.video_url] : null;
+        if (nextVid && nextVid.paused) {
+          nextVid.play().catch(() => {});
         }
+        const nextImg = loadedImagesRef.current[nextShot.image_url];
+        ctx.save();
+        ctx.globalAlpha = blendAlpha;
+        if (nextVid && nextVid.readyState >= 2) {
+          try {
+            ctx.drawImage(nextVid, 0, 0, 1280, 720);
+          } catch (_) {
+            if (nextImg?.complete) ctx.drawImage(nextImg, 0, 0, 1280, 720);
+          }
+        } else if (nextImg && nextImg.complete && nextImg.naturalWidth) {
+          ctx.drawImage(nextImg, 0, 0, 1280, 720);
+        }
+        ctx.restore();
       }
 
       // Volumetric beat-reactive glow
@@ -360,32 +417,38 @@ export default function AwakeningMusicVideoStage({
   }, [production?.audio_url, activeDeck]);
 
   const handleLiveStitchAndExport = useCallback(
-    async (rangeMode = 'peak_30s') => {
+    async (rangeMode = 'full_12_clips_master') => {
       const canvas = canvasRef.current;
       const audioEl = audioRef.current;
       if (!canvas || !audioEl) return;
 
+      stopEarlyRef.current = false;
       setRecording(true);
-      setStitchProgressPct(5);
-      onStitchStateChange?.({ recording: true, progressPct: 5, lastDownloadUrl });
+      setStitchProgressPct(2);
+      onStitchStateChange?.({ recording: true, progressPct: 2, lastDownloadUrl });
 
-      let startSec = 98.0;
-      let recordDurationSec = 24.0;
-      if (rangeMode === 'peak_30s') {
-        startSec = 98.0;
-        recordDurationSec = 24.0;
-        condensePassRef.current.active = false;
-      } else if (rangeMode === 'intro_42s') {
+      // Ensure all 12 preloaded MP4 videos are ready and playing
+      Object.values(preloadedVideosRef.current).forEach((vid) => {
+        if (vid) {
+          vid.currentTime = 0;
+          vid.play().catch(() => {});
+        }
+      });
+
+      const clipCount = Math.max(1, includedShots.length || 12);
+      let startSec = 0.0;
+      let recordDurationSec = clipCount * 5.0; // Default: 60s continuous stitch across all 12 MP4 clips (5s per clip)
+      let modeLabel = `ALL ${clipCount} MP4 CLIPS CONTINUOUS MASTER`;
+
+      if (rangeMode === 'full_218s_song') {
         startSec = 0.0;
-        recordDurationSec = 24.0;
+        recordDurationSec = Number(duration || 217.9);
         condensePassRef.current.active = false;
-      } else if (rangeMode === 'coda_30s') {
-        startSec = 183.0;
-        recordDurationSec = 24.0;
-        condensePassRef.current.active = false;
+        modeLabel = `FULL ${recordDurationSec}s SONG MASTER (ALL ${clipCount} CLIPS)`;
       } else {
-        startSec = 108.0;
-        recordDurationSec = 24.0;
+        // Default: full_12_clips_master — steps through every single one of the 12 MP4 video clips in sequence
+        startSec = 0.0;
+        recordDurationSec = clipCount * 5.0;
         condensePassRef.current = {
           active: true,
           startWallMs: performance.now(),
@@ -435,7 +498,7 @@ export default function AwakeningMusicVideoStage({
           : 'video/webm';
         const recorder = new MediaRecorder(combinedStream, {
           mimeType,
-          videoBitsPerSecond: 4500000,
+          videoBitsPerSecond: 3800000,
         });
 
         const chunks = [];
@@ -455,12 +518,14 @@ export default function AwakeningMusicVideoStage({
             const pct = Math.min(99, Math.round((elapsed / recordDurationSec) * 100));
             setStitchProgressPct(pct);
             onStitchStateChange?.({ recording: true, progressPct: pct, lastDownloadUrl });
-            if (elapsed >= recordDurationSec) {
+            if (elapsed >= recordDurationSec || stopEarlyRef.current) {
               clearInterval(timer);
               resolve();
             }
-          }, 400);
+          }, 300);
         });
+
+        const actualRecordedSec = Math.max(1, Math.round((performance.now() - startWall) / 1000));
 
         await new Promise((resolve) => {
           recorder.onstop = resolve;
@@ -470,33 +535,50 @@ export default function AwakeningMusicVideoStage({
         condensePassRef.current.active = false;
 
         const blob = new Blob(chunks, { type: mimeType });
+        const sizeMb = (blob.size / (1024 * 1024)).toFixed(2);
+        const filename = `Check_The_Source_Full_${clipCount}Clips_${actualRecordedSec}s_Master.webm`;
         const localUrl = URL.createObjectURL(blob);
         setLastDownloadUrl(localUrl);
 
+        // 1. Save to Local Browser Downloads (~/Downloads)
         const a = document.createElement('a');
         a.href = localUrl;
-        a.download = `Check_The_Source_Stitched_${rangeMode}.webm`;
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
 
-        // Upload stitched master video to private storage (stored privately)
-        const fileObj = new File([blob], `Check_The_Source_Stitched_${rangeMode}.webm`, {
-          type: 'video/webm',
-        });
+        // 2. Upload to Private Cloud Storage (stored privately) with permanent file_uri + signed URL
+        const fileObj = new File([blob], filename, { type: 'video/webm' });
         const uploadRes = await base44.integrations.Core.UploadPrivateFile({ file: fileObj }).catch(
           () => null
         );
-        if (uploadRes?.file_uri && production?.id) {
-          const signedRes = await base44.integrations.Core.CreateFileSignedUrl({
-            file_uri: uploadRes.file_uri,
-            expires_in: 86400,
-          }).catch(() => null);
+        const fileUri = uploadRes?.file_uri || '';
+        const signedRes = fileUri
+          ? await base44.integrations.Core.CreateFileSignedUrl({
+              file_uri: fileUri,
+              expires_in: 86400,
+            }).catch(() => null)
+          : null;
+        const permanentCloudUrl = signedRes?.signed_url || '';
+
+        if (production?.id) {
           const saveRes = await base44.functions.invoke('productionFactory', {
             action: 'save_final_cut_choices',
             production_id: production.id,
             shot_plan: allShots,
-            stitched_video_url: signedRes?.signed_url || localUrl,
+            stitched_video_url: permanentCloudUrl,
+            stitched_file_uri: fileUri,
+            download_entry: {
+              filename,
+              mode: rangeMode,
+              mode_label: modeLabel,
+              clips_stitched: clipCount,
+              duration_label: `${actualRecordedSec}s (${clipCount} MP4 Clips + Audio)`,
+              size_mb: sizeMb,
+              file_uri: fileUri,
+              cloud_url: permanentCloudUrl,
+            },
           });
           if (saveRes?.data?.production) {
             onUpdateProduction?.(saveRes.data.production);
@@ -507,11 +589,11 @@ export default function AwakeningMusicVideoStage({
         onStitchStateChange?.({
           recording: false,
           progressPct: 100,
-          lastDownloadUrl: localUrl,
+          lastDownloadUrl: permanentCloudUrl || localUrl,
         });
         toast({
-          title: 'Stitched Final Video Exported!',
-          description: 'Smooth non-looping video downloaded and saved to your production.',
+          title: `Full ${clipCount}-Clip Video Exported (${sizeMb} MB)!`,
+          description: `Saved to ~/Downloads/${filename}, Cloud CDN, Library (/library), and looseScrew (/loose-screw).`,
         });
       } catch (err) {
         condensePassRef.current.active = false;
@@ -524,12 +606,12 @@ export default function AwakeningMusicVideoStage({
         setRecording(false);
       }
     },
-    [allShots, lastDownloadUrl, onStitchStateChange, onUpdateProduction, production, toast]
+    [allShots, duration, includedShots.length, lastDownloadUrl, onStitchStateChange, onUpdateProduction, production, toast]
   );
 
   useEffect(() => {
     if (externalStitchTrigger?.ts && !recording) {
-      handleLiveStitchAndExport(externalStitchTrigger.rangeMode || 'peak_30s');
+      handleLiveStitchAndExport(externalStitchTrigger.rangeMode || 'full_12_clips_master');
     }
   }, [externalStitchTrigger, handleLiveStitchAndExport, recording]);
 
@@ -596,12 +678,27 @@ export default function AwakeningMusicVideoStage({
             size="sm"
             variant="secondary"
             disabled={recording}
-            onClick={() => handleLiveStitchAndExport('peak_30s')}
+            onClick={() => handleLiveStitchAndExport('full_12_clips_master')}
             className="h-8 px-3 gap-1.5 text-xs text-success"
           >
             {recording ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
-            {recording ? `Recording Video (${stitchProgressPct}%)…` : 'Export Stitched Video + Audio (.webm)'}
+            {recording
+              ? `Stitching All 12 MP4 Clips (${stitchProgressPct}%)…`
+              : 'Stitch & Export Entire 12-Clip Video + Audio (.webm)'}
           </Button>
+
+          {recording && (
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => {
+                stopEarlyRef.current = true;
+              }}
+              className="h-8 px-3 text-xs font-bold"
+            >
+              Finish &amp; Save Video Now ({stitchProgressPct}%)
+            </Button>
+          )}
 
           <div className="inline-flex rounded border border-border bg-background p-0.5">
             {[

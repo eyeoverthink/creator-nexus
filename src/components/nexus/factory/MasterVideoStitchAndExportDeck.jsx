@@ -15,6 +15,7 @@ import {
   Video,
   Check,
 } from 'lucide-react';
+import FactoryDownloadHistoryAndLocations from '@/components/nexus/factory/FactoryDownloadHistoryAndLocations';
 
 const FALLBACK_AUDIO_MASTER =
   'https://media.base44.com/files/public/6ad00af14909c671e73bb835/79561d060_ChecktheSource.mp3';
@@ -62,7 +63,7 @@ export default function MasterVideoStitchAndExportDeck({
 }) {
   const { toast } = useToast();
   const [busy, setBusy] = useState('');
-  const [stitchRange, setStitchRange] = useState('peak_30s'); // 'peak_30s' | 'intro_42s' | 'full_timeline'
+  const [stitchRange, setStitchRange] = useState('full_12_clips_master'); // 'full_12_clips_master' | 'full_218s_song'
 
   if (!production) return null;
 
@@ -206,118 +207,161 @@ export default function MasterVideoStitchAndExportDeck({
     });
   };
 
-  // Export 3: Standalone Self-Contained HTML5 Continuous Non-Looping Cinema Player
+  const recordDownloadInHistory = async (entry) => {
+    if (!production?.id) return;
+    const { data } = await base44.functions
+      .invoke('productionFactory', {
+        action: 'save_final_cut_choices',
+        production_id: production.id,
+        shot_plan: shots,
+        ai_suggested_ideas: aiIdeas,
+        download_entry: entry,
+      })
+      .catch(() => ({ data: null }));
+    if (data?.production) {
+      onUpdateProduction?.(data.production);
+    }
+  };
+
+  // Export 3: Standalone Self-Contained HTML5 Full 217.9s 12-Clip MP4 Video Player
   const handleExportStandaloneHtmlPlayer = () => {
+    const audioSrc =
+      production.audio_url && !production.audio_url.includes('6be084021')
+        ? production.audio_url
+        : FALLBACK_AUDIO_MASTER;
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>${production.title} — Continuous Stitched Master Player</title>
+<title>${production.title} — Full 217.9s 12-Clip MP4 Master Video Player</title>
 <style>
   body { margin: 0; background: #070b14; color: #f2f2f2; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-  .stage { width: min(1120px, 96vw); aspect-ratio: 16/9; border: 1px solid #2b3b5c; border-radius: 8px; overflow: hidden; position: relative; background: #0b1630; }
-  canvas { width: 100%; height: 100%; display: block; }
-  .controls { width: min(1120px, 96vw); margin-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #111827; padding: 10px 16px; border-radius: 8px; border: 1px solid #263248; font-family: monospace; font-size: 12px; }
-  button { background: #3b63fb; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
-  .ideas { width: min(1120px, 96vw); margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
-  .card { background: #111827; border: 1px solid #263248; border-radius: 6px; padding: 10px; font-size: 12px; }
+  .stage { width: min(1160px, 96vw); aspect-ratio: 16/9; border: 1px solid #2b3b5c; border-radius: 8px; overflow: hidden; position: relative; background: #0b1630; cursor: pointer; }
+  video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 1400ms ease-in-out; }
+  .hud { position: absolute; top: 14px; left: 14px; right: 14px; z-index: 20; display: flex; justify-content: space-between; pointer-events: none; font-family: monospace; font-size: 12px; }
+  .badge { background: rgba(7,11,20,0.88); border: 1px solid #3b63fb; padding: 6px 12px; border-radius: 6px; }
+  .hook { position: absolute; bottom: 20px; left: 24px; right: 24px; z-index: 20; text-align: center; pointer-events: none; }
+  .hook span { background: rgba(7,11,20,0.92); border: 1px solid #eab308; color: #fffbeb; padding: 8px 18px; border-radius: 6px; font-family: Georgia, serif; font-size: 18px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .controls { width: min(1160px, 96vw); margin-top: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; background: #111827; padding: 12px 16px; border-radius: 8px; border: 1px solid #263248; font-family: monospace; font-size: 12px; }
+  button { background: #3b63fb; color: #fff; border: none; padding: 9px 18px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+  .timeline { width: min(1160px, 96vw); margin-top: 10px; display: flex; gap: 3px; }
+  .seg { flex: 1; background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 6px 4px; font-size: 10px; text-align: center; border-radius: 4px; cursor: pointer; truncate: true; }
+  .seg.active { background: #3b63fb; color: #fff; border-color: #60a5fa; font-weight: 700; }
 </style>
 </head>
 <body>
-  <h2 style="margin:0 0 10px 0;">${production.title} — Smooth Non-Looping Stitched Master</h2>
-  <div class="stage"><canvas id="c" width="1280" height="720"></canvas></div>
+  <h2 style="margin:0 0 8px 0;">${production.title} — Entire 217.9s 12-Clip MP4 Stitched Master</h2>
+  <div class="stage" id="stage">
+    <video id="deckA" muted playsinline crossorigin="anonymous" style="opacity:1;z-index:10"></video>
+    <video id="deckB" muted playsinline crossorigin="anonymous" style="opacity:0;z-index:5"></video>
+    <div class="hud">
+      <div class="badge" id="tc">TC 0.0s / 217.9s · 1. INTRO</div>
+      <div class="badge" style="border-color:#eab308;color:#eab308">ALL 12 REAL MP4 VIDEO CLIPS + STEREO AUDIO</div>
+    </div>
+    <div class="hook" id="hookBox" style="display:none"><span id="hookText"></span></div>
+  </div>
   <div class="controls">
-    <button id="playBtn">▶ Play Continuous Stitched Master</button>
-    <span id="tc">0.0s / 217.9s · Bar 1 · Beat 1</span>
-    <span>${includedShots.length} Stitched Shots · ${selectedIdeas.length} AI Ideas Active</span>
+    <button id="playBtn">▶ Play Entire 217.9s 12-Clip Music Video + Audio</button>
+    <audio id="audio" src="${audioSrc}" controls crossorigin="anonymous" style="height:34px;width:420px"></audio>
+    <span>${includedShots.length} Real MP4 Video Clips · ${selectedIdeas.length} AI Ideas</span>
   </div>
-  <audio id="audio" src="${
-    production.audio_url && !production.audio_url.includes('6be084021')
-      ? production.audio_url
-      : FALLBACK_AUDIO_MASTER
-  }" controls crossorigin="anonymous"></audio>
-  <div class="ideas">
-    ${selectedIdeas
-      .map(
-        (id) =>
-          `<div class="card"><strong style="color:#eab308">[${id.section}] ${id.title}</strong><p style="margin:6px 0 0;color:#9ca3af">${id.visual_enhancement}</p></div>`
-      )
-      .join('')}
-  </div>
+  <div class="timeline" id="timeline"></div>
 <script>
 const SHOTS = ${JSON.stringify(includedShots)};
 const audio = document.getElementById('audio');
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
+const deckA = document.getElementById('deckA');
+const deckB = document.getElementById('deckB');
 const tcEl = document.getElementById('tc');
 const playBtn = document.getElementById('playBtn');
-const imgs = {};
-SHOTS.forEach(s => { const im = new Image(); im.crossOrigin = 'anonymous'; im.src = s.image_url; imgs[s.id] = im; });
-playBtn.onclick = () => { if (audio.paused) { audio.play(); playBtn.textContent = '⏸ Pause Master'; } else { audio.pause(); playBtn.textContent = '▶ Play Continuous Stitched Master'; } };
-function draw() {
+const hookBox = document.getElementById('hookBox');
+const hookText = document.getElementById('hookText');
+const timeline = document.getElementById('timeline');
+let activeDeck = 'A';
+let curIdx = -1;
+
+SHOTS.forEach((s, idx) => {
+  const b = document.createElement('button');
+  b.className = 'seg';
+  b.textContent = (idx + 1) + '. ' + s.section;
+  b.onclick = () => { audio.currentTime = s.start; audio.play(); };
+  timeline.appendChild(b);
+});
+
+function loadShot(idx) {
+  if (idx === curIdx || !SHOTS[idx]) return;
+  curIdx = idx;
+  const s = SHOTS[idx];
+  const dur = Math.max(6, (s.end || 20) - (s.start || 0));
+  const rate = Math.max(0.35, Math.min(0.85, 6.0 / dur));
+  const nextEl = activeDeck === 'A' ? deckB : deckA;
+  const oldEl = activeDeck === 'A' ? deckA : deckB;
+  nextEl.src = s.video_url;
+  nextEl.currentTime = 0;
+  nextEl.playbackRate = rate;
+  if (!audio.paused) nextEl.play().catch(()=>{});
+  nextEl.style.opacity = '1';
+  nextEl.style.zIndex = '10';
+  oldEl.style.opacity = '0';
+  oldEl.style.zIndex = '5';
+  activeDeck = activeDeck === 'A' ? 'B' : 'A';
+  Array.from(timeline.children).forEach((el, i) => el.classList.toggle('active', i === idx));
+  if (s.exact_text) { hookBox.style.display = 'block'; hookText.textContent = s.exact_text; }
+  else { hookBox.style.display = 'none'; }
+}
+
+loadShot(0);
+function toggle() {
+  audio.muted = false;
+  audio.volume = 1.0;
+  const activeEl = activeDeck === 'A' ? deckA : deckB;
+  if (audio.paused) { audio.play(); activeEl.play(); playBtn.textContent = '⏸ Pause Full Master'; }
+  else { audio.pause(); deckA.pause(); deckB.pause(); playBtn.textContent = '▶ Play Entire 217.9s 12-Clip Music Video + Audio'; }
+}
+playBtn.onclick = toggle;
+document.getElementById('stage').onclick = toggle;
+audio.ontimeupdate = () => {
   const t = audio.currentTime || 0;
   const idx = Math.max(0, SHOTS.findIndex(s => t >= s.start && t < s.end));
-  const cur = SHOTS[idx] || SHOTS[0];
-  const next = SHOTS[idx + 1] || null;
-  const dur = Math.max(1, (cur.end || 15) - (cur.start || 0));
-  const p = Math.min(1, Math.max(0, (t - cur.start) / dur));
-  ctx.fillStyle = '#0B1630';
-  ctx.fillRect(0, 0, 1280, 720);
-  const im = imgs[cur.id];
-  if (im && im.complete && im.naturalWidth) {
-    const scale = 1.02 + p * 0.12;
-    const panX = (p - 0.5) * 45 * (idx % 2 === 0 ? 1 : -1);
-    ctx.save();
-    ctx.translate(640 + panX, 360);
-    ctx.scale(scale, scale);
-    ctx.drawImage(im, -640, -360, 1280, 720);
-    ctx.restore();
-  }
-  const dissolveWindow = 1.74;
-  if (next && cur.end - t <= dissolveWindow && imgs[next.id] && imgs[next.id].complete) {
-    const alpha = Math.min(1, Math.max(0, 1 - (cur.end - t) / dissolveWindow));
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.drawImage(imgs[next.id], 0, 0, 1280, 720);
-    ctx.restore();
-  }
-  if (cur.exact_text) {
-    ctx.fillStyle = 'rgba(11,22,48,0.82)';
-    ctx.fillRect(240, 595, 800, 48);
-    ctx.fillStyle = '#fffbeb';
-    ctx.font = '600 22px Georgia, serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(cur.exact_text.toUpperCase(), 640, 626);
-  }
-  const beat = Math.floor(t / 0.435) + 1;
-  const bar = Math.floor(t / 1.74) + 1;
-  tcEl.textContent = t.toFixed(1) + 's / 217.9s · ' + cur.section + ' · Bar ' + bar + ' · Beat ' + beat;
-  requestAnimationFrame(draw);
-}
-draw();
+  loadShot(idx);
+  const s = SHOTS[idx] || SHOTS[0];
+  tcEl.textContent = 'TC ' + t.toFixed(1) + 's / 217.9s · ' + (idx + 1) + '. ' + s.section;
+};
 </script>
 </body>
 </html>`;
+    const filename = 'Check_The_Source_Full_218s_12Clip_Video_Player.html';
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    downloadBlob(blob, 'Awakening_Of_AI_Stitched_Master_Player.html');
+    downloadBlob(blob, filename);
+    recordDownloadInHistory({
+      filename,
+      mode: 'standalone_12clip_html5',
+      mode_label: 'FULL 217.9s 12-CLIP MP4 HTML5 PLAYER',
+      clips_stitched: includedShots.length,
+      duration_label: '217.9s (All 12 Real MP4 Videos + Audio)',
+      size_mb: (blob.size / 1024).toFixed(1) + ' KB',
+    });
     toast({
-      title: 'Exported Standalone HTML5 Master Player',
-      description: 'Plays the smooth non-looping stitched master in any browser.',
+      title: 'Exported Full 217.9s 12-Clip Video Player (.html)',
+      description: `Saved to ~/Downloads/${filename} — plays all 12 real MP4 video clips + stereo audio.`,
     });
   };
 
-  // Export 4: FFmpeg Non-Looping 1080p MP4 Master Stitcher Script
+  // Export 4: FFmpeg Non-Looping 1080p MP4 Master Stitcher Script (Uses Real MP4 Video Clips!)
   const handleExportFfmpegScript = () => {
+    const audioSrc =
+      production.audio_url && !production.audio_url.includes('6be084021')
+        ? production.audio_url
+        : FALLBACK_AUDIO_MASTER;
     const py = `#!/usr/bin/env python3
 """
-FFMPEG NON-LOOPING 1080P MP4 MASTER STITCHER — ${production.title}
-Downloads your final chosen shot plates, applies continuous anamorphic zoompan camera motion
-across each shot's exact duration (zero looping), cross-dissolves at 1.74s bar boundaries,
-and muxes the master ChecktheSource.mp3 audio into a single smooth 1920x1080 H.264 MP4.
+FFMPEG FULL 217.9s 12-CLIP MP4 VIDEO + AUDIO STITCHER — ${production.title}
+Downloads all 12 real generated 16:9 MP4 video clips (NOT still images!) and the 4.84MB ChecktheSource.mp3 master audio,
+time-stretches each 6s MP4 clip smoothly across its exact musical section window (0.0s to 217.9s),
+and muxes the complete 1920x1080 H.264 MP4 film with stereo AAC audio.
 """
-import os, json, urllib.request, subprocess
+import os, urllib.request, subprocess
 
-AUDIO_URL = "${production.audio_url}"
+AUDIO_URL = "${audioSrc}"
 SHOTS = ${JSON.stringify(
       includedShots.map((s) => ({
         id: s.id,
@@ -325,53 +369,59 @@ SHOTS = ${JSON.stringify(
         start: s.start,
         end: s.end,
         duration: Number((s.end - s.start).toFixed(2)),
-        image_url: s.image_url,
-        camera_motion: s.camera_motion,
+        video_url: s.video_url,
         exact_text: s.exact_text,
       })),
       null,
       2
     )}
 
-os.makedirs("build_frames", exist_ok=True)
-print("[1/3] Downloading master audio and final chosen shot plates...")
-urllib.request.urlretrieve(AUDIO_URL, "build_frames/master_audio.mp3")
+os.makedirs("build_clips", exist_ok=True)
+print("[1/3] Downloading master ChecktheSource.mp3 audio and all 12 real MP4 video clips...")
+urllib.request.urlretrieve(AUDIO_URL, "build_clips/master_audio.mp3")
 
 segment_files = []
 for idx, shot in enumerate(SHOTS):
-    img_path = f"build_frames/{shot['id']}.png"
-    seg_path = f"build_frames/seg_{idx:02d}.mp4"
-    urllib.request.urlretrieve(shot["image_url"], img_path)
-    dur = max(2.0, float(shot["duration"]))
-    frames = int(dur * 30)
-    # Continuous non-looping anamorphic zoompan over the full shot duration
-    zp = f"zoompan=z='1.0+0.12*(on/{frames})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={frames}:s=1920x1080:fps=30"
+    raw_mp4 = f"build_clips/raw_{idx:02d}_{shot['id']}.mp4"
+    seg_mp4 = f"build_clips/seg_{idx:02d}_{shot['id']}.mp4"
+    print(f"  -> Downloading MP4 Clip #{idx+1}: {shot['section']} ({shot['start']}s-{shot['end']}s)")
+    urllib.request.urlretrieve(shot["video_url"], raw_mp4)
+    target_dur = max(6.0, float(shot["duration"]))
+    pts_mult = round(target_dur / 6.0, 4)
     subprocess.run([
-        "ffmpeg", "-y", "-loop", "1", "-i", img_path,
-        "-vf", f"scale=2200:1238,{zp},format=yuv420p",
-        "-t", str(dur), "-c:v", "libx264", "-pix_fmt", "yuv420p", seg_path
+        "ffmpeg", "-y", "-i", raw_mp4,
+        "-vf", f"setpts={pts_mult}*PTS,scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,fps=30,format=yuv420p",
+        "-t", str(target_dur), "-an", "-c:v", "libx264", "-preset", "fast", "-crf", "18", seg_mp4
     ], check=True)
-    segment_files.append(seg_path)
+    segment_files.append(seg_mp4)
 
-with open("build_frames/concat_list.txt", "w") as f:
+with open("build_clips/concat_list.txt", "w") as f:
     for seg in segment_files:
         f.write(f"file '{os.path.abspath(seg)}'\\n")
 
-print("[2/3] Stitching continuous segments with master audio...")
+print("[2/3] Concatenating all 12 MP4 video sections + muxing ChecktheSource.mp3...")
 subprocess.run([
-    "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", "build_frames/concat_list.txt",
-    "-i", "build_frames/master_audio.mp3",
-    "-c:v", "libx264", "-preset", "medium", "-crf", "18",
-    "-c:a", "aac", "-b:a", "192k", "-shortest",
-    "Check_The_Source_Final_Stitched_Master.mp4"
+    "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", "build_clips/concat_list.txt",
+    "-i", "build_clips/master_audio.mp3",
+    "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest",
+    "Check_The_Source_Full_218s_12Clips_Master.mp4"
 ], check=True)
-print("[3/3] Done -> Check_The_Source_Final_Stitched_Master.mp4")
+print("[3/3] Saved -> Check_The_Source_Full_218s_12Clips_Master.mp4 (Full 217.9s 1080p MP4 with Audio)")
 `;
+    const filename = 'stitch_all_12_mp4_clips_full_218s.py';
     const blob = new Blob([py], { type: 'text/x-python;charset=utf-8' });
-    downloadBlob(blob, 'stitch_final_video.py');
+    downloadBlob(blob, filename);
+    recordDownloadInHistory({
+      filename,
+      mode: 'ffmpeg_12clip_mp4',
+      mode_label: 'FFMPEG 12-CLIP 217.9s MP4 STITCHER',
+      clips_stitched: includedShots.length,
+      duration_label: '217.9s (12 MP4 Clips + Stereo Audio)',
+      size_mb: (blob.size / 1024).toFixed(1) + ' KB',
+    });
     toast({
-      title: 'Exported FFmpeg Non-Looping Stitcher Script',
-      description: 'Saved stitch_final_video.py for 1080p H.264 MP4 rendering.',
+      title: 'Exported 12-Clip MP4 FFmpeg Stitcher (.py)',
+      description: `Saved to ~/Downloads/${filename} — stitches all 12 real MP4 clips + audio (no still images).`,
     });
   };
 
@@ -401,10 +451,12 @@ print("[3/3] Done -> Check_The_Source_Final_Stitched_Master.mp4")
             disabled={stitchState?.recording}
             className="h-8 rounded border border-input bg-background px-2 text-[10.5px] text-foreground"
           >
-            <option value="peak_30s">Peak Anthem Cut (98s–128s · Hand Stops -&gt; Iconic Chorus)</option>
-            <option value="intro_42s">Opening Cathedral Arc (0.0s–41.7s · Intro -&gt; Choir Reveal)</option>
-            <option value="coda_30s">Final Chorus to Coda Companion Light (180s–217.9s)</option>
-            <option value="fast_master_24s">Complete 12-Section Condensed Master Pass (24s Smooth Stitch)</option>
+            <option value="full_12_clips_master">
+              Entire 12-Clip Sequence (All 12 Real MP4 Videos Stitched End-to-End + Audio · 60s)
+            </option>
+            <option value="full_218s_song">
+              Full 217.9s Song Realtime Master (0.0s–217.9s Complete Track + All 12 MP4 Clips)
+            </option>
           </select>
 
           <Button
@@ -419,8 +471,8 @@ print("[3/3] Done -> Check_The_Source_Final_Stitched_Master.mp4")
               <Video size={13} />
             )}
             {stitchState?.recording
-              ? `Stitching Live Video (${stitchState.progressPct || 0}%)…`
-              : 'Stitch & Export Final Video Now'}
+              ? `Stitching All 12 MP4 Clips (${stitchState.progressPct || 0}%)…`
+              : 'Stitch & Export Entire 12-Clip Video Now'}
           </Button>
         </div>
       </div>
@@ -529,6 +581,14 @@ print("[3/3] Done -> Check_The_Source_Final_Stitched_Master.mp4")
           </p>
         </button>
       </div>
+
+      {/* Download History & Permanent Save Locations Inspector */}
+      <FactoryDownloadHistoryAndLocations
+        production={production}
+        localDownloadUrl={stitchState?.lastDownloadUrl}
+        onTriggerExportHtmlPlayer={handleExportStandaloneHtmlPlayer}
+        onTriggerExportFfmpeg={handleExportFfmpegScript}
+      />
 
       {/* Two-Column Final Cut Choices: Left = AI-Suggested Ideas | Right = Shot-by-Shot Camera & Transition Stitch Table */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">

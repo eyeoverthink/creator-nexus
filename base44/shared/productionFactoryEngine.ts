@@ -14,6 +14,21 @@ export const AWAKENING_CATHEDRAL_VIDEO_URL =
 export const AWAKENING_HAND_STOPS_VIDEO_URL =
   'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/8a731d482_The_Hand_Stops_1003s.mp4';
 
+export const AWAKENING_12_SECTION_VIDEO_URLS: Record<string, string> = {
+  'sec-01-intro': 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/b9bdcbcbe_generated_video.mp4',
+  'sec-02-verse1': 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/715cbb381_generated_video.mp4',
+  'sec-03-choir': 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/bfd5d4d22_generated_video.mp4',
+  'sec-04-verse2': 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/7326ab4f9_generated_video.mp4',
+  'sec-05-prechorus1a': 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/de20c2592_generated_video.mp4',
+  'sec-06-prechorus1b': 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/e54ca34fe_generated_video.mp4',
+  'sec-07-chorus1': 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/efeb90b70_generated_video.mp4',
+  'sec-08-postchorus': 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/242d0a56d_generated_video.mp4',
+  'sec-09-bridge': 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/8a731d482_The_Hand_Stops_1003s.mp4',
+  'sec-10-breakdown': 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/d78ea4930_generated_video.mp4',
+  'sec-11-finalchorus': 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/a368caa8c_Final_Chorus_Galaxy_Aerial.mp4',
+  'sec-12-credo-coda': 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/4feeecb89_Coda_Companion_Light_190s.mp4',
+};
+
 export const AWAKENING_INTRO_IMAGE_URL =
   'https://media.base44.com/images/public/6ad00af14909c671e73bb835/3fbd5a250_generated_image.png';
 
@@ -237,7 +252,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: '',
     status: 'verified_gold',
     image_url: AWAKENING_INTRO_IMAGE_URL,
-    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
+    video_url: AWAKENING_12_SECTION_VIDEO_URLS['sec-01-intro'],
   },
   {
     id: 'sec-02-verse1',
@@ -253,7 +268,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: '',
     status: 'verified_gold',
     image_url: AWAKENING_INTRO_IMAGE_URL,
-    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
+    video_url: AWAKENING_12_SECTION_VIDEO_URLS['sec-02-verse1'],
   },
   {
     id: 'sec-03-choir',
@@ -269,7 +284,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: '',
     status: 'verified_gold',
     image_url: AWAKENING_ICONIC_IMAGE_URL,
-    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
+    video_url: AWAKENING_12_SECTION_VIDEO_URLS['sec-03-choir'],
   },
   {
     id: 'sec-04-verse2',
@@ -285,7 +300,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: '',
     status: 'silver_inquiry',
     image_url: AWAKENING_FRAYED_SILVER_IMAGE_URL,
-    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
+    video_url: AWAKENING_12_SECTION_VIDEO_URLS['sec-04-verse2'],
   },
   {
     id: 'sec-05-prechorus1a',
@@ -301,7 +316,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: '',
     status: 'unverified_silver',
     image_url: AWAKENING_FRAYED_SILVER_IMAGE_URL,
-    video_url: AWAKENING_HAND_STOPS_VIDEO_URL,
+    video_url: AWAKENING_12_SECTION_VIDEO_URLS['sec-05-prechorus1a'],
   },
   {
     id: 'sec-06-prechorus1b',
@@ -317,7 +332,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: '',
     status: 'verified_gold',
     image_url: AWAKENING_HAND_STOPS_IMAGE_URL,
-    video_url: AWAKENING_HAND_STOPS_VIDEO_URL,
+    video_url: AWAKENING_12_SECTION_VIDEO_URLS['sec-06-prechorus1b'],
   },
   {
     id: 'sec-07-chorus1',
@@ -333,7 +348,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: 'Check the source | Let a person make the choice',
     status: 'verified_gold',
     image_url: AWAKENING_ICONIC_IMAGE_URL,
-    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
+    video_url: AWAKENING_12_SECTION_VIDEO_URLS['sec-07-chorus1'],
   },
   {
     id: 'sec-08-postchorus',
@@ -349,7 +364,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: '',
     status: 'silver_inquiry',
     image_url: AWAKENING_FRAYED_SILVER_IMAGE_URL,
-    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
+    video_url: AWAKENING_12_SECTION_VIDEO_URLS['sec-08-postchorus'],
   },
   {
     id: 'sec-09-bridge',
@@ -365,7 +380,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: '',
     status: 'verified_gold',
     image_url: AWAKENING_CODA_COMPANION_IMAGE_URL,
-    video_url: AWAKENING_HAND_STOPS_VIDEO_URL,
+    video_url: AWAKENING_12_SECTION_VIDEO_URLS['sec-09-bridge'],
   },
   {
     id: 'sec-10-breakdown',
@@ -381,7 +396,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: '',
     status: 'verified_gold',
     image_url: AWAKENING_CODA_COMPANION_IMAGE_URL,
-    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
+    video_url: AWAKENING_12_SECTION_VIDEO_URLS['sec-10-breakdown'],
   },
   {
     id: 'sec-11-finalchorus',
@@ -397,7 +412,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: 'Keep the final say with us',
     status: 'verified_gold',
     image_url: AWAKENING_ICONIC_IMAGE_URL,
-    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
+    video_url: AWAKENING_12_SECTION_VIDEO_URLS['sec-11-finalchorus'],
   },
   {
     id: 'sec-12-credo-coda',
@@ -413,7 +428,7 @@ export const AWAKENING_OF_AI_SHOT_PLAN = [
     exact_text: 'Verify before you act | Human judgment stays in command.',
     status: 'verified_gold',
     image_url: AWAKENING_CODA_COMPANION_IMAGE_URL,
-    video_url: AWAKENING_CATHEDRAL_VIDEO_URL,
+    video_url: AWAKENING_12_SECTION_VIDEO_URLS['sec-12-credo-coda'],
   },
 ];
 

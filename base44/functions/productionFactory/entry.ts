@@ -719,7 +719,111 @@ Propose 4 concrete, high-impact creative ideas (camera movement, transition brid
       const updatedIdeas = Array.isArray(body.ai_suggested_ideas)
         ? body.ai_suggested_ideas
         : existing.track_meta?.ai_suggested_ideas || [];
-      const stitchedVideoUrl = String(body.stitched_video_url || existing.track_meta?.stitched_video_url || '');
+
+      const rawStitchedUrl = String(body.stitched_video_url || existing.track_meta?.stitched_video_url || '');
+      // Never persist temporary browser blob: URLs as permanent cloud locations
+      const stitchedVideoUrl = rawStitchedUrl.startsWith('blob:') ? '' : rawStitchedUrl;
+      const stitchedFileUri = String(body.stitched_file_uri || existing.track_meta?.stitched_file_uri || '');
+
+      const prevHistory = Array.isArray(existing.track_meta?.download_history)
+        ? existing.track_meta.download_history
+        : [];
+      const newEntry =
+        body.download_entry && typeof body.download_entry === 'object'
+          ? {
+              id: `dl_${Date.now().toString(36)}`,
+              created_at: new Date().toISOString(),
+              ...body.download_entry,
+              cloud_url: String(body.download_entry.cloud_url || stitchedVideoUrl || '').startsWith('blob:')
+                ? ''
+                : String(body.download_entry.cloud_url || stitchedVideoUrl || ''),
+            }
+          : null;
+      const nextHistory = newEntry ? [newEntry, ...prevHistory].slice(0, 25) : prevHistory;
+
+      const saveLocations = [
+        {
+          id: 'loc-browser-downloads',
+          location_type: 'Browser Local Downloads (~/Downloads)',
+          path: newEntry?.filename || 'Check_The_Source_Full_12Clips_Master.webm',
+          status: 'active',
+          description: 'Direct file saved to your local Downloads folder on export',
+        },
+        {
+          id: 'loc-cloud-cdn',
+          location_type: 'Base44 Public Media CDN',
+          path: stitchedVideoUrl || 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/',
+          status: 'active',
+          description: '12 permanent 16:9 H.264 MP4 section clips + 4.84 MB stereo master MP3 + cloud-saved stitched master',
+        },
+        {
+          id: 'loc-library-assets',
+          location_type: 'Creator Nexus Library (/library)',
+          route: '/library',
+          status: 'active',
+          description: 'Indexed in NexusAsset under project "Production Factory"',
+        },
+        {
+          id: 'loc-loosescrew-video',
+          location_type: 'looseScrew Studio Catalog (/loose-screw)',
+          route: '/loose-screw',
+          status: 'active',
+          description: 'Published to VIDEO broadcast channel (deduplicated, permanent URLs only)',
+        },
+        {
+          id: 'loc-github-vault',
+          location_type: 'GitHub Continuity Vault',
+          path: existing.github_url || 'https://github.com/eyeoverthink/fraymus-continuity',
+          status: 'active',
+          description: 'Versioned treatment, timed EDL, and production manifest',
+        },
+      ];
+
+      // Only create/update LooseScrewItem and Library NexusAsset when a real non-blob cloud URL or file_uri is provided
+      if (body.stitched_video_url && stitchedVideoUrl) {
+        const recentLooseP = await db.entities.LooseScrewItem.filter(
+          { owner_id: ownerId, channel: 'VIDEO' },
+          { sort: '-created_date', limit: 20 }
+        ).catch(() => ({ items: [] }));
+        const recentLoose = Array.isArray(recentLooseP) ? recentLooseP : recentLooseP?.items || [];
+        const existingMaster = recentLoose.find((item) =>
+          String(item.title || '').startsWith('[FINAL STITCHED MASTER]')
+        );
+
+        if (existingMaster) {
+          await db.entities.LooseScrewItem.update(existingMaster.id, {
+            media_url: stitchedVideoUrl,
+            file_uri: stitchedFileUri || existingMaster.file_uri || '',
+            duration: '3:38',
+          }).catch(() => null);
+        } else {
+          await db.entities.LooseScrewItem.create({
+            owner_id: ownerId,
+            channel: 'VIDEO',
+            title: `[FINAL STITCHED MASTER] ${existing.title}`,
+            duration: '3:38',
+            bpm: existing.track_meta?.bpm || 138,
+            tags: ['FINAL_CUT_STITCHED', 'ALL_12_CLIPS_MASTER', 'CHECK_THE_SOURCE'],
+            media_url: stitchedVideoUrl,
+            file_uri: stitchedFileUri || '',
+            mime_type: 'video/webm',
+          }).catch(() => null);
+        }
+
+        await db.entities.NexusAsset.create({
+          owner_id: ownerId,
+          workspace_id: workspaceId,
+          title: `[FINAL STITCHED VIDEO] ${existing.title}`,
+          body: `Full 12-clip stitched master video muxed with ChecktheSource.mp3 stereo audio.\nPermanent Cloud URL: ${stitchedVideoUrl}`,
+          kind: 'generated',
+          file_uri: stitchedVideoUrl,
+          file_name: newEntry?.filename || 'Check_The_Source_Full_12Clips_Master.webm',
+          mime_type: 'video/webm',
+          project: 'Production Factory',
+          agent_ids: ['director'],
+          favorite: true,
+        }).catch(() => null);
+      }
 
       const updatedProd = await db.entities.NexusFactoryProduction.update(existing.id, {
         shot_plan: updatedShots,
@@ -728,22 +832,12 @@ Propose 4 concrete, high-impact creative ideas (camera movement, transition brid
           ...(existing.track_meta || {}),
           ai_suggested_ideas: updatedIdeas,
           stitched_video_url: stitchedVideoUrl,
+          stitched_file_uri: stitchedFileUri,
+          download_history: nextHistory,
+          save_locations: saveLocations,
           last_stitched_at: new Date().toISOString(),
         },
       });
-
-      if (stitchedVideoUrl) {
-        await db.entities.LooseScrewItem.create({
-          owner_id: ownerId,
-          channel: 'VIDEO',
-          title: `[FINAL STITCHED MASTER] ${existing.title}`,
-          duration: '3:38',
-          bpm: existing.track_meta?.bpm || 138,
-          tags: ['FINAL_CUT_STITCHED', 'NON_LOOPING_MASTER', 'CHECK_THE_SOURCE'],
-          media_url: stitchedVideoUrl,
-          mime_type: 'video/webm',
-        }).catch(() => null);
-      }
 
       return Response.json({ ok: true, production: updatedProd });
     }
