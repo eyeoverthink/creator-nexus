@@ -392,27 +392,39 @@ export default function AwakeningMusicVideoStage({
 
       try {
         const canvasStream = canvas.captureStream(30);
-        if (!audioCtxRef.current && window.AudioContext) {
-          try {
-            const ctx = new window.AudioContext();
-            const src = ctx.createMediaElementSource(audioEl);
-            const dest = ctx.createMediaStreamDestination();
-            src.connect(dest);
-            src.connect(ctx.destination);
-            audioCtxRef.current = ctx;
-            mediaDestRef.current = dest;
-          } catch (_) {
-            // Audio context already attached or restricted
+        audioEl.muted = false;
+        audioEl.volume = 1.0;
+        const nativeAudioStream =
+          typeof audioEl.captureStream === 'function'
+            ? audioEl.captureStream()
+            : typeof audioEl.mozCaptureStream === 'function'
+            ? audioEl.mozCaptureStream()
+            : null;
+
+        let audioTracks = nativeAudioStream ? nativeAudioStream.getAudioTracks() : [];
+        if (audioTracks.length === 0 && window.AudioContext) {
+          if (!audioCtxRef.current) {
+            try {
+              const ctx = new window.AudioContext();
+              const src = ctx.createMediaElementSource(audioEl);
+              const dest = ctx.createMediaStreamDestination();
+              src.connect(dest);
+              src.connect(ctx.destination);
+              audioCtxRef.current = ctx;
+              mediaDestRef.current = dest;
+            } catch (_) {
+              // ignore
+            }
+          }
+          if (audioCtxRef.current?.state === 'suspended') {
+            await audioCtxRef.current.resume().catch(() => {});
+          }
+          if (mediaDestRef.current) {
+            audioTracks = mediaDestRef.current.stream.getAudioTracks();
           }
         }
-        if (audioCtxRef.current?.state === 'suspended') {
-          await audioCtxRef.current.resume().catch(() => {});
-        }
 
-        const combinedTracks = [
-          ...canvasStream.getVideoTracks(),
-          ...(mediaDestRef.current ? mediaDestRef.current.stream.getAudioTracks() : []),
-        ];
+        const combinedTracks = [...canvasStream.getVideoTracks(), ...audioTracks];
         const combinedStream = new MediaStream(combinedTracks);
 
         const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
@@ -521,6 +533,8 @@ export default function AwakeningMusicVideoStage({
   const togglePlay = () => {
     const el = audioRef.current;
     if (!el) return;
+    el.muted = false;
+    el.volume = 1.0;
     if (el.paused) {
       el.play().catch(() => {});
       const activeEl = activeDeck === 'A' ? deckARef.current : deckBRef.current;
@@ -624,16 +638,27 @@ export default function AwakeningMusicVideoStage({
         </div>
       </div>
 
-      {/* Master Audio Track */}
-      {production?.audio_url && (
+      {/* Master Audio Track Bar (Visible + Interactive Scrubber & Volume) */}
+      <div className="p-2.5 rounded border border-success/40 bg-background flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-[11px]">
+          <Volume2 size={14} className={playing ? 'text-success animate-pulse' : 'text-primary'} />
+          <strong className="text-foreground">
+            Master Audio Track: ChecktheSource.mp3 (217.9s · 138 BPM · Stereo)
+          </strong>
+        </div>
         <audio
           ref={audioRef}
-          src={production.audio_url}
+          src={
+            production?.audio_url && !production.audio_url.includes('6be084021')
+              ? production.audio_url
+              : FALLBACK_AUDIO_MASTER
+          }
           crossOrigin="anonymous"
+          controls
           preload="auto"
-          className="hidden"
+          className="h-8 w-full sm:w-96"
         />
-      )}
+      </div>
 
       {/* Main 16:9 Cinema Stage + Active Shot Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">

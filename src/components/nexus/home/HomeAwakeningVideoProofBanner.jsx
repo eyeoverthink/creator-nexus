@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Play, Pause, Film, ExternalLink, Volume2, CheckCircle2 } from 'lucide-react';
 
 const AUDIO_MASTER =
-  'https://base44.app/api/apps/6ad00af14909c671e73bb835/files/public/6ad00af14909c671e73bb835/6be084021_ChecktheSource.mp3';
+  'https://media.base44.com/files/public/6ad00af14909c671e73bb835/79561d060_ChecktheSource.mp3';
 
 const STITCHED_CLIPS = [
   {
@@ -127,6 +127,8 @@ export default function HomeAwakeningVideoProofBanner() {
     const vEl = videoRef.current;
     const aEl = audioRef.current;
     if (!aEl) return;
+    aEl.muted = false;
+    aEl.volume = 1.0;
     if (aEl.paused) {
       aEl.play().catch(() => {});
       vEl?.play().catch(() => {});
@@ -179,7 +181,19 @@ export default function HomeAwakeningVideoProofBanner() {
         </div>
       </div>
 
-      <audio ref={audioRef} src={AUDIO_MASTER} preload="metadata" className="hidden" />
+      <div className="p-2.5 rounded border border-success/40 bg-background flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-[11px]">
+          <Volume2 size={14} className={playing ? 'text-success animate-pulse' : 'text-primary'} />
+          <strong className="text-foreground">Master Audio Track: ChecktheSource.mp3 (4.84 MB · 138 BPM · Stereo)</strong>
+        </div>
+        <audio
+          ref={audioRef}
+          src={AUDIO_MASTER}
+          controls
+          preload="auto"
+          className="h-8 w-full sm:w-96"
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
         <div className="lg:col-span-7">
