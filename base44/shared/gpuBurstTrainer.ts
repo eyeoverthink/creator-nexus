@@ -45,17 +45,61 @@ function buildChatMlRow(userText, assistantText, systemText = CORE_SYSTEM_PROMPT
   });
 }
 
+const GPU_TIER_SPECS = {
+  a100_80gb_2xlarge_mem: {
+    label: 'NVIDIA A100 (80GB VRAM · 2X-Large-Mem · 2 Cores · 64GB RAM · 100GB Storage · 179 credits/hr · Reading, UK)',
+    creditsPerHour: 179,
+    region: 'Reading, United Kingdom',
+  },
+  a100_80gb_4c_8gb: {
+    label: 'NVIDIA A100 (80GB VRAM · 4 Cores · 8GB RAM · 100GB Storage · 161 credits/hr · Reading, UK)',
+    creditsPerHour: 161,
+    region: 'Reading, United Kingdom',
+  },
+  a100_80gb_8c_16gb: {
+    label: 'NVIDIA A100 (80GB VRAM · 8 Cores · 16GB RAM · 200GB Storage · 167 credits/hr · Reading, UK)',
+    creditsPerHour: 167,
+    region: 'Reading, United Kingdom',
+  },
+  rtx_pro_6000_96gb: {
+    label: 'NVIDIA RTX PRO 6000 Server (96GB VRAM · From $0.65/hr · Reading, UK)',
+    creditsPerHour: 195,
+    region: 'Reading, United Kingdom',
+  },
+  b200_192gb: {
+    label: 'NVIDIA B200 (192GB VRAM · From $4.50/hr · Reading, UK)',
+    creditsPerHour: 520,
+    region: 'Reading, United Kingdom',
+  },
+  l40s_48gb: {
+    label: 'NVIDIA L40S (48GB VRAM · From $0.96/hr · Reading, UK)',
+    creditsPerHour: 140,
+    region: 'Reading, United Kingdom',
+  },
+  rtx_5090_32gb: {
+    label: 'NVIDIA RTX 5090 (32GB VRAM · From $0.64/hr · Reading, UK)',
+    creditsPerHour: 115,
+    region: 'Reading, United Kingdom',
+  },
+  rtx_4090_24gb: {
+    label: 'NVIDIA RTX 4090 (24GB VRAM · From $0.42/hr · Reading, UK)',
+    creditsPerHour: 85,
+    region: 'Reading, United Kingdom',
+  },
+};
+
 export function buildUnslothTrainingScript({
-  gpuTier = 'rtx_pro_6000_96gb',
+  gpuTier = 'a100_80gb_2xlarge_mem',
   baseModel = 'unsloth/Qwen2.5-Coder-14B-Instruct',
   outputModelName = 'fraymus-sovereign-v25',
-  gatewayUrl = 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+  gatewayUrl = 'https://creator-nexus.base44.app/functions/openclawGateway',
 }) {
+  const spec = GPU_TIER_SPECS[gpuTier] || GPU_TIER_SPECS.a100_80gb_2xlarge_mem;
   return `#!/usr/bin/env python3
 """
 ===============================================================================
 F.R.A.Y.M.U.S. 1-HOUR HOSTINGER GPU BURST TRAINER (train_fraymus_gpu_burst.py)
-Target Hardware: ${gpuTier === 'rtx_pro_6000_96gb' ? 'NVIDIA RTX PRO 6000 (96GB VRAM) · 32 Cores · 64GB RAM' : 'NVIDIA RTX 5090 (32GB VRAM) · 16/32 Cores'}
+Target Hardware: ${spec.label}
 Base Model:      ${baseModel}
 Output Artifact: ${outputModelName} (GGUF + LoRA + phi75-Ternary .phit)
 ===============================================================================
@@ -231,29 +275,30 @@ print(f"[{elapsed_min()}m] ALL DONE! Model exported & registered with Creator Ne
 }
 
 export function buildClaudeCodeSupervisorPrompt({
-  gpuTier = 'rtx_pro_6000_96gb',
+  gpuTier = 'a100_80gb_2xlarge_mem',
   baseModel = 'unsloth/Qwen2.5-Coder-14B-Instruct',
   outputModelName = 'fraymus-sovereign-v25',
   datasetCount = 0,
   jobId = 'job_gpu_burst',
   githubFolderUrl = 'https://github.com/eyeoverthink/fraymus-continuity/tree/main/gpu-training',
 }) {
-  const gpuLabel =
-    gpuTier === 'rtx_pro_6000_96gb'
-      ? 'NVIDIA RTX PRO 6000 (96GB VRAM · 32 Cores · 64GB RAM · 500GB Storage · 525 credits/hr)'
-      : 'NVIDIA RTX 5090 (32GB VRAM · 16/32 Cores · 488 credits/hr)';
+  const spec = GPU_TIER_SPECS[gpuTier] || GPU_TIER_SPECS.a100_80gb_2xlarge_mem;
+  const gpuLabel = spec.label;
 
-  return `# MISSION BRIEF FOR CLAUDE CODE / HERMES AGENT: 1-HOUR HOSTINGER GPU BURST SUPERVISOR
+  return `# MISSION BRIEF FOR CLAUDE CODE / HERMES / MCP AGENT: 1-HOUR HOSTINGER A100 (80GB) GPU BURST SUPERVISOR
 
-You are supervising a **strictly time-boxed 1-hour Cloud GPU fine-tuning run** (~500 Hostinger credits) for **Creator Nexus + Fraymus Transmuter**.
-Your job is to keep eyes on the clock, run the training pipeline without wasted commands, verify empirical outputs, and ensure we export all weights and **destroy the GPU instance before Minute 55** so zero extra hourly credits are burned.
+You are supervising a **strictly time-boxed 1-hour Cloud GPU fine-tuning run** (**${spec.creditsPerHour} credits/hour** out of **4,893.26 available credits** in **${spec.region}**) for **Creator Nexus + Fraymus Transmuter**.
+Your job is to keep eyes on the clock, run the training pipeline without wasted commands, verify empirical outputs over MCP + Keyless Orifice telemetry, and ensure we export all weights and **destroy the GPU instance before Minute 55** (~4,714.26 credits remaining after 1 hour).
 
 ---
 
-## 1. VERIFIED ENDPOINTS & PRE-STAGED TRAINING KIT
+## 1. VERIFIED MCP SERVER, GATEWAY & PRE-STAGED TRAINING KIT
+- **Live Creator Nexus MCP Server (Streamable HTTP + OAuth):**
+  - Published MCP URL: \`https://creator-nexus.base44.app/api/mcp\` (or custom domain \`https://fraymus.cloud/api/mcp\`)
+  - Exposed MCP Tools: \`invoke_openclaw_gateway\` (\`export_gpu_training_bundle\`, \`status\`, \`claim_dispatch_job\`, \`complete_dispatch_job\`, \`orifice_ping\`), \`invoke_compile_ollama_model\`, \`invoke_run_argon_evolution\`, plus all Creator Nexus entities (\`NexusDispatchJob\`, \`NexusModelArtifact\`, \`NexusOuroborosNode\`, \`NexusDraft\`).
 - **Live Keyless Telemetry & Completion Receptor (Verified HTTP 200 OK):**
-  \`POST https://nexus-create-sync.base44.app/functions/openclawGateway\`
-  - Uses \`{"action": "orifice_ping", "protocol": "ORIFICE-TXRX-V1.0", "node_id": "hostinger-gpu-burst-node", "payload": "..."}\` (no secret header required!).
+  \`POST https://creator-nexus.base44.app/functions/openclawGateway\`
+  - Uses \`{"action": "orifice_ping", "protocol": "ORIFICE-TXRX-V1.0", "node_id": "hostinger-a100-80gb-reading", "payload": "..."}\` (no secret header required!).
 - **Pre-Compiled GitHub Training Kit:**
   \`${githubFolderUrl}\`
   - \`gpu-training/fraymus-sovereign-sft.jsonl\` (${datasetCount} real ChatML examples from Creator Nexus + Fraymus Orbit)
@@ -306,14 +351,14 @@ ollama run ${outputModelName} "Verify OPEG-V1.0 EP3 condition and summarize our 
 
 ### PHASE 5 (Minutes 50–55): HARD TEARDOWN DEADLINE (CREDIT GUARD)
 Once \`train_fraymus_gpu_burst.py\` prints \`ALL DONE! Model exported & registered with Creator Nexus\` and the \`.gguf\` is copied off-box:
-1. Alert the operator immediately: **"Training complete and artifacts evacuated. Destroy/Delete the Hostinger GPU instance in hPanel now to preserve your remaining ~4,470 credits."**`;
+1. Alert the operator immediately: **"Training complete and artifacts evacuated. Destroy/Delete the Hostinger A100 GPU instance in hPanel (Reading, UK) now — only ~179 credits used, preserving ~4,714.26 of your 4,893.26 credits."**`;
 }
 
 export async function exportGpuTrainingBundle({
   db,
   ownerId,
   workspaceId,
-  gpuTier = 'rtx_pro_6000_96gb',
+  gpuTier = 'a100_80gb_2xlarge_mem',
   baseModel = 'unsloth/Qwen2.5-Coder-14B-Instruct',
   outputModelName = 'fraymus-sovereign-v25',
   commitToGithub = true,
@@ -433,7 +478,7 @@ export async function exportGpuTrainingBundle({
     gpuTier,
     baseModel,
     outputModelName,
-    gatewayUrl: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+    gatewayUrl: 'https://creator-nexus.base44.app/functions/openclawGateway',
   });
 
   const claudeSupervisorPrompt = buildClaudeCodeSupervisorPrompt({
@@ -503,18 +548,17 @@ export async function exportGpuTrainingBundle({
     } catch {}
   }
 
+  const selectedSpec = GPU_TIER_SPECS[gpuTier] || GPU_TIER_SPECS.a100_80gb_2xlarge_mem;
+
   // 3. Create accountable job & model artifact in Creator Nexus
   const createdJob = await db.entities.NexusDispatchJob.create({
     owner_id: ownerId,
     workspace_id: workspaceId,
     job_id: jobId,
-    directive: `[1-Hour Hostinger GPU Burst · ${gpuTier}] Fine-tune ${baseModel} -> ${outputModelName} on ${jsonlLines.length} workspace JSONL examples`,
+    directive: `[1-Hour Hostinger GPU Burst · ${selectedSpec.label}] Fine-tune ${baseModel} -> ${outputModelName} on ${jsonlLines.length} workspace JSONL examples`,
     task_type: 'lora_training',
-    assigned_node:
-      gpuTier === 'rtx_pro_6000_96gb'
-        ? 'hostinger-gpu-burst (RTX PRO 6000 · 96GB VRAM · 525 cred/hr)'
-        : 'hostinger-gpu-burst (RTX 5090 · 32GB VRAM · 488 cred/hr)',
-    assigned_ip: 'hpanel.hostinger.com/gpu/deploy (Los Angeles)',
+    assigned_node: `hostinger-gpu-burst (${selectedSpec.label})`,
+    assigned_ip: `hpanel.hostinger.com/gpu/deploy (${selectedSpec.region})`,
     fallback_node: 'desktop-actid8c (100.88.61.56) / srv1944678 (45.82.73.49)',
     routing_reason: `Pre-staged ${jsonlLines.length} ChatML JSONL records + Unsloth QLoRA script in GitHub Vault so 1-hour GPU burst executes in <35 mins.`,
     execution_mode: 'hybrid_bridge',

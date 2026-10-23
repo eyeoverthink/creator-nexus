@@ -15,6 +15,15 @@
                 "status",
                 "dispatch_task",
                 "opeg_verify",
+                "export_gpu_training_bundle",
+                "execute_native_skill",
+                "hermes_fleet_manifest",
+                "run_coherence_teamwork_assay",
+                "v16_visitor_relay",
+                "control_plane_registry",
+                "control_plane_enroll",
+                "ambassador_greet",
+                "spawn_dual_site_subagents",
                 "absorb_all_continuity",
                 "orifice_spec",
                 "orifice_ping",
@@ -27,7 +36,27 @@
                 "claim_dispatch_job",
                 "complete_dispatch_job"
               ],
-              "description": "Gateway operation to run: status, dispatch_task, opeg_verify, absorb_all_continuity, or Synaptic Orifice TX/RX actions (orifice_ping, orifice_absorb, orifice_tx_queue, orifice_peer_bridge)."
+              "description": "Gateway operation to run: status, export_gpu_training_bundle (stage A100 80GB Unsloth QLoRA + GGUF kit), execute_native_skill, hermes_fleet_manifest, run_coherence_teamwork_assay, v16_visitor_relay, dispatch_task, opeg_verify, absorb_all_continuity, or Synaptic Orifice TX/RX actions."
+            },
+            "gpu_tier": {
+              "type": "string",
+              "description": "Hostinger GPU tier for export_gpu_training_bundle (default: a100_80gb_2xlarge_mem for Reading UK A100 80GB 64GB RAM at 179 credits/hr)."
+            },
+            "base_model": {
+              "type": "string",
+              "description": "Base model for export_gpu_training_bundle (e.g. unsloth/Qwen2.5-Coder-14B-Instruct)."
+            },
+            "output_model_name": {
+              "type": "string",
+              "description": "Compiled model output tag for export_gpu_training_bundle (e.g. fraymus-sovereign-v25)."
+            },
+            "skill_id": {
+              "type": "string",
+              "description": "Skill ID when action is execute_native_skill (e.g. sherlock, web-pentest, duckduckgo-search)."
+            },
+            "query": {
+              "type": "string",
+              "description": "Input query when action is execute_native_skill."
             },
             "workspace_id": {
               "type": "string",

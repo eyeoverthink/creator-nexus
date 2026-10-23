@@ -17,22 +17,76 @@ import {
 
 const GPU_TIERS = [
   {
-    id: 'rtx_pro_6000_96gb',
-    label: 'RTX PRO 6000 Server (96GB VRAM · 32 Cores · 64GB RAM · 500GB · 525 cred/hr)',
+    id: 'a100_80gb_2xlarge_mem',
+    label: '✓ A100 · 80GB VRAM · 2X-Large-Mem (2 Cores · 64GB RAM · 100GB Storage · 179 cred/hr · Reading, UK)',
     recommendedBase: 'unsloth/Qwen2.5-Coder-14B-Instruct',
+    creditsPerHour: 179,
+    vram: '80GB VRAM',
+    ram: '64GB RAM',
+  },
+  {
+    id: 'a100_80gb_8c_16gb',
+    label: 'A100 · 80GB VRAM (8 Cores · 16GB RAM · 200GB Storage · 167 cred/hr · Reading, UK)',
+    recommendedBase: 'unsloth/Qwen2.5-Coder-14B-Instruct',
+    creditsPerHour: 167,
+    vram: '80GB VRAM',
+    ram: '16GB RAM',
+  },
+  {
+    id: 'a100_80gb_4c_8gb',
+    label: 'A100 · 80GB VRAM (4 Cores · 8GB RAM · 100GB Storage · 161 cred/hr · Reading, UK)',
+    recommendedBase: 'unsloth/Llama-3.2-3B-Instruct',
+    creditsPerHour: 161,
+    vram: '80GB VRAM',
+    ram: '8GB RAM',
+  },
+  {
+    id: 'rtx_pro_6000_96gb',
+    label: 'RTX PRO 6000 Server (96GB VRAM · From $0.65/hr · Reading, UK)',
+    recommendedBase: 'unsloth/Qwen2.5-32B-Instruct-bnb-4bit',
+    creditsPerHour: 195,
+    vram: '96GB VRAM',
+    ram: '64GB RAM',
+  },
+  {
+    id: 'b200_192gb',
+    label: 'B200 (192GB VRAM · From $4.50/hr · Reading, UK)',
+    recommendedBase: 'unsloth/Qwen2.5-32B-Instruct-bnb-4bit',
+    creditsPerHour: 520,
+    vram: '192GB VRAM',
+    ram: '128GB RAM',
+  },
+  {
+    id: 'l40s_48gb',
+    label: 'L40S (48GB VRAM · From $0.96/hr · Reading, UK)',
+    recommendedBase: 'unsloth/Qwen2.5-Coder-14B-Instruct',
+    creditsPerHour: 140,
+    vram: '48GB VRAM',
+    ram: '64GB RAM',
   },
   {
     id: 'rtx_5090_32gb',
-    label: 'RTX 5090 (32GB VRAM · 16/32 Cores · 300GB · 488 cred/hr)',
+    label: 'RTX 5090 (32GB VRAM · From $0.64/hr · Reading, UK)',
+    recommendedBase: 'unsloth/Qwen2.5-Coder-14B-Instruct',
+    creditsPerHour: 115,
+    vram: '32GB VRAM',
+    ram: '64GB RAM',
+  },
+  {
+    id: 'rtx_4090_24gb',
+    label: 'RTX 4090 (24GB VRAM · From $0.42/hr · Reading, UK)',
     recommendedBase: 'unsloth/Llama-3.2-3B-Instruct',
+    creditsPerHour: 85,
+    vram: '24GB VRAM',
+    ram: '32GB RAM',
   },
 ];
 
 const BASE_MODELS = [
   'unsloth/Qwen2.5-Coder-14B-Instruct',
   'unsloth/DeepSeek-R1-Distill-Qwen-14B',
-  'unsloth/Llama-3.2-3B-Instruct',
   'unsloth/Qwen2.5-32B-Instruct-bnb-4bit',
+  'unsloth/Llama-3.2-3B-Instruct',
 ];
 
 export default function HostingerGpuBurstTrainerPanel({ onJobCreated }) {
@@ -89,16 +143,15 @@ export default function HostingerGpuBurstTrainerPanel({ onJobCreated }) {
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2.5">
         <div className="space-y-0.5">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-caution/20 text-caution border border-caution/40 text-[10px] font-bold">
-              GPU RENTAL PAUSED — HOSTINGER GPUS OUT OF STOCK (0 CREDITS SPENT)
+            <span className="px-2 py-0.5 rounded bg-success text-background text-[10px] font-bold">
+              HOSTINGER GPU READY // A100 · 80GB VRAM · 2X-LARGE-MEM (READING, UK)
             </span>
-            <span className="text-[11px] font-semibold text-foreground">
-              Active GPU Burst Jobs Cancelled · JSONL Kit Preserved in GitHub Vault for Later
+            <span className="px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/40 text-[10px] font-bold">
+              179 CREDITS/HR · 4,893.26 CREDITS AVAILABLE (~27.3 HRS)
             </span>
           </div>
           <p className="text-[10.5px] text-muted-foreground font-body">
-            Compiles your live Creator Nexus + Polar Orbit data into <code>fraymus-sovereign-sft.jsonl</code> and pushes the ready-to-run Unsloth training kit to{' '}
-            <code>eyeoverthink/fraymus-continuity/gpu-training/</code> so your Hostinger GPU trains &amp; exports GGUF in ~25 minutes.
+            Matched to your live Hostinger selection: <strong>A100 (80GB VRAM · 2 Cores · 64GB RAM · 100GB Storage · 179 credits/hr in Reading, UK)</strong>. Note: choose the <strong>64 GB RAM (179 cred/hr)</strong> tier over the 8 GB / 16 GB RAM options so GGUF quantization and Unsloth model merging never hit host-RAM OOM.
           </p>
         </div>
 
@@ -109,14 +162,14 @@ export default function HostingerGpuBurstTrainerPanel({ onJobCreated }) {
           className="h-8 px-3.5 gap-1.5 text-xs bg-primary text-primary-foreground"
         >
           {busy ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
-          {bundle ? 'Re-Compile & Push JSONL Kit' : '1. Compile JSONL & Stage GPU Kit Now'}
+          {bundle ? 'Re-Compile & Push A100 Kit' : '1. Compile JSONL & Stage A100 (80GB) Kit Now'}
         </Button>
       </div>
 
       {/* Selectors */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
         <div className="space-y-1">
-          <label className="text-[10px] text-muted-foreground">HOSTINGER GPU SELECTION (LOS ANGELES)</label>
+          <label className="text-[10px] text-muted-foreground">HOSTINGER GPU SELECTION (READING, UK)</label>
           <select
             value={gpuTier}
             onChange={(e) => setGpuTier(e.target.value)}

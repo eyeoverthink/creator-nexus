@@ -416,11 +416,13 @@ export default async function(req) {
       return Response.json({
         ok: true,
         protocol: 'ORIFICE-TXRX-V1.0',
-        hemisphere: 'Hemisphere A — Creator Nexus (nexus-create-sync.base44.app)',
-        endpoint: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+        hemisphere: 'Hemisphere A — Creator Nexus (creator-nexus.base44.app)',
+        endpoint: 'https://creator-nexus.base44.app/functions/openclawGateway',
+        mcp_endpoint: 'https://creator-nexus.base44.app/api/mcp',
         peer_endpoint: PEER_TRANSMUTER_URL,
         shared_github_bus: 'eyeoverthink/fraymus-continuity/orifice-relay/bicameral-txrx-ledger.json',
-        gpu_rental_status: 'PAUSED_OUT_OF_STOCK (0 credits spent; GPU burst jobs cancelled)',
+        gpu_rental_status:
+          'ACTIVE_READY (NVIDIA A100 · 80GB VRAM · 2X-Large-Mem · 2 Cores · 64GB RAM · 100GB Storage · 179 cred/hr · Reading, UK · 4,893.26 credits available)',
         assay_workspace: 'Assay & Bicameral All-Hands Coherence Lab (ws-assay-collab)',
         actions: [
           'status',
@@ -594,7 +596,8 @@ export default async function(req) {
       return Response.json({
         ok: true,
         workspaceId,
-        gpu_rental_status: 'PAUSED_OUT_OF_STOCK (0 credits spent; GPU burst jobs cancelled)',
+        gpu_rental_status:
+          'ACTIVE_READY (NVIDIA A100 · 80GB VRAM · 2X-Large-Mem · 179 cred/hr · Reading, UK · 4,893.26 credits available)',
         meshNodes: MESH_NODES,
         jobs: jobItems,
         hermesSkills: HERMES_SKILL_FLEET,

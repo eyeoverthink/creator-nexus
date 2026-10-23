@@ -182,7 +182,7 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
     try {
       const res = await base44.functions.invoke('openclawGateway', {
         action: 'export_gpu_training_bundle',
-        gpu_tier: 'rtx_pro_6000_96gb',
+        gpu_tier: 'a100_80gb_2xlarge_mem',
         base_model: 'unsloth/Qwen2.5-Coder-14B-Instruct',
         output_model_name: `fraymus-sovereign-v25-${Date.now().toString(36).slice(-3)}`,
         commit_to_github: true,
@@ -214,8 +214,8 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
         action: 'claim_dispatch_job',
         job_id: job.job_id,
         worker_node: executeNow
-          ? 'hostinger-gpu-burst (Cloud Synthesis)'
-          : 'hostinger-gpu-burst (RTX PRO 6000 · 96GB)',
+          ? 'hostinger-gpu-burst (A100 · 80GB · Reading UK)'
+          : 'hostinger-gpu-burst (A100 · 80GB VRAM · 2X-Large-Mem · 179 cred/hr)',
         execute_now: executeNow,
       });
       if (res?.data?.ok && res.data.job) {
@@ -363,7 +363,7 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
               </span>
               <div className="text-[10px] text-muted-foreground">
                 Active Target: <strong className="text-foreground">{selectedJob?.job_id || 'job_gpu_burst'}</strong> ·{' '}
-                {selectedJob?.assigned_node || 'RTX PRO 6000 (96GB VRAM)'}
+                {selectedJob?.assigned_node || 'NVIDIA A100 (80GB VRAM · 2X-Large-Mem · 179 cred/hr · Reading, UK)'}
               </div>
             </div>
 
@@ -461,13 +461,13 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
           </div>
 
           {/* 60-Minute Hostinger Credit Guard */}
-          <div className="p-2 rounded border border-caution/40 bg-card flex flex-wrap items-center justify-between gap-2 text-[10px]">
+          <div className="p-2 rounded border border-success/40 bg-card flex flex-wrap items-center justify-between gap-2 text-[10px]">
             <div className="flex items-center gap-1.5">
-              <Clock size={12} className="text-caution" />
-              <span>1-Hour Burst Budget Guard:</span>
+              <Clock size={12} className="text-success" />
+              <span>A100 (80GB · Reading UK) Credit Guard:</span>
             </div>
             <span className="text-foreground font-semibold">
-              Est. 25m runtime (~218 / 4,996.57 credits) · Teardown @ Min 50
+              179 cred/hr · Est. 25m (~75 / 4,893.26 credits) · Teardown @ Min 50
             </span>
           </div>
         </div>
