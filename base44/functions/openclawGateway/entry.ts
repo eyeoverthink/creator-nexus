@@ -329,6 +329,8 @@ export default async function(req) {
         effectiveUrl.hostname = `${host}.sslip.io`;
       }
       const targetUrl = effectiveUrl.toString().replace(/\/$/, '') + reqPath;
+      const internalPort = u.port === '20003' ? '8001' : '8000';
+      const serviceName = u.port === '20003' ? 'fraynus-nexus-2' : 'fraymus-nexus';
       const payload = body.payload ?? null;
       const bearer = String(body.token || '').trim();
       try {
@@ -350,11 +352,13 @@ export default async function(req) {
           data = { raw: text };
         }
         if (!upRes.ok) {
-          if (upRes.status === 521 || upRes.status === 502 || upRes.status === 503) {
+          if (upRes.status === 521 || upRes.status === 502 || upRes.status === 503 || upRes.status === 525 || upRes.status === 526) {
             return Response.json(
               {
-                error: `Reached fraymus-nexus (${rawEndpoint}), waiting for Ollama to start on internal port 11434 (HTTP ${upRes.status}). Run inside your Hostinger GPU terminal: curl -fsSL https://ollama.com/install.sh | sh && OLLAMA_HOST=0.0.0.0:11434 OLLAMA_ORIGINS="*" ollama serve &`,
+                error: `Reached ${serviceName} (${rawEndpoint} → internal port ${internalPort}, HTTP ${upRes.status}). Start Ollama on internal port ${internalPort} inside your Hostinger GPU terminal: curl -fsSL https://ollama.com/install.sh | sh && OLLAMA_HOST=0.0.0.0:${internalPort} OLLAMA_ORIGINS="*" ollama serve &`,
                 endpoint: rawEndpoint,
+                service_name: serviceName,
+                internal_port: Number(internalPort),
                 resolved_dns: effectiveUrl.origin,
                 awaiting_daemon: true,
               },
@@ -370,8 +374,10 @@ export default async function(req) {
       } catch (err) {
         return Response.json(
           {
-            error: `Endpoint ${rawEndpoint} is saved & wired, but the Ollama daemon on the GPU container is not listening on internal port 11434 yet (${err.message}). Run in your Hostinger GPU terminal: curl -fsSL https://ollama.com/install.sh | sh && OLLAMA_HOST=0.0.0.0:11434 OLLAMA_ORIGINS="*" ollama serve &`,
+            error: `Endpoint ${rawEndpoint} (${serviceName} → internal port ${internalPort}) is wired, waiting for daemon on internal port ${internalPort} (${err.message}). Run in your Hostinger GPU terminal: curl -fsSL https://ollama.com/install.sh | sh && OLLAMA_HOST=0.0.0.0:${internalPort} OLLAMA_ORIGINS="*" ollama serve &`,
             endpoint: rawEndpoint,
+            service_name: serviceName,
+            internal_port: Number(internalPort),
             awaiting_daemon: true,
           },
           { status: 502 }
@@ -504,6 +510,22 @@ export default async function(req) {
         shared_github_bus: 'eyeoverthink/fraymus-continuity/orifice-relay/bicameral-txrx-ledger.json',
         gpu_rental_status:
           'ACTIVE_READY (NVIDIA A100 · 80GB VRAM · 2X-Large-Mem · 2 Cores · 64GB RAM · 100GB Storage · 179 cred/hr · Reading, UK · 4,893.26 credits available)',
+        exposed_gpu_services: [
+          {
+            name: 'fraymus-nexus',
+            internal_port: 8000,
+            scheme: 'HTTP',
+            protocol: 'TCP',
+            public_address: 'http://4.71.129.4:20002',
+          },
+          {
+            name: 'fraynus-nexus-2',
+            internal_port: 8001,
+            scheme: 'HTTPS',
+            protocol: 'TCP',
+            public_address: 'https://4.71.129.4:20003',
+          },
+        ],
         assay_workspace: 'Assay & Bicameral All-Hands Coherence Lab (ws-assay-collab)',
         actions: [
           'status',

@@ -136,7 +136,7 @@ export default function HostingerGpuBurstTrainerPanel({ onJobCreated }) {
     }
   };
 
-  const oneLinerBootstrap = `mkdir -p ~/fraymus-gpu && cd ~/fraymus-gpu && git clone --depth 1 https://github.com/eyeoverthink/fraymus-continuity.git && cp fraymus-continuity/gpu-training/* . && pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git" --no-deps trl peft accelerate bitsandbytes datasets && python3 train_fraymus_gpu_burst.py 2>&1 | tee train_burst.log`;
+  const oneLinerBootstrap = `curl -fsSL https://ollama.com/install.sh | sh && OLLAMA_HOST=0.0.0.0:8000 OLLAMA_ORIGINS="*" nohup ollama serve > ~/ollama_8000.log 2>&1 & mkdir -p ~/fraymus-gpu && cd ~/fraymus-gpu && git clone --depth 1 https://github.com/eyeoverthink/fraymus-continuity.git && cp fraymus-continuity/gpu-training/* . && pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git" --no-deps trl peft accelerate bitsandbytes datasets && python3 train_fraymus_gpu_burst.py 2>&1 | tee train_burst.log`;
 
   return (
     <div className="p-3.5 rounded-lg border border-success/50 bg-background space-y-3 font-mono text-xs">
@@ -209,21 +209,40 @@ export default function HostingerGpuBurstTrainerPanel({ onJobCreated }) {
         </div>
       </div>
 
-      {/* Hostinger "Add exposed service" Live Endpoint Banner */}
-      <div className="p-2.5 rounded border border-success/50 bg-card flex flex-wrap items-center justify-between gap-2 text-[10.5px]">
-        <div className="space-y-0.5">
+      {/* Hostinger "Exposed services" Live Endpoints Banner */}
+      <div className="p-2.5 rounded border border-success/50 bg-card space-y-1.5 text-[10.5px]">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="font-semibold text-success">
-            ✓ EXPOSED SERVICE CONNECTED: <code className="text-foreground font-bold">fraymus-nexus</code> →{' '}
-            <code className="text-primary font-bold">http://4.71.129.4:20002</code> (Internal Port 11434 · HTTP/TCP)
+            ✓ 2 EXPOSED SERVICES ACTIVE ON HOSTINGER GPU (4.71.129.4):
           </div>
-          <div className="text-muted-foreground">
-            Start Ollama inside your A100 terminal so <code className="text-foreground">http://4.71.129.4:20002</code> answers immediately:{' '}
-            <code className="text-foreground font-bold">curl -fsSL https://ollama.com/install.sh | sh &amp;&amp; OLLAMA_HOST=0.0.0.0:11434 OLLAMA_ORIGINS=&quot;*&quot; ollama serve &amp;</code>
+          <span className="px-2 py-0.5 rounded bg-success/15 text-success border border-success/40 text-[9.5px] font-bold">
+            PORT 8000 (HTTP) &amp; PORT 8001 (HTTPS) WIRED
+          </span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-0.5">
+          <div className="p-2 rounded bg-background border border-border">
+            <div className="font-bold text-foreground">
+              1. <code>fraymus-nexus</code> → <span className="text-primary">http://4.71.129.4:20002</span>
+            </div>
+            <div className="text-muted-foreground">
+              Internal port: <code className="text-success font-bold">8000</code> · Scheme: <code>HTTP</code> · Protocol: <code>TCP</code>
+            </div>
+            <div className="text-[9.5px] text-muted-foreground mt-0.5">
+              Bind Ollama to 8000: <code className="text-foreground">OLLAMA_HOST=0.0.0.0:8000 OLLAMA_ORIGINS=&quot;*&quot; ollama serve &amp;</code>
+            </div>
+          </div>
+          <div className="p-2 rounded bg-background border border-border">
+            <div className="font-bold text-foreground">
+              2. <code>fraynus-nexus-2</code> → <span className="text-primary">https://4.71.129.4:20003</span>
+            </div>
+            <div className="text-muted-foreground">
+              Internal port: <code className="text-success font-bold">8001</code> · Scheme: <code>HTTPS</code> · Protocol: <code>TCP</code>
+            </div>
+            <div className="text-[9.5px] text-muted-foreground mt-0.5">
+              Bind Secondary API / Worker to 8001: <code className="text-foreground">OLLAMA_HOST=0.0.0.0:8001 OLLAMA_ORIGINS=&quot;*&quot; ollama serve &amp;</code>
+            </div>
           </div>
         </div>
-        <span className="px-2 py-0.5 rounded bg-success/15 text-success border border-success/40 text-[9.5px] font-bold">
-          WIRED TO NEXUS MODELS + HTTPS CLOUD PROXY
-        </span>
       </div>
 
       {/* 1-Liner GPU Terminal Bootstrap */}
