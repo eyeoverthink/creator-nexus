@@ -1,14 +1,26 @@
+import {base44} from '@/api/base44Client';
+
 export function ollamaUrl(settings){
  const u=new URL(settings.endpoint.trim());
  if(!['http:','https:'].includes(u.protocol)||u.username||u.password||u.search||u.hash)throw new Error('Use an HTTP or HTTPS Ollama address without credentials, query parameters, or fragments.');
- const loopback=['localhost','127.0.0.1','[::1]'].includes(u.hostname);
- if(settings.connection==='local'&&!loopback)throw new Error('Choose Network / Tailscale or HTTPS for a different computer.');
- if(settings.connection==='https'&&u.protocol!=='https:')throw new Error('HTTPS mode requires an https:// address.');
- if(window.location.protocol==='https:'&&u.protocol==='http:'&&!loopback)throw new Error('Browsers block insecure network requests from this HTTPS workspace. Use a trusted HTTPS address, such as Tailscale Serve, for another computer.');
  return u.toString().replace(/\/$/,'');
 }
 export async function ollamaRequest(settings,token,path,body){
- const endpoint=ollamaUrl(settings);let response;
+ const endpoint=ollamaUrl(settings);
+ const u=new URL(endpoint);
+ const loopback=['localhost','127.0.0.1','[::1]'].includes(u.hostname);
+ const needsCloudBridge=!loopback&&window.location.protocol==='https:'&&u.protocol==='http:';
+ if(needsCloudBridge||!loopback){
+  try{
+   const {data}=await base44.functions.invoke('openclawGateway',{action:'ollama_proxy',endpoint,path,payload:body||null,token:token||''});
+   if(data?.error)throw new Error(String(data.error));
+   return data;
+  }catch(err){
+   const msg=err?.response?.data?.error||err?.message||'Cannot reach remote GPU Ollama endpoint.';
+   throw new Error(msg);
+  }
+ }
+ let response;
  try{response=await fetch(endpoint+path,{method:body?'POST':'GET',credentials:'omit',headers:{...(body?{'Content-Type':'application/json'}:{}),...(token?{Authorization:'Bearer '+token}:{})},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(body?240000:15000)});}catch(error){throw new Error(error.name==='TimeoutError'?'Ollama timed out. Check that the computer is awake and the model fits its memory.':'Cannot reach Ollama from this browser. Check the address, Tailscale, allowed origins, browser local-network permission, and HTTPS.');}
  if(!response.ok)throw new Error('Ollama returned '+response.status+'. '+(response.status===403?'Check allowed origins and your proxy’s Host header.':'Check your running model or proxy authentication.'));
  const data=await response.json();if(data.error)throw new Error(String(data.error).slice(0,500));return data;

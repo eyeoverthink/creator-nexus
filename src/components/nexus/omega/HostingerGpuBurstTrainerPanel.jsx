@@ -209,22 +209,20 @@ export default function HostingerGpuBurstTrainerPanel({ onJobCreated }) {
         </div>
       </div>
 
-      {/* Hostinger "Add exposed service" Port Reference */}
-      <div className="p-2.5 rounded border border-primary/40 bg-card flex flex-wrap items-center justify-between gap-2 text-[10.5px]">
+      {/* Hostinger "Add exposed service" Live Endpoint Banner */}
+      <div className="p-2.5 rounded border border-success/50 bg-card flex flex-wrap items-center justify-between gap-2 text-[10.5px]">
         <div className="space-y-0.5">
-          <div className="font-semibold text-primary">
-            HOSTINGER &ldquo;ADD EXPOSED SERVICE&rdquo; SETTINGS (FOR LIVE MODEL &amp; API ACCESS)
+          <div className="font-semibold text-success">
+            ✓ EXPOSED SERVICE CONNECTED: <code className="text-foreground font-bold">fraymus-nexus</code> →{' '}
+            <code className="text-primary font-bold">http://4.71.129.4:20002</code> (Internal Port 11434 · HTTP/TCP)
           </div>
           <div className="text-muted-foreground">
-            Service name: <code className="text-foreground font-bold">fraymus-nexus</code> · Internal port:{' '}
-            <code className="text-success font-bold">11434</code> (Ollama API) or{' '}
-            <code className="text-foreground font-bold">8000</code> (FastAPI/vLLM Worker) · Scheme:{' '}
-            <code className="text-foreground font-bold">HTTP</code> · Protocol:{' '}
-            <code className="text-foreground font-bold">TCP</code>
+            Start Ollama inside your A100 terminal so <code className="text-foreground">http://4.71.129.4:20002</code> answers immediately:{' '}
+            <code className="text-foreground font-bold">curl -fsSL https://ollama.com/install.sh | sh &amp;&amp; OLLAMA_HOST=0.0.0.0:11434 OLLAMA_ORIGINS=&quot;*&quot; ollama serve &amp;</code>
           </div>
         </div>
         <span className="px-2 py-0.5 rounded bg-success/15 text-success border border-success/40 text-[9.5px] font-bold">
-          Paste Resulting Hostinger URL into Models → Server Address
+          WIRED TO NEXUS MODELS + HTTPS CLOUD PROXY
         </span>
       </div>
 

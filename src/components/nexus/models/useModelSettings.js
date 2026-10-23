@@ -1,15 +1,19 @@
 import {useEffect,useState,useRef} from 'react';
 import {useQuery,useQueryClient} from '@tanstack/react-query';
 import {base44} from '@/api/base44Client';
-const initial={provider:'hosted',connection:'local',endpoint:'http://localhost:11434',model:'',useMemory:true};
-const clean=value=>Object.fromEntries(Object.keys(initial).map(key=>[key,typeof value?.[key]===typeof initial[key]?value[key]:initial[key]]));
+const initial={provider:'ollama',connection:'network',endpoint:'http://4.71.129.4:20002',model:'fraymus-sovereign-v25-a100',useMemory:true};
+const clean=value=>{
+ const out=Object.fromEntries(Object.keys(initial).map(key=>[key,typeof value?.[key]===typeof initial[key]&&String(value?.[key]||'').trim()!==''?value[key]:initial[key]]));
+ if(out.endpoint==='http://localhost:11434'&&(!value?.endpoint||value?.endpoint==='http://localhost:11434')){out.provider='ollama';out.connection='network';out.endpoint='http://4.71.129.4:20002';if(!out.model)out.model='fraymus-sovereign-v25-a100';}
+ return out;
+};
 export default function useModelSettings(workspaceId){
  const cache=useQueryClient(),[token,setToken]=useState(''),[error,setError]=useState(''),pending=useRef(null),timer=useRef(null);
  const key=['model-settings',workspaceId];
- const stored=useQuery({queryKey:key,enabled:!!workspaceId,staleTime:Infinity,queryFn:async()=>{
+ const stored=useQuery({queryKey:key,enabled:!!workspaceId,staleTime:0,queryFn:async()=>{
   const user=await base44.auth.me(),scope={owner_id:user.id,workspace_id:workspaceId,scope:'models'};
   const page=await base44.entities.NexusContinuity.filter(scope,{limit:1});
-  if(page.items[0])return {scope,settings:clean(page.items[0].settings)};
+  if(page.items[0]?.settings){const settings=clean(page.items[0].settings);localStorage.setItem('nexus-model:'+workspaceId,JSON.stringify(settings));return {scope,settings};}
   let legacy=null;try{legacy=JSON.parse(localStorage.getItem('nexus-model:'+workspaceId)||'null');}catch{legacy=null;}
   const settings=clean(legacy);
   return {scope,settings};
