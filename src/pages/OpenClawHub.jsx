@@ -305,6 +305,11 @@ export default function OpenClawHub() {
           </div>
 
           <div className="flex items-center gap-1.5">
+            <Link to="/factory">
+              <Button size="sm" variant="default" className="h-7 text-[10.5px] px-2.5 gap-1">
+                Production Factory (/factory) <ExternalLink size={10} />
+              </Button>
+            </Link>
             <Link to="/hermes">
               <Button size="sm" variant="outline" className="h-7 text-[10.5px] px-2.5 gap-1">
                 Full Hermes Hub (/hermes) <ExternalLink size={10} />

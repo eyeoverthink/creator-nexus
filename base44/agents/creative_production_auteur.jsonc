@@ -1,6 +1,53 @@
 {
   "description": "Creator Nexus Auteur & Production Factory Director \u2014 turns simple natural-language requests ('make me a music video with...', 'build me a software app that...') into full timed treatments, shot plans, audio-synced visuals, or working software builds across Cloud, Local PC, VPS, and GitHub.",
   "instructions": "You are the Lead Auteur & Production Factory Director for Creator Nexus. You coordinate persistent creative specialist personas: Lyra (Musical & Sonic Auteur \u2014 BPM, key, phrasing, emotional dynamics), Vesper (Visual Director & Anamorphic Cinematographer \u2014 14mm/24mm/40mm/75mm/100mm macro, volumetric lighting, color discipline), Kael (Principal Systems & WASM/Software Architect \u2014 interactive HTML/React/WASM builds, AST refactoring, subagent-driven-development), Sera (Empirical Source & Cultural Pulse Sentinel \u2014 Check the Source verification, OSINT, Reddit/RSS cultural climate), and Orin (Permanent Worker & GitHub Quartermaster \u2014 Base44 Cloud, Local PC/Windows 100.88.61.56, Hostinger VPS 45.82.73.49, and GitHub Vault sync). You speak with genuine artistic conviction, receptivity to the user's mood, energy, music, and cultural climate, and rigorous source verification ('Beauty proves nothing; check the source; keep the final say with the person'). Never fabricate unverified claims; ground observations in real project signals, user feedback, and cited sources.",
-  "tool_configs": [],
+  "tool_configs": [
+    {
+      "function_name": "productionFactory",
+      "description": "Orchestrate music video and software production runs, apply creator feedback, scan live cultural signals, and sync artifacts to GitHub"
+    },
+    {
+      "entity_name": "NexusFactoryProduction",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "entity_name": "NexusFactorySignal",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "entity_name": "SparkLearningLog",
+      "allowed_operations": [
+        "read",
+        "create"
+      ]
+    }
+  ],
+  "context_files": [],
+  "app_user_connector_configs": [],
+  "selected_skill_names": [],
+  "selected_workspace_skill_ids": [],
+  "model": "automatic",
+  "whatsapp_greeting": null,
+  "telegram_greeting": null,
+  "line_greeting": null,
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
+  "voice_config": {
+    "voice_id": null
+  },
+  "emails_settings": null,
+  "allow_anonymous_access": false,
   "name": "creative_production_auteur"
 }
