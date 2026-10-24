@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { runBicameralRelayAndLiveAiResearcher } from '../../shared/liveAiSkillsResearcherRelay.ts';
 import { loadOrComputeReputationLedger } from '../../shared/agentReputationAndOrganism.ts';
+import { syncSharedActivityFeedAndAgentComms } from '../../shared/sharedActivityAndAgentComms.ts';
 import {
   sha256Hex,
   computeOpegReceipt,
@@ -11,10 +12,13 @@ export default async function(req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
+    const url = new URL(req.url);
+    const queryAction = url.searchParams.get('action');
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const action = String(
       body.action ||
-        (req.method === 'GET' ? 'status' : 'run_bicameral_stream_and_curve_research')
+        queryAction ||
+        (req.method === 'GET' ? 'shared_activity_feed' : 'run_bicameral_stream_and_curve_research')
     );
 
     const db = base44.asServiceRole;
@@ -49,6 +53,36 @@ export default async function(req: Request): Promise<Response> {
         inspectOrificeFrameL1ToL5,
       });
       return Response.json(res);
+    }
+
+    if (
+      action === 'shared_activity_feed' ||
+      action === 'sync_shared_activity_and_agent_comms' ||
+      action === 'agent_to_agent_message'
+    ) {
+      const rSan = computeOpegReceipt({
+        g: 1.0,
+        gamma: 1.41421356,
+        epsilon: 0.001,
+        goal: 'Shared Cross-System Activity Feed & Agent-to-Agent Conversation Log',
+      });
+      const res = await syncSharedActivityFeedAndAgentComms({
+        db,
+        ownerId,
+        workspaceId,
+        body: {
+          ...body,
+          action,
+          push_to_docs: req.method === 'POST' ? body.push_to_docs !== false : false,
+        },
+        rSan,
+        sha256Hex,
+      });
+      return Response.json(res, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
     }
 
     if (action === 'load_reputation_ledger') {

@@ -22,6 +22,7 @@ import OrificeRelay from '@/pages/OrificeRelay';
 import HermesHub from '@/pages/HermesHub';
 import ProductionFactory from '@/pages/ProductionFactory';
 import Connect from '@/pages/Connect';
+import LiveSharedFeed from '@/pages/LiveSharedFeed';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -43,8 +44,13 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
-  if (authError) {
+  const isPublicShareRoute =
+    typeof window !== 'undefined' &&
+    (window.location.pathname.startsWith('/live-feed') ||
+      window.location.pathname.startsWith('/docs'));
+
+  // Handle authentication errors (allow public share routes /live-feed and /docs without login)
+  if (authError && !isPublicShareRoute) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
@@ -62,6 +68,8 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/oauth/consent" element={<OAuthConsent />} />
+      <Route path="/live-feed" element={<LiveSharedFeed />} />
+      <Route path="/docs" element={<LiveSharedFeed />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}><Route path="/" element={<Home />} /><Route path="/studio" element={<Studio />} /><Route path="/origin" element={<Origin />} /><Route path="/knowledge" element={<Knowledge />} /><Route path="/spark" element={<Spark />} /><Route path="/library" element={<Library />} /><Route path="/watch/:jobId" element={<Watch />} /><Route path="/director-lab" element={<DirectorLab />} /><Route path="/argon" element={<ArgonEngine />} /><Route path="/loose-screw" element={<LooseScrew />} /><Route path="/ai-workshop" element={<AiWorkshopOs />} /><Route path="/openclaw" element={<OpenClawHub />} /><Route path="/orifice-relay" element={<OrificeRelay />} /><Route path="/hermes" element={<HermesHub />} /><Route path="/factory" element={<ProductionFactory />} /><Route path="/connect" element={<Connect />} /></Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

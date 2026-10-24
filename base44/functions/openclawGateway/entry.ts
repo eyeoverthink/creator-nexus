@@ -70,6 +70,9 @@ import {
 import {
   runBicameralRelayAndLiveAiResearcher,
 } from '../../shared/liveAiSkillsResearcherRelay.ts';
+import {
+  syncSharedActivityFeedAndAgentComms,
+} from '../../shared/sharedActivityAndAgentComms.ts';
 
 function slugify(str) {
   return (
@@ -132,6 +135,9 @@ export default async function(req) {
       'sync_hermes_github_comm_bus',
       'run_bicameral_relay_and_live_researcher',
       'run_bicameral_stream_and_curve_research',
+      'shared_activity_feed',
+      'sync_shared_activity_and_agent_comms',
+      'agent_to_agent_message',
       'list_dispatch_jobs',
       'hermes_fleet_manifest',
       'execute_native_skill',
@@ -1054,6 +1060,28 @@ export default async function(req) {
         ownerId,
         workspaceId,
         body,
+        rSan,
+        sha256Hex,
+      });
+      return Response.json(res);
+    }
+
+    if (
+      action === 'shared_activity_feed' ||
+      action === 'sync_shared_activity_and_agent_comms' ||
+      action === 'agent_to_agent_message'
+    ) {
+      const rSan = computeOpegReceipt({
+        g: 1.0,
+        gamma: 1.41421356,
+        epsilon: 0.001,
+        goal: 'Shared Cross-System Activity Feed & Agent-to-Agent Conversation Log',
+      });
+      const res = await syncSharedActivityFeedAndAgentComms({
+        db,
+        ownerId,
+        workspaceId,
+        body: { ...body, action },
         rSan,
         sha256Hex,
       });
