@@ -251,7 +251,7 @@ export default function HeartMuLaLocalMusicForgePanel({ onDispatchedJob, onSelec
     });
   };
 
-  // Dispatch Local GPU Job via Motor Cortex (Windows GPU 100.88.61.56 / Hermes Worker)
+  // Dispatch Local GPU Job via Motor Cortex (Windows GPU desktop-actid8c-tailnet-node / Hermes Worker)
   const dispatchLocalHeartMuLaJob = async (queueForLocalGpu = true) => {
     setBusy(queueForLocalGpu ? 'queue' : 'cloud');
     try {
@@ -294,7 +294,7 @@ instrumental track locally, and reports completion back to your workspace.
 import json, os, subprocess, time, requests
 
 GATEWAY_URL = "https://nexus-create-sync.base44.app/functions/openclawGateway"
-WORKER_NODE = "heartmula-local-gpu (100.88.61.56)"
+WORKER_NODE = "heartmula-local-gpu (desktop-actid8c via tailnet; IP redacted per mesh hygiene rule 2026-10-24)"
 CKPT_DIR    = os.environ.get("HEARTMULA_CKPT", "./ckpt/HeartMuLa-oss-3B")
 OUT_DIR     = "./outputs/heartmula"
 os.makedirs(OUT_DIR, exist_ok=True)
