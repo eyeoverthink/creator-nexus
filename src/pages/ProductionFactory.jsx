@@ -9,6 +9,7 @@ import AgentResponseSongAndVideoForge from '@/components/nexus/factory/AgentResp
 import FactorySignalSensoriumPanel from '@/components/nexus/factory/FactorySignalSensoriumPanel';
 import FactoryWorkforceAndSkillsPanel from '@/components/nexus/factory/FactoryWorkforceAndSkillsPanel';
 import FactoryReviewAndLearningPanel from '@/components/nexus/factory/FactoryReviewAndLearningPanel';
+import WitnessConductorAgentPanel from '@/components/nexus/factory/WitnessConductorAgentPanel';
 import {
   Clapperboard,
   Code2,
@@ -20,6 +21,7 @@ import {
   Radio,
   Users,
   CheckCircle2,
+  Eye,
 } from 'lucide-react';
 import '@/components/nexus/theme.css';
 
@@ -466,6 +468,11 @@ export default function ProductionFactory() {
                   label: `3. Workforce, 33 Skills & 5 HTML Artifacts`,
                   icon: Users,
                 },
+                {
+                  id: 'witness',
+                  label: `4. The Witness & Conductor Agent`,
+                  icon: Eye,
+                },
               ].map((t) => {
                 const Icon = t.icon;
                 return (
@@ -532,6 +539,19 @@ export default function ProductionFactory() {
               }}
             />
 
+            <WitnessConductorAgentPanel
+              production={selectedProduction}
+              productions={productions}
+              signals={signals}
+              personas={personas}
+              learningLogs={learningLogs}
+              onWitnessUpdate={(data) => {
+                if (data?.learningLog) {
+                  setLearningLogs((prev) => [data.learningLog, ...prev]);
+                }
+              }}
+            />
+
             <FactoryReviewAndLearningPanel
               production={selectedProduction}
               learningLogs={learningLogs}
@@ -541,6 +561,22 @@ export default function ProductionFactory() {
               busy={busy}
             />
           </div>
+        )}
+
+        {/* Tab 4: Dedicated Witness & Conductor Agent Stage */}
+        {activeTab === 'witness' && (
+          <WitnessConductorAgentPanel
+            production={selectedProduction}
+            productions={productions}
+            signals={signals}
+            personas={personas}
+            learningLogs={learningLogs}
+            onWitnessUpdate={(data) => {
+              if (data?.learningLog) {
+                setLearningLogs((prev) => [data.learningLog, ...prev]);
+              }
+            }}
+          />
         )}
 
         {/* Tab 2: Sourced Context, Mood & World Trend Sensorium (Core Flow 3) */}

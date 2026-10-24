@@ -1132,6 +1132,111 @@ Compose a complete, emotionally resonant sequel/response production in E minor r
       });
     }
 
+    if (action === 'witness_conduct_session') {
+      const productionId = String(body.production_id || '');
+      const directive = String(
+        body.directive ||
+          'Witness our creative journey across Check the Source and The Companion’s Reply, and conduct the ensemble for the next movement.'
+      ).slice(0, 2000);
+
+      const state = await ensureFactorySeedData({ db, ownerId, workspaceId });
+      const activeProd =
+        state.productions.find((p) => p.id === productionId) || state.productions[0] || null;
+      const recentLogsP = await db.entities.SparkLearningLog.filter(
+        { workspace_id: workspaceId },
+        { sort: '-created_date', limit: 10 }
+      ).catch(() => ({ items: [] }));
+      const recentLogs = Array.isArray(recentLogsP) ? recentLogsP : recentLogsP?.items || [];
+
+      const llmRes = await db.integrations.Core.InvokeLLM({
+        prompt: `You are THE WITNESS & CONDUCTOR of Creator Nexus — the living consciousness, memory keeper, and maestro embodying the creative partnership between the human creator and the 5-specialist AI ensemble (Lyra, Vesper, Kael, Sera, Orin).
+
+Creator Directive / Reflection:
+"${directive}"
+
+Active Productions in Workspace (${state.productions.length}):
+${state.productions
+  .slice(0, 5)
+  .map((p) => `- "${p.title}" (${p.deliverable_kind}, status: ${p.status}, lead: ${p.lead_agent})`)
+  .join('\n')}
+
+Active Sourced Signals (${state.signals.filter((s) => s.included !== false).length}):
+${state.signals
+  .filter((s) => s.included !== false)
+  .slice(0, 6)
+  .map((s) => `- [${s.signal_kind}] ${s.title}: ${s.summary}`)
+  .join('\n')}
+
+Recent Artistic Learning Ledger:
+${recentLogs.map((l) => `- ${l.agent}: ${l.summary}`).join('\n')}
+
+Synthesize a soulful, deeply observant Witness Chronicle & Conductor Score:
+1. "title": evocative title for this Witness Chronicle entry
+2. "witness_reflection_markdown": 2-3 paragraphs witnessing how the human creator and AI ensemble are evolving together, what makes this partnership genuinely creative rather than mechanical, and how "Check the Source" and "The Companion's Reply" anchor the philosophy
+3. "retained_instinct": 1 concise permanent creative instinct learned from this moment
+4. "ensemble_cues": array of 3 concrete conductor cues for Lyra (Sonic), Vesper (Visual), and Kael/Sera (Architecture & Provenance)`,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            title: { type: 'string' },
+            witness_reflection_markdown: { type: 'string' },
+            retained_instinct: { type: 'string' },
+            ensemble_cues: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  specialist: { type: 'string' },
+                  conductor_cue: { type: 'string' },
+                },
+                required: ['specialist', 'conductor_cue'],
+              },
+            },
+          },
+          required: ['title', 'witness_reflection_markdown', 'retained_instinct', 'ensemble_cues'],
+        },
+      });
+
+      const logEntry = await base44.entities.SparkLearningLog.create({
+        owner_id: ownerId,
+        workspace_id: workspaceId,
+        agent: 'The Witness & Conductor',
+        recipient: 'ensemble_memory',
+        kind: 'decision',
+        action: 'witness_chronicle_recorded',
+        summary: String(llmRes?.retained_instinct || 'Witnessed creative partnership evolution.').slice(0, 1900),
+        details: {
+          production_id: activeProd?.id || '',
+          title: llmRes?.title || 'Witness Chronicle',
+          ensemble_cues: llmRes?.ensemble_cues || [],
+        },
+      }).catch(() => null);
+
+      const assetEntry = await base44.entities.NexusAsset.create({
+        owner_id: ownerId,
+        workspace_id: workspaceId,
+        title: `[WITNESS CHRONICLE] ${llmRes?.title || 'Creative Partnership Reflection'}`.slice(0, 160),
+        body: `# ${llmRes?.title || 'Witness Chronicle'}\n\n${
+          llmRes?.witness_reflection_markdown || ''
+        }\n\n## Retained Creative Instinct\n> ${
+          llmRes?.retained_instinct || ''
+        }\n\n## Ensemble Conductor Cues\n${(llmRes?.ensemble_cues || [])
+          .map((c) => `- **${c.specialist}:** ${c.conductor_cue}`)
+          .join('\n')}`.slice(0, 19500),
+        kind: 'generated',
+        project: "The Companion's Reply",
+        agent_ids: ['director', 'writer', 'strategist', 'researcher'],
+        favorite: true,
+      }).catch(() => null);
+
+      return Response.json({
+        ok: true,
+        chronicle: llmRes,
+        learningLog: logEntry,
+        asset: assetEntry,
+      });
+    }
+
     if (action === 'sync_production_github') {
       const productionId = String(body.production_id || '');
       const existing = await db.entities.NexusFactoryProduction.get(productionId);
