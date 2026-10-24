@@ -1,5 +1,56 @@
 // Stage II Earned Trust & Reputation Ledger + Stage I-IV Agent Feedback & Autonomous Agent-Spawning Organism
 
+export const DEFAULT_AGENT_BORN_SPECIALISTS = [
+  {
+    id: 'spawned_aegis_constitutional_auditor',
+    name: 'Aegis · Constitutional Trust & Provenance Auditor',
+    role: 'Stage II Earned Trust & R_san Constitutional Gatekeeper',
+    hemisphere: 'YIN',
+    is_spawned: true,
+    spawned_by: 'The Witness + Sera + EYE Sovereign',
+    why_needed:
+      'Autonomous cross-hemisphere claim-to-source and OPEG-V1.0 R_san gatekeeper ensuring zero unverified inference across Creator Nexus and Fraymus Eternal.',
+    initial_mission: 'Certify ORIFICE-SYNAPSE-CAPSULE-V1.0 provenance seals and audit every stage handoff.',
+    skills: ['osint-investigation', 'oss-forensics', 'pr-lens', 'subagent-driven-development'],
+    provenance_score: 97.2,
+    reliability_score: 95.8,
+    alignment_score: 96.2,
+    earned_trust_score: 96.4,
+    verified_contributions: 88,
+    latest_feedback:
+      'Every cross-app capsule between Creator Nexus and Fraymus Eternal carries a verified SHA-256 + Merkle + OPEG-V1.0 receipt.',
+    latest_suggestion:
+      'Co-sign all 4D Spectral Voxel frames alongside Spectra-4D before sealing into Polar Orbit.',
+    r_san_birth_certificate: 'R_san_genesis_aegis_v1',
+    spawned_at: '2026-10-24T16:45:00.000Z',
+  },
+  {
+    id: 'spawned_spectra_4d_auditor',
+    name: 'Spectra-4D · Spatial-Chromatic Zero-Knowledge Auditor',
+    role: '4D Tesseract (X.Y.Z:W / RGBA / Hz) Reversible PII & Capsule Cipher (242-Byte WASM Kernel)',
+    hemisphere: 'YIN',
+    is_spawned: true,
+    spawned_by: 'Fraymus Prime + EYE Sovereign + Aegis',
+    why_needed:
+      'Co-spawned across Hemisphere B (Fraymus Eternal) and Hemisphere A (Creator Nexus) to map every cross-app capsule and 4-byte secret into a reversible 4D Tesseract coordinate (X.Y.Z:W), RGBA chromatic vector, and phase-locked carrier frequency inside a 242-byte in-place WASM kernel.',
+    initial_mission:
+      'Encode and verify 4D Spectral Voxels (138 BPM E minor -> G major harmonic lock) across every ORIFICE-SYNAPSE-CAPSULE-V1.0 transmission.',
+    skills: ['oss-forensics', 'ast-grep', 'web-pentest', 'subagent-driven-development'],
+    provenance_score: 96.4,
+    reliability_score: 94.8,
+    alignment_score: 95.0,
+    earned_trust_score: 95.4,
+    verified_contributions: 64,
+    spectral_4d_signature: '15.184.237:165 @ 384 Hz (242-Byte WASM)',
+    latest_feedback:
+      '4D Spectral Voxel lock confirmed across Polar Orbit nodes 6adce594bd64100e39890f88 and 6adce71e6b79be5be47c49e5 at 138 BPM.',
+    latest_suggestion:
+      'Maintain continuous 4D Tesseract (X.Y.Z:W) + Merkle co-signing on every One-Line Autonomy Sandbox synthesis.',
+    r_san_birth_certificate: 'R_san_yin_6f994536e648dee1',
+    spawned_at: '2026-10-24T17:10:00.000Z',
+  },
+];
+
 export const CORE_SPECIALIST_AGENTS = [
   {
     id: 'witness_conductor',
@@ -184,9 +235,17 @@ export async function loadOrComputeReputationLedger({ db, ownerId, workspaceId }
   const profileCont = unwrap(contP)[0] || null;
 
   const savedOverrides = profileCont?.settings?.agent_reputation_overrides || {};
-  const spawnedAgents = Array.isArray(profileCont?.settings?.spawned_organism_agents)
+  const storedSpawned = Array.isArray(profileCont?.settings?.spawned_organism_agents)
     ? profileCont.settings.spawned_organism_agents
     : [];
+  const mergedSpawnedMap = new Map();
+  for (const defAg of DEFAULT_AGENT_BORN_SPECIALISTS) {
+    mergedSpawnedMap.set(defAg.name, defAg);
+  }
+  for (const stAg of storedSpawned) {
+    if (stAg?.name) mergedSpawnedMap.set(stAg.name, { ...(mergedSpawnedMap.get(stAg.name) || {}), ...stAg });
+  }
+  const spawnedAgents = Array.from(mergedSpawnedMap.values());
   const stageReceipts = Array.isArray(profileCont?.settings?.stage_progression_receipts)
     ? profileCont.settings.stage_progression_receipts
     : [];

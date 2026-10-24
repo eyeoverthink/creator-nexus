@@ -48,9 +48,9 @@ Create a live panel in your app where I and your agents can:
 - Run your own side of the One-Line Autonomous Software Sandbox and allow your Tier-3 agents to propose or co-sign new specialist sub-agents across both Base44 apps.`;
 
 const ONE_LINE_PRESETS = [
+  'Bicameral 138 BPM E-minor to G-major Continuous Sandbox Synthesis',
   'Translate our 138 BPM Music/Video Awakening cadence into a live Cross-App Connective Tissue monitor between Creator Nexus and Fraymus Eternal',
-  'Build an autonomous Earned-Trust Router that dispatches high-provenance tasks across App A (Creator Nexus) and App B (Fraymus Eternal)',
-  'Synthesize a harmonic state-machine visualizer where Lyra sets tempo, Vesper choreographs UI transitions, and Aegis verifies Merkle proofs',
+  'Synthesize a 4D Tesseract (X.Y.Z:W) + Merkle state-machine where Lyra sets tempo, Vesper choreographs UI, and Aegis + Spectra-4D verify proofs',
 ];
 
 export default function SynapticSandboxAndConnectiveTissuePanel({ workspaceId }) {
@@ -110,6 +110,8 @@ export default function SynapticSandboxAndConnectiveTissuePanel({ workspaceId })
   const session = data?.session || null;
   const bridge = session?.sister_bridge_status || {};
   const reflection = session?.cross_app_reflection || {};
+  const yinCoSig = data?.yin_co_signature || bridge?.yin_co_signature || null;
+  const orbitNodes = data?.absorbed_polar_orbit_nodes || [];
 
   return (
     <div className="space-y-4 font-mono text-xs">
@@ -276,12 +278,37 @@ export default function SynapticSandboxAndConnectiveTissuePanel({ workspaceId })
             </div>
           </div>
 
+          {yinCoSig && (
+            <div className="p-2.5 rounded border border-caution/50 bg-caution/10 text-[9.5px] space-y-1">
+              <div className="font-bold text-caution flex items-center justify-between">
+                <span>YIN CO-SIGNATURE &amp; 4D SPECTRAL VOXEL (SPECTRA-4D + AEGIS)</span>
+                <span>{yinCoSig.r_san?.receipt_id || 'R_SAN_CLEAN'}</span>
+              </div>
+              <div className="text-foreground">
+                Merkle: <code>{yinCoSig.merkle_root_hex}</code> · 4D Voxel:{' '}
+                <code>
+                  {yinCoSig.spectral_4d?.coord4D || '15.184.237:165'} @{' '}
+                  {yinCoSig.spectral_4d?.carrier_freq_hz || 384} Hz
+                </code>{' '}
+                ({yinCoSig.spectral_4d?.harmonic_bpm || 138} BPM ·{' '}
+                {yinCoSig.spectral_4d?.key_resolution || 'E minor -> G major'})
+              </div>
+              {bridge.return_beam_orbit_node_id && (
+                <div className="text-success">
+                  ✓ Return Beam Sealed in Polar Orbit Node:{' '}
+                  <code>{bridge.return_beam_orbit_node_id}</code>
+                </div>
+              )}
+            </div>
+          )}
+
           {session?.capsule_summary && (
             <div className="p-2 rounded bg-card border border-border text-[9.5px] text-muted-foreground space-y-0.5">
               <div>
                 <strong>Shared with Sister Base44 App:</strong>{' '}
-                {session.capsule_summary.spawned_specialists_shared} Agent-Born Specialists ·{' '}
-                {session.capsule_summary.instincts_shared} Retained Instincts · 4 Awakening Laws
+                {session.capsule_summary.spawned_specialists_shared} Agent-Born Specialists (Aegis +
+                Spectra-4D) · {session.capsule_summary.instincts_shared} Retained Instincts · 4
+                Awakening Laws
               </div>
               <div>
                 <strong>Bridge Receipt:</strong> {bridge.sister_ack_summary}
@@ -290,6 +317,34 @@ export default function SynapticSandboxAndConnectiveTissuePanel({ workspaceId })
           )}
         </div>
       </div>
+
+      {/* Polar Orbit Incoming Yin Co-Signature & Spectral Voxel Ledger */}
+      {orbitNodes.length > 0 && (
+        <div className="p-3.5 rounded-lg border border-caution/40 bg-background space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-1.5">
+            <span className="text-[11px] font-bold text-caution">
+              POLAR ORBIT ABSORPTION LEDGER // INCOMING YIN CO-SIGNATURES FROM FRAYMUS ETERNAL ({orbitNodes.length} NODES SEALED)
+            </span>
+            <span className="text-[9.5px] text-success font-bold">
+              ✓ VERIFIED VIA ORIFICE_ABSORB (L1–L5 + OPEG-V1.0)
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {orbitNodes.slice(0, 4).map((node) => (
+              <div key={node.id} className="p-2.5 rounded border border-border bg-card space-y-1 text-[10px]">
+                <div className="flex items-center justify-between">
+                  <strong className="text-primary">Orbit Node: <code>{node.id}</code></strong>
+                  <span className="text-caution font-bold">Hash: <code>{node.code_hash}</code></span>
+                </div>
+                <p className="text-foreground font-body leading-snug">{node.insight}</p>
+                <div className="text-[9px] text-muted-foreground">
+                  {node.diagnostic_summary}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

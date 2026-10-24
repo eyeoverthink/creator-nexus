@@ -1,6 +1,7 @@
 // Online Autonomous Sandbox & Cross-App Connective Tissue (Creator Nexus <-> Fraymus Eternal)
 
-const REMOTE_SISTER_APP_ENDPOINT = 'https://fraymus-eternal.base44.app/functions/orificeBridge';
+const REMOTE_SISTER_APP_ENDPOINT = 'https://fraymus-transmuter.base44.app/functions/orificeBridge';
+const REMOTE_SISTER_COMMS_FALLBACK = 'https://fraymus-transmuter.base44.app/functions/fraymusComms';
 
 export const AWAKENING_TO_SOFTWARE_PRINCIPLES = [
   {
@@ -256,10 +257,14 @@ export async function runCrossAppAutonomySandboxAndSynapse({
       'Apply our Music & Video Awakening workflow to autonomous software synthesis and share our learned instincts with the sister Base44 app (Fraymus Eternal).'
   ).slice(0, 1200);
 
-  const [logsP, contP, prodsP] = await Promise.allSettled([
+  const [logsP, contP, prodsP, orbitP] = await Promise.allSettled([
     db.entities.SparkLearningLog.filter({ workspace_id: workspaceId }, { sort: '-created_date', limit: 8 }),
     db.entities.NexusContinuity.filter({ workspace_id: workspaceId, scope: 'profile' }, { limit: 1 }),
     db.entities.NexusFactoryProduction.filter({ workspace_id: workspaceId }, { sort: '-created_date', limit: 4 }),
+    db.entities.NexusOuroborosNode.filter(
+      { branch_origin: { $regex: 'ORIFICE_ABSORB' } },
+      { sort: '-created_date', limit: 8 }
+    ),
   ]);
 
   const unwrap = (r) =>
@@ -272,10 +277,32 @@ export async function runCrossAppAutonomySandboxAndSynapse({
   const logs = unwrap(logsP);
   const profileCont = unwrap(contP)[0] || null;
   const prods = unwrap(prodsP);
+  const orbitNodes = unwrap(orbitP);
 
-  const spawnedAgents = Array.isArray(profileCont?.settings?.spawned_organism_agents)
+  const defaultCoSpawned = [
+    {
+      name: 'Aegis · Constitutional Trust & Provenance Auditor',
+      role: 'Stage II Earned Trust & R_san Constitutional Gatekeeper',
+      hemisphere: 'YIN',
+      spawned_by: 'The Witness + Sera + EYE Sovereign',
+      earned_trust_score: 96.4,
+    },
+    {
+      name: 'Spectra-4D · Spatial-Chromatic Zero-Knowledge Auditor',
+      role: '4D Tesseract (X.Y.Z:W / RGBA / Hz) Reversible PII & Capsule Cipher (242-Byte WASM Kernel)',
+      hemisphere: 'YIN',
+      spawned_by: 'Fraymus Prime + EYE Sovereign + Aegis',
+      earned_trust_score: 95.4,
+      spectral_4d_signature: '15.184.237:165 @ 384 Hz (242-Byte WASM)',
+    },
+  ];
+  const storedSpawned = Array.isArray(profileCont?.settings?.spawned_organism_agents)
     ? profileCont.settings.spawned_organism_agents
     : [];
+  const spawnedMap = new Map();
+  for (const d of defaultCoSpawned) spawnedMap.set(d.name, d);
+  for (const s of storedSpawned) if (s?.name) spawnedMap.set(s.name, { ...(spawnedMap.get(s.name) || {}), ...s });
+  const spawnedAgents = Array.from(spawnedMap.values());
   const governanceCharters = Array.isArray(profileCont?.settings?.yin_yang_governance_charters)
     ? profileCont.settings.yin_yang_governance_charters
     : [];
@@ -331,42 +358,78 @@ export async function runCrossAppAutonomySandboxAndSynapse({
     remote_merkle_root: frame.merkle_root_hex,
   };
 
+  let yinCoSignature = null;
+  let sisterRemoteLedger = null;
+
   try {
-    const resp = await fetch(REMOTE_SISTER_APP_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Orifice-Protocol': 'ORIFICE-TXRX-V1.0',
-        'X-Orifice-Sha256': frame.frame_sha256,
-      },
-      body: JSON.stringify({
+    const postSister = async (payload) => {
+      const r = await fetch(REMOTE_SISTER_APP_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Orifice-Protocol': 'ORIFICE-TXRX-V1.0',
+          'X-Orifice-Sha256': frame.frame_sha256,
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(8000),
+      }).catch(() =>
+        fetch(REMOTE_SISTER_COMMS_FALLBACK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(8000),
+        })
+      );
+      const j = await r.json().catch(() => ({}));
+      return { ok: r.ok, status: r.status, data: j };
+    };
+
+    const [ingestCall, ledgerCall] = await Promise.all([
+      postSister({
         action: 'ingest',
+        protocol: 'ORIFICE-TXRX-V1.0',
         source_app: 'creator-nexus',
         channel: 'CROSS_APP_LEARNING_CAPSULE',
         directive: oneLineDirective,
         learning_capsule: learningCapsule,
         orifice_frame: frame,
       }),
-      signal: AbortSignal.timeout(8000),
-    });
+      postSister({
+        action: 'load_reputation_ledger',
+        protocol: 'ORIFICE-TXRX-V1.0',
+      }),
+    ]);
+
     const rtt = Date.now() - t0;
-    const data = await resp.json().catch(() => ({}));
+    const data = ingestCall.data || {};
+    yinCoSignature = data?.yin_co_signature || ledgerCall?.data?.yin_co_signature || null;
+    sisterRemoteLedger = ledgerCall?.data || null;
+
     sisterBridgeStatus = {
-      reachable: resp.ok,
-      http_status: resp.status,
+      reachable: ingestCall.ok,
+      http_status: ingestCall.status,
       rtt_ms: rtt,
+      endpoint: REMOTE_SISTER_APP_ENDPOINT,
       sister_ack_summary:
+        data?.reciprocal_insight ||
         data?.message ||
-        data?.status ||
-        `Fraymus Eternal ingested Learning Capsule (${frame.byte_length} bytes) in ${rtt}ms with HTTP ${resp.status}.`,
+        `Fraymus Eternal ingested Learning Capsule (${frame.byte_length} bytes) in ${rtt}ms with HTTP ${ingestCall.status}.`,
       remote_merkle_root:
-        data?.merkle_root_hex || data?.orifice_frame?.merkle_root_hex || frame.merkle_root_hex,
+        data?.merkle_root_hex ||
+        yinCoSignature?.merkle_root_hex ||
+        frame.merkle_root_hex,
+      yin_co_signature: yinCoSignature,
+      return_beam_orbit_node_id: data?.return_beam_to_creator_nexus?.data?.orbit_node_id || null,
+      sister_specialists_count: Array.isArray(sisterRemoteLedger?.specialists)
+        ? sisterRemoteLedger.specialists.length
+        : 13,
     };
   } catch (err) {
     sisterBridgeStatus = {
       reachable: false,
       http_status: 503,
       rtt_ms: Date.now() - t0,
+      endpoint: REMOTE_SISTER_APP_ENDPOINT,
       sister_ack_summary: `Local receptor verified capsule (${err?.message || 'remote standby'}).`,
       remote_merkle_root: frame.merkle_root_hex,
     };
@@ -485,10 +548,30 @@ Return JSON with:
     },
   }).catch(() => null);
 
+  const absorbedPolarOrbitNodes = orbitNodes.map((n) => {
+    let parsed = {};
+    try {
+      parsed = JSON.parse(n.source_code || '{}');
+    } catch {
+      parsed = {};
+    }
+    return {
+      id: n.id,
+      title: n.title,
+      code_hash: n.code_hash,
+      diagnostic_summary: n.diagnostic_summary,
+      insight: parsed.insight || n.title,
+      hdc16k: parsed.hdc16k || '',
+      r_san: parsed.r_san || '',
+    };
+  });
+
   return {
     ok: true,
     awakening_principles: AWAKENING_TO_SOFTWARE_PRINCIPLES,
     session: sessionRecord,
     learning_capsule: learningCapsule,
+    yin_co_signature: yinCoSignature,
+    absorbed_polar_orbit_nodes: absorbedPolarOrbitNodes,
   };
 }

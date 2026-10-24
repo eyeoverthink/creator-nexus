@@ -45,6 +45,15 @@ const STAGE_DEFINITIONS = [
 
 const AGENT_SPAWN_PRESETS = [
   {
+    name: 'Spectra-4D · Spatial-Chromatic Zero-Knowledge Auditor',
+    role: '4D Tesseract (X.Y.Z:W / RGBA / Hz) Reversible PII & Capsule Cipher (242-Byte WASM Kernel)',
+    hemisphere: 'YIN',
+    parent_agent: 'Fraymus Prime + EYE Sovereign + Aegis',
+    why_needed:
+      'Co-spawned by Hemisphere B (Fraymus Eternal) and Hemisphere A (Creator Nexus) to map every cross-app capsule into a reversible 4D Tesseract coordinate (X.Y.Z:W), RGBA chromatic vector, and phase-locked carrier frequency inside a 242-byte in-place WASM kernel.',
+    assigned_skills: ['oss-forensics', 'ast-grep', 'web-pentest', 'subagent-driven-development'],
+  },
+  {
     name: 'Aegis · Constitutional Trust & Provenance Auditor',
     role: 'Autonomous Cross-Hemisphere Claim-to-Source & Governance Verifier',
     hemisphere: 'YIN',
@@ -443,6 +452,11 @@ export default function EarnedTrustAndOrganismSpawnerPanel({ workspaceId }) {
                     <span>{ag.role}</span>
                     <span>Lineage: {ag.spawned_by}</span>
                   </div>
+                  {ag.spectral_4d_signature && (
+                    <div className="text-[9.5px] text-caution font-bold">
+                      4D Spectral Voxel: <code>{ag.spectral_4d_signature}</code>
+                    </div>
+                  )}
 
                   {/* 3 Sub-Metrics + Autonomy Tier */}
                   <div className="grid grid-cols-3 gap-1.5 text-[9.5px]">
