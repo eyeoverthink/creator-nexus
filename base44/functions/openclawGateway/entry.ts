@@ -49,6 +49,7 @@ import {
 } from '../../shared/agentReputationAndOrganism.ts';
 import {
   runCrossAppAutonomySandboxAndSynapse,
+  runAutonomousAgentPracticeSandbox,
 } from '../../shared/crossAppAutonomySandbox.ts';
 // Bundled with crossAppAutonomySandbox.ts
 
@@ -232,6 +233,7 @@ export default async function(req) {
       'run_stage_agent_feedback',
       'agent_spawn_specialist',
       'cross_app_autonomy_sandbox',
+      'run_agent_practice_sandbox',
       'list_dispatch_jobs',
       'hermes_fleet_manifest',
       'execute_native_skill',
@@ -1063,6 +1065,24 @@ export default async function(req) {
         db,
         ownerId,
         workspaceId,
+        body,
+        rSan,
+        computeSha256Hex: sha256Hex,
+        inspectOrificeFrameL1ToL5,
+      });
+      return Response.json(res);
+    }
+
+    if (action === 'run_agent_practice_sandbox') {
+      const rSan = computeOpegReceipt({
+        g: 1.0,
+        gamma: 1.41421356,
+        epsilon: 0.001,
+        goal: `Isolated Agent Creative Practice Sandbox: ${body.method_id || 'polyrhythmic_scene_dissolve'}`,
+      });
+      const res = await runAutonomousAgentPracticeSandbox({
+        db,
+        ownerId,
         body,
         rSan,
         computeSha256Hex: sha256Hex,

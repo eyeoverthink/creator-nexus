@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import AgentCreativePracticeSandboxZone from './AgentCreativePracticeSandboxZone';
 import {
   Sparkles,
   Code2,
@@ -317,6 +318,9 @@ export default function SynapticSandboxAndConnectiveTissuePanel({ workspaceId })
           )}
         </div>
       </div>
+
+      {/* Dedicated Quarantined Agent Practice & Refinement Sandbox Workspace */}
+      <AgentCreativePracticeSandboxZone />
 
       {/* Polar Orbit Incoming Yin Co-Signature & Spectral Voxel Ledger */}
       {orbitNodes.length > 0 && (
