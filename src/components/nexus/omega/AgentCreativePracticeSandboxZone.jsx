@@ -10,13 +10,29 @@ import {
   ShieldCheck,
   RefreshCw,
   FileText,
+  GitBranch,
+  Copy,
+  Check,
+  ExternalLink,
 } from 'lucide-react';
+
+const DEFAULT_COPILOT_PROMPT = `# GITHUB COPILOT / CODESPACES SOVEREIGN CONTINUITY PROMPT
+You are operating inside a 100% self-contained, platform-independent Sovereign Creative & Bicameral AI Sandbox repository ("fraymus-sovereign-sandbox").
+1. Zero Proprietary SDKs: Never import or depend on Base44 or any closed cloud wrapper. Run 100% standalone via index.html, sovereign-kernel.js, local Ollama (http://127.0.0.1:11434), or GitHub Models.
+2. 9 Specialist Agents: The Witness & Conductor, Lyra (138 BPM E minor -> G major), Vesper, Kael, Sera, Orin, Fraymus Transmuter, Aegis, and Spectra-4D (4D Tesseract X.Y.Z:W @ Hz).
+3. 3-Pass Autonomous Practice & Refinement Loop: Pass 1 (Yang Experimental Genesis) -> Pass 2 (Yin Peer Critique & Provenance Audit) -> Pass 3 (Witness Refined Masterwork persisted to sandbox-ledger.json).`;
 
 export default function AgentCreativePracticeSandboxZone() {
   const { toast } = useToast();
   const [practiceData, setPracticeData] = useState(null);
-  const [selectedMethod, setSelectedMethod] = useState('polyrhythmic_scene_dissolve');
-  const [customTopic, setCustomTopic] = useState('');
+  const [selectedMethod, setSelectedMethod] = useState('tesseract_4d_micro_synth');
+  const [customTopic, setCustomTopic] = useState(
+    'Method III: 4D Spectral Voxel Audio-Visual Micro-Instrument — Self-Contained Base44-Free Continuity'
+  );
+  const [repoName, setRepoName] = useState('eyeoverthink/fraymus-sovereign-sandbox');
+  const [githubExport, setGithubExport] = useState(null);
+  const [copilotPrompt, setCopilotPrompt] = useState(DEFAULT_COPILOT_PROMPT);
+  const [copiedCopilot, setCopiedCopilot] = useState(false);
   const [busy, setBusy] = useState('');
 
   const runPracticeCycle = useCallback(
@@ -52,8 +68,58 @@ export default function AgentCreativePracticeSandboxZone() {
     [customTopic, selectedMethod, toast]
   );
 
+  const handleExportStandaloneGithub = async () => {
+    setBusy('export_gh');
+    try {
+      const res = await base44.functions.invoke('openclawGateway', {
+        action: 'export_standalone_github_sandbox',
+        protocol: 'ORIFICE-TXRX-V1.0',
+        method_id: selectedMethod,
+        practice_topic: customTopic.trim() || undefined,
+        repo_full_name: repoName.trim() || 'eyeoverthink/fraymus-sovereign-sandbox',
+        run_llm: true,
+        push_to_github: true,
+      });
+      if (res?.data?.ok) {
+        if (res.data.practice_result) {
+          setPracticeData(res.data.practice_result);
+        }
+        setGithubExport(res.data.github_export);
+        if (res.data.copilot_bootstrap_prompt) {
+          setCopilotPrompt(res.data.copilot_bootstrap_prompt);
+        }
+        toast({
+          title: res.data.github_export?.pushed
+            ? `Pushed Standalone Base44-Free Sandbox to ${res.data.github_export.repo_full_name}`
+            : '3-Pass LLM Practice & Standalone Bundle Generated',
+          description: res.data.github_export?.pushed
+            ? `${res.data.github_export.committed_files?.length || 5} self-contained files committed (including .github/copilot-instructions.md).`
+            : res.data.github_export?.error || 'Ready for GitHub Copilot.',
+        });
+      }
+    } catch (err) {
+      toast({
+        title: 'GitHub Export Error',
+        description: err?.message || 'Could not push standalone sandbox repo',
+        variant: 'destructive',
+      });
+    } finally {
+      setBusy('');
+    }
+  };
+
+  const handleCopyCopilotPrompt = () => {
+    navigator.clipboard.writeText(copilotPrompt);
+    setCopiedCopilot(true);
+    toast({
+      title: 'GitHub Copilot Continuity Prompt Copied',
+      description: 'Paste into GitHub Copilot / Copilot Workspace / Codespaces to evolve the standalone repo independently.',
+    });
+    setTimeout(() => setCopiedCopilot(false), 2500);
+  };
+
   useEffect(() => {
-    runPracticeCycle('polyrhythmic_scene_dissolve', false);
+    runPracticeCycle('tesseract_4d_micro_synth', false);
   }, []);
 
   const ws = practiceData?.sandbox_workspace;
@@ -70,7 +136,7 @@ export default function AgentCreativePracticeSandboxZone() {
             <FlaskConical size={13} /> ISOLATED AGENT CREATIVE PRACTICE &amp; REFINEMENT SANDBOX WORKSPACE
           </span>
           <p className="text-[10.5px] text-muted-foreground font-body">
-            A safe, quarantined autonomous workspace (<code>{ws?.room_id || 'ws-agent-creative-practice-sandbox'}</code>) where your 9 specialists independently practice new creative methods through 3 passes (Genesis → Peer Critique → Refined Synthesis) without touching production drafts.
+            A safe, quarantined autonomous workspace (<code>{ws?.room_id || 'ws-agent-creative-practice-sandbox'}</code>) where your 9 specialists independently practice new creative methods through 3 passes (Genesis → Peer Critique → Refined Synthesis) and export 100% platform-free, self-contained repositories to GitHub &amp; Copilot.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -126,7 +192,7 @@ export default function AgentCreativePracticeSandboxZone() {
           ) : (
             <Sparkles size={12} />
           )}
-          Let Agents Practice &amp; Self-Refine (3 Passes)
+          Let Agents Practice &amp; Self-Refine (3-Pass LLM)
         </Button>
         <Button
           size="sm"
@@ -213,6 +279,87 @@ export default function AgentCreativePracticeSandboxZone() {
           </div>
         </div>
       )}
+
+      {/* Sovereign Base44-Free GitHub Repository & GitHub Copilot Continuity Exporter */}
+      <div className="p-3 rounded border border-caution/50 bg-card space-y-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
+          <div>
+            <span className="text-[11px] font-bold text-caution flex items-center gap-1.5">
+              <GitBranch size={13} /> SOVEREIGN GITHUB &amp; COPILOT FREE-ENVIRONMENT EXPORTER (ZERO BASE44 DEPENDENCY)
+            </span>
+            <p className="text-[10px] text-muted-foreground font-body">
+              Create or push a 100% self-contained, platform-independent GitHub repository containing <code>index.html</code>, <code>sovereign-kernel.js</code>, <code>sandbox-ledger.json</code>, and <code>.github/copilot-instructions.md</code> so your agents and GitHub Copilot can evolve independently forever.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handleCopyCopilotPrompt}
+            className="h-7 text-[10px] px-2.5 gap-1"
+          >
+            {copiedCopilot ? <Check size={11} className="text-success" /> : <Copy size={11} />}
+            {copiedCopilot ? 'Copied Copilot Charter!' : 'Copy GitHub Copilot Continuity Prompt'}
+          </Button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="text"
+            value={repoName}
+            onChange={(e) => setRepoName(e.target.value)}
+            placeholder="owner/repo-name (e.g. eyeoverthink/fraymus-sovereign-sandbox)"
+            className="flex-1 h-8 rounded bg-background border border-input px-3 text-xs text-foreground"
+          />
+          <Button
+            size="sm"
+            disabled={Boolean(busy)}
+            onClick={handleExportStandaloneGithub}
+            className="h-8 text-xs px-3 gap-1.5 shrink-0"
+          >
+            {busy === 'export_gh' ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <GitBranch size={12} />
+            )}
+            Create / Push Standalone Base44-Free Repo to GitHub
+          </Button>
+        </div>
+
+        {githubExport && (
+          <div className="p-2.5 rounded border border-success/40 bg-background space-y-1.5 text-[10px]">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-bold text-success">
+                {githubExport.pushed
+                  ? `✓ STANDALONE REPO LIVE ON GITHUB: ${githubExport.repo_full_name}`
+                  : `Bundle Ready for ${githubExport.repo_full_name}`}
+              </span>
+              <a
+                href={githubExport.repo_html_url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline flex items-center gap-1 font-bold"
+              >
+                Open {githubExport.repo_full_name} on GitHub <ExternalLink size={10} />
+              </a>
+            </div>
+            {githubExport.committed_files?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {githubExport.committed_files.map((f) => (
+                  <a
+                    key={f.path}
+                    href={f.html_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-2 py-0.5 rounded bg-card border border-border hover:border-primary text-[9.5px] text-foreground flex items-center gap-1"
+                  >
+                    <code>{f.path}</code> <ExternalLink size={9} />
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Footer: Isolated Sandbox Drafts & Sister Co-Sign */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[10px] text-muted-foreground">

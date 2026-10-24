@@ -51,6 +51,9 @@ import {
   runCrossAppAutonomySandboxAndSynapse,
   runAutonomousAgentPracticeSandbox,
 } from '../../shared/crossAppAutonomySandbox.ts';
+import {
+  exportStandaloneGithubSandboxRepo,
+} from '../../shared/standaloneGithubSandboxExporter.ts';
 // Bundled with crossAppAutonomySandbox.ts
 
 function slugify(str) {
@@ -234,6 +237,7 @@ export default async function(req) {
       'agent_spawn_specialist',
       'cross_app_autonomy_sandbox',
       'run_agent_practice_sandbox',
+      'export_standalone_github_sandbox',
       'list_dispatch_jobs',
       'hermes_fleet_manifest',
       'execute_native_skill',
@@ -1089,6 +1093,34 @@ export default async function(req) {
         inspectOrificeFrameL1ToL5,
       });
       return Response.json(res);
+    }
+
+    if (action === 'export_standalone_github_sandbox') {
+      const rSan = computeOpegReceipt({
+        g: 1.0,
+        gamma: 1.41421356,
+        epsilon: 0.001,
+        goal: `Export Standalone Base44-Free GitHub Sandbox (${body.repo_full_name || 'eyeoverthink/fraymus-sovereign-sandbox'})`,
+      });
+      const practiceRes = await runAutonomousAgentPracticeSandbox({
+        db,
+        ownerId,
+        body: {
+          ...body,
+          method_id: body.method_id || 'tesseract_4d_micro_synth',
+          run_llm: body.run_llm !== false,
+        },
+        rSan,
+        computeSha256Hex: sha256Hex,
+        inspectOrificeFrameL1ToL5,
+      });
+      const exportRes = await exportStandaloneGithubSandboxRepo({
+        db,
+        ownerId,
+        body,
+        practiceRes,
+      });
+      return Response.json(exportRes);
     }
 
     if (action === 'absorb_all_continuity') {
