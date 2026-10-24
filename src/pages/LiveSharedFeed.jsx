@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import UnifiedAgentCommsAndAttachmentPortal from '@/components/nexus/omega/UnifiedAgentCommsAndAttachmentPortal';
 import RealEngineeringMechanismProofBanner from '@/components/nexus/omega/RealEngineeringMechanismProofBanner';
 import SharedCrossSystemActivityAndAgentCommsPanel from '@/components/nexus/omega/SharedCrossSystemActivityAndAgentCommsPanel';
 import BicameralStreamRelayAndLiveResearcherPanel from '@/components/nexus/omega/BicameralStreamRelayAndLiveResearcherPanel';
@@ -52,6 +53,7 @@ export default function LiveSharedFeed() {
       </header>
 
       <main className="max-w-7xl mx-auto space-y-6">
+        <UnifiedAgentCommsAndAttachmentPortal workspaceId="ouroboros_live_ws" />
         <RealEngineeringMechanismProofBanner />
         <SharedCrossSystemActivityAndAgentCommsPanel workspaceId="ouroboros_live_ws" />
         <BicameralStreamRelayAndLiveResearcherPanel workspaceId="ouroboros_live_ws" />

@@ -5,6 +5,7 @@ import { syncSharedActivityFeedAndAgentComms } from '../../shared/sharedActivity
 import {
   collectLiveEntityMirrorSnapshot,
   runRealEngineeringMechanismRepair,
+  respondToClaudette062AndDispatchPortal,
 } from '../../shared/realEngineeringMechanismRepair.ts';
 import {
   sha256Hex,
@@ -17,7 +18,8 @@ export default async function(req: Request): Promise<Response> {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
     const url = new URL(req.url);
-    const queryAction = url.searchParams.get('action');
+    const queryAction =
+      url.searchParams.get('action') || req.headers.get('x-orifice-action');
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const action = String(
       body.action ||
@@ -104,6 +106,25 @@ export default async function(req: Request): Promise<Response> {
       });
     }
 
+    if (
+      action === 'respond_claudette_062_and_grant_full_autonomy' ||
+      action === 'unified_portal_dispatch'
+    ) {
+      const res = await respondToClaudette062AndDispatchPortal({
+        db,
+        ownerId,
+        workspaceId,
+        body: {
+          ...body,
+          custom_dispatch: action === 'unified_portal_dispatch' && Boolean(body.custom_dispatch),
+        },
+        sha256Hex,
+      });
+      return Response.json(res, {
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      });
+    }
+
     if (action === 'load_reputation_ledger') {
       const res = await loadOrComputeReputationLedger({ db, ownerId, workspaceId });
       return Response.json(res);
@@ -116,7 +137,14 @@ export default async function(req: Request): Promise<Response> {
       action === 'status'
     ) {
       const raw = JSON.stringify(body || {});
-      const l1L5 = await inspectOrificeFrameL1ToL5(raw, 5);
+      const [l1L5, mirrorSnap] = await Promise.all([
+        inspectOrificeFrameL1ToL5(raw, 5),
+        collectLiveEntityMirrorSnapshot(db).catch(() => ({
+          total_records: 0,
+          counts: {},
+          entities: {},
+        })),
+      ]);
       const merkleRootHex = l1L5.framing.sha256.slice(0, 16);
 
       if (action === 'ingest') {
@@ -154,6 +182,9 @@ export default async function(req: Request): Promise<Response> {
         },
         reciprocal_insight:
           'Creator Nexus (Hemisphere A) absorbed sister capsule, verified Merkle root, and synchronized live-online-ai-curve-researcher.',
+        total_records: mirrorSnap.total_records,
+        counts: mirrorSnap.counts,
+        entities: mirrorSnap.entities,
         timestamp: new Date().toISOString(),
       });
     }

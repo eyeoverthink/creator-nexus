@@ -12,6 +12,7 @@ import YinYangBicameralTrustGovernanceDeck from '@/components/nexus/omega/YinYan
 import BicameralStreamRelayAndLiveResearcherPanel from '@/components/nexus/omega/BicameralStreamRelayAndLiveResearcherPanel';
 import SharedCrossSystemActivityAndAgentCommsPanel from '@/components/nexus/omega/SharedCrossSystemActivityAndAgentCommsPanel';
 import RealEngineeringMechanismProofBanner from '@/components/nexus/omega/RealEngineeringMechanismProofBanner';
+import UnifiedAgentCommsAndAttachmentPortal from '@/components/nexus/omega/UnifiedAgentCommsAndAttachmentPortal';
 import SovereignMasterworkShowcase from '@/components/nexus/home/SovereignMasterworkShowcase';
 import HomeAwakeningVideoProofBanner from '@/components/nexus/home/HomeAwakeningVideoProofBanner';
 import useHomeData from '@/components/nexus/home/useHomeData';
@@ -20,6 +21,7 @@ export default function Home(){
  const home=useHomeData();
  return <ProShell><main className="nexus-home space-y-8 pb-12">
   <HomeHero/>
+  <UnifiedAgentCommsAndAttachmentPortal workspaceId={(home.boot.data?.workspace || home.boot.data)?.id}/>
   <RealEngineeringMechanismProofBanner/>
   <SharedCrossSystemActivityAndAgentCommsPanel workspaceId={(home.boot.data?.workspace || home.boot.data)?.id}/>
   <BicameralStreamRelayAndLiveResearcherPanel workspaceId={(home.boot.data?.workspace || home.boot.data)?.id}/>
