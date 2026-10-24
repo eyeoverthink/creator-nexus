@@ -97,7 +97,7 @@ export default function HermesHub() {
                 HERMES SOVEREIGN FLEET // 29 SKILLS + SOLO SUB-AGENT ORCHESTRATOR
               </span>
               <h1 className="text-sm font-semibold text-foreground">
-                Hermes VPS Daemon (srv1944678 · 45.82.73.49 / 100.110.6.44) + Canonical VPS 2067485 Mesh
+                Hermes VPS Daemon (srv1944678) + Canonical VPS 2067485 Mesh
               </h1>
               <span className="px-2 py-0.5 rounded bg-success/15 text-success text-[10px] font-bold">
                 ● KEYLESS ORIFICE-TXRX-V1.0 VERIFIED

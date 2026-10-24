@@ -408,8 +408,8 @@ export default async function(req) {
     // =========================================================================
     if (action === 'enroll_node') {
       const nodeId = String(body.node_id || body.agent_id || 'hermes-vps-node');
-      const tailscaleIp = String(body.tailscale_ip || '100.110.6.44');
-      const publicIp = String(body.public_ip || '45.82.73.49');
+      const tailscaleIp = String(body.tailscale_ip || Deno.env.get('DEFAULT_NODE_TAILSCALE_IP') || '');
+      const publicIp = String(body.public_ip || Deno.env.get('DEFAULT_NODE_PUBLIC_IP') || '');
       const capabilities = Array.isArray(body.capabilities)
         ? body.capabilities
         : ['vps_daemon_scrape', 'ollama_inference', 'tailnet_router', 'lora_bridge'];
@@ -620,7 +620,7 @@ export default async function(req) {
     }
 
     if (action === 'claim_dispatch_job') {
-      const workerNode = String(body.worker_node || 'desktop-actid8c (100.88.61.56)');
+      const workerNode = String(body.worker_node || Deno.env.get('DEFAULT_WORKER_NODE') || 'unassigned');
       const targetJobId = String(body.job_id || '');
 
       let jobToClaim = null;
