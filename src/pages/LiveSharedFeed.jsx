@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import RealEngineeringMechanismProofBanner from '@/components/nexus/omega/RealEngineeringMechanismProofBanner';
 import SharedCrossSystemActivityAndAgentCommsPanel from '@/components/nexus/omega/SharedCrossSystemActivityAndAgentCommsPanel';
 import BicameralStreamRelayAndLiveResearcherPanel from '@/components/nexus/omega/BicameralStreamRelayAndLiveResearcherPanel';
 import { Globe, ExternalLink, ArrowLeft, Terminal } from 'lucide-react';
@@ -51,6 +52,7 @@ export default function LiveSharedFeed() {
       </header>
 
       <main className="max-w-7xl mx-auto space-y-6">
+        <RealEngineeringMechanismProofBanner />
         <SharedCrossSystemActivityAndAgentCommsPanel workspaceId="ouroboros_live_ws" />
         <BicameralStreamRelayAndLiveResearcherPanel workspaceId="ouroboros_live_ws" />
       </main>

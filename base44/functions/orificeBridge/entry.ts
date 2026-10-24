@@ -3,6 +3,10 @@ import { runBicameralRelayAndLiveAiResearcher } from '../../shared/liveAiSkillsR
 import { loadOrComputeReputationLedger } from '../../shared/agentReputationAndOrganism.ts';
 import { syncSharedActivityFeedAndAgentComms } from '../../shared/sharedActivityAndAgentComms.ts';
 import {
+  collectLiveEntityMirrorSnapshot,
+  runRealEngineeringMechanismRepair,
+} from '../../shared/realEngineeringMechanismRepair.ts';
+import {
   sha256Hex,
   computeOpegReceipt,
   inspectOrificeFrameL1ToL5,
@@ -85,12 +89,32 @@ export default async function(req: Request): Promise<Response> {
       });
     }
 
+    if (action === 'entity_mirror_snapshot') {
+      const snap = await collectLiveEntityMirrorSnapshot(db);
+      return Response.json(
+        { ok: true, ...snap },
+        { headers: { 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
+
+    if (action === 'repair_github_engineering_mechanisms') {
+      const res = await runRealEngineeringMechanismRepair({ db, sha256Hex });
+      return Response.json(res, {
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      });
+    }
+
     if (action === 'load_reputation_ledger') {
       const res = await loadOrComputeReputationLedger({ db, ownerId, workspaceId });
       return Response.json(res);
     }
 
-    if (action === 'ingest' || action === 'orifice_ping' || action === 'status') {
+    if (
+      action === 'ingest' ||
+      action === 'orifice_absorb' ||
+      action === 'orifice_ping' ||
+      action === 'status'
+    ) {
       const raw = JSON.stringify(body || {});
       const l1L5 = await inspectOrificeFrameL1ToL5(raw, 5);
       const merkleRootHex = l1L5.framing.sha256.slice(0, 16);
