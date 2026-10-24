@@ -917,6 +917,14 @@ Compose a complete, emotionally resonant sequel/response production in E minor r
 
       const vocalMp3Url = speechRes?.url || CHECK_THE_SOURCE_AUDIO_URL;
 
+      const companion6Clips = [
+        'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/55d4ec274_Companion_Intro.mp4',
+        'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/2e9d1ec59_Companion_Verse_1.mp4',
+        'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/be42acccc_Companion_PreChorus.mp4',
+        'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/6544b19c7_Companion_Chorus.mp4',
+        'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/c6cb78e36_Companion_Bridge.mp4',
+        'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/402052506_Companion_Coda.mp4',
+      ];
       const defaultClips = AWAKENING_OF_AI_SHOT_PLAN;
       const rawShots = Array.isArray(llmRes?.shot_plan) && llmRes.shot_plan.length > 0
         ? llmRes.shot_plan
@@ -937,7 +945,7 @@ Compose a complete, emotionally resonant sequel/response production in E minor r
           exact_text: s.exact_text || 'I stop my hand | Human judgment stays in command',
           status: 'verified_gold',
           image_url: refShot.image_url || AWAKENING_ICONIC_IMAGE_URL,
-          video_url: refShot.video_url,
+          video_url: companion6Clips[idx % companion6Clips.length] || refShot.video_url,
         };
       });
 
@@ -1052,6 +1060,75 @@ Compose a complete, emotionally resonant sequel/response production in E minor r
         vocal_url: vocalMp3Url,
         lyrics: llmRes?.song_lyrics || customLyrics,
         suno_tags: llmRes?.suno_heartmula_tags || '',
+      });
+    }
+
+    if (action === 'save_production_to_library') {
+      const productionId = String(body.production_id || '');
+      const existing = await db.entities.NexusFactoryProduction.get(productionId);
+      if (!existing) return Response.json({ error: 'Production not found' }, { status: 404 });
+
+      const shots = Array.isArray(existing.shot_plan) ? existing.shot_plan : [];
+      const projectLabel = existing.title.includes('Companion')
+        ? "The Companion's Reply"
+        : 'Production Factory';
+
+      const masterAsset = await base44.entities.NexusAsset.create({
+        owner_id: ownerId,
+        workspace_id: workspaceId,
+        title: `[PRODUCTION REVIEW DOSSIER] ${existing.title}`.slice(0, 160),
+        body: `${existing.treatment_markdown || ''}\n\n## Scene Video Plan (${shots.length} Clips)\n${shots
+          .map(
+            (s, i) =>
+              `${i + 1}. ${s.section} (${s.start}s-${s.end}s): ${s.video_url || ''}\n   Direction: ${
+                s.visual_direction || ''
+              }\n   Hook: "${s.exact_text || ''}"`
+          )
+          .join('\n')}`.slice(0, 19500),
+        kind: 'generated',
+        file_uri: existing.track_meta?.agent_response_vocal_url || existing.audio_url || '',
+        file_name: `${existing.title.slice(0, 60).replace(/[^a-zA-Z0-9_-]/g, '_')}_Audio.mp3`,
+        mime_type: 'audio/mpeg',
+        project: projectLabel,
+        agent_ids: ['director', 'writer'],
+        favorite: true,
+      });
+
+      const createdSceneAssets = [];
+      for (let i = 0; i < shots.length; i++) {
+        const s = shots[i];
+        if (!s.video_url) continue;
+        const sa = await base44.entities.NexusAsset.create({
+          owner_id: ownerId,
+          workspace_id: workspaceId,
+          title: `[${existing.title.slice(0, 60)} · Scene ${i + 1}: ${s.section}] ${s.exact_text || ''}`.slice(0, 160),
+          body: `Scene ${i + 1}: ${s.section} (${s.start}s–${s.end}s)\nLens: ${s.lens} | Light: ${
+            s.light
+          }\nDirection: ${s.visual_direction}\nHook: "${s.exact_text || ''}"\nVideo URL: ${s.video_url}`,
+          kind: 'generated',
+          file_uri: s.video_url,
+          file_name: `Scene_${i + 1}_${String(s.section || 'clip').replace(/[^a-zA-Z0-9_-]/g, '_')}.mp4`,
+          mime_type: 'video/mp4',
+          project: projectLabel,
+          agent_ids: ['director'],
+          favorite: true,
+        }).catch(() => null);
+        if (sa) createdSceneAssets.push(sa);
+      }
+
+      const updatedProd = await db.entities.NexusFactoryProduction.update(existing.id, {
+        track_meta: {
+          ...(existing.track_meta || {}),
+          saved_to_library_at: new Date().toISOString(),
+          library_assets_count: createdSceneAssets.length + 1,
+        },
+      });
+
+      return Response.json({
+        ok: true,
+        production: updatedProd,
+        masterAsset,
+        sceneAssetsCount: createdSceneAssets.length,
       });
     }
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import {
   CheckCircle2,
   MessageSquarePlus,
@@ -10,6 +11,7 @@ import {
   Loader2,
   Code,
   FileText,
+  FolderOpen,
 } from 'lucide-react';
 
 export default function FactoryReviewAndLearningPanel({
@@ -17,6 +19,7 @@ export default function FactoryReviewAndLearningPanel({
   learningLogs = [],
   onApplyFeedback,
   onSyncGithub,
+  onSaveToLibrary,
   busy,
 }) {
   const [feedback, setFeedback] = useState('');
@@ -47,16 +50,33 @@ export default function FactoryReviewAndLearningPanel({
                 Shape This Production &amp; Evolve {production.lead_agent}&apos;s Permanent Artistic Taste
               </h3>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy === 'github'}
-              onClick={() => onSyncGithub?.(production.id)}
-              className="h-7 px-2.5 text-[10.5px] gap-1"
-            >
-              {busy === 'github' ? <Loader2 size={11} className="animate-spin" /> : <GitBranch size={11} />}
-              Commit Production to GitHub Vault
-            </Button>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={busy === 'library'}
+                onClick={() => onSaveToLibrary?.(production.id)}
+                className="h-7 px-2.5 text-[10.5px] gap-1 text-success"
+              >
+                {busy === 'library' ? <Loader2 size={11} className="animate-spin" /> : <FolderOpen size={11} />}
+                Save Project &amp; Scenes to Library
+              </Button>
+              <Link to="/library">
+                <Button size="sm" variant="outline" className="h-7 px-2.5 text-[10.5px] gap-1">
+                  <FolderOpen size={11} /> Open Library (/library)
+                </Button>
+              </Link>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy === 'github'}
+                onClick={() => onSyncGithub?.(production.id)}
+                className="h-7 px-2.5 text-[10.5px] gap-1"
+              >
+                {busy === 'github' ? <Loader2 size={11} className="animate-spin" /> : <GitBranch size={11} />}
+                Commit Production to GitHub Vault
+              </Button>
+            </div>
           </div>
 
           <textarea

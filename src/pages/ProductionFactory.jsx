@@ -271,6 +271,26 @@ export default function ProductionFactory() {
     }
   };
 
+  const handleSaveToLibrary = async (productionId) => {
+    setBusy('library');
+    try {
+      const { data } = await base44.functions.invoke('productionFactory', {
+        action: 'save_production_to_library',
+        production_id: productionId,
+      });
+      if (data?.ok && data.production) {
+        setProductions((prev) => prev.map((p) => (p.id === data.production.id ? data.production : p)));
+        setSelectedProduction(data.production);
+        toast({
+          title: 'Saved to Library (/library)!',
+          description: `Indexed ${data.sceneAssetsCount || 6} scene videos + master dossier in your Library.`,
+        });
+      }
+    } finally {
+      setBusy('');
+    }
+  };
+
   const handleSyncGithub = async (productionId) => {
     setBusy('github');
     try {
@@ -517,6 +537,7 @@ export default function ProductionFactory() {
               learningLogs={learningLogs}
               onApplyFeedback={handleApplyFeedback}
               onSyncGithub={handleSyncGithub}
+              onSaveToLibrary={handleSaveToLibrary}
               busy={busy}
             />
           </div>

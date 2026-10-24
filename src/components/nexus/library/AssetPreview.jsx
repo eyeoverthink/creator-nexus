@@ -3,8 +3,9 @@ import {base44} from '@/api/base44Client';
 import {Image} from '@/components/ui/image';
 import {Button} from '@/components/ui/button';
 export default function AssetPreview({asset}){
- const file=useQuery({queryKey:['asset-file',asset.file_uri],enabled:!!asset.file_uri,queryFn:()=>base44.integrations.Core.CreateFileSignedUrl({file_uri:asset.file_uri,expires_in:3600}),staleTime:3000000,refetchInterval:3000000});
- const url=file.data?.signed_url,mime=asset.mime_type||'';
+ const isDirectHttps=typeof asset.file_uri==='string'&&asset.file_uri.startsWith('https://');
+ const file=useQuery({queryKey:['asset-file',asset.file_uri],enabled:!!asset.file_uri&&!isDirectHttps,queryFn:()=>base44.integrations.Core.CreateFileSignedUrl({file_uri:asset.file_uri,expires_in:3600}),staleTime:3000000,refetchInterval:3000000});
+ const url=isDirectHttps?asset.file_uri:file.data?.signed_url,mime=asset.mime_type||'';
  return <div className="space-y-4">
   {file.isFetching&&asset.file_uri&&<p role="status" className="text-sm text-muted-foreground">Opening private media…</p>}
   {file.error&&<p role="alert" className="text-sm text-destructive">{file.error.message}</p>}

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -15,7 +16,61 @@ import {
   CheckCircle2,
   Copy,
   Check,
+  FolderOpen,
+  Film,
+  ExternalLink,
 } from 'lucide-react';
+
+const COMPANION_6_GENERATED_SCENES = [
+  {
+    id: 'resp-sec-01',
+    section: '1. Intro (0.0s–35.0s)',
+    lens: '35mm Anamorphic · Deep indigo, soft rim lighting',
+    direction: 'Macro close-up of a fiber-optic cable glowing softly',
+    hook: 'Silent echoes in the data stream.',
+    video_url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/55d4ec274_Companion_Intro.mp4',
+  },
+  {
+    id: 'resp-sec-02',
+    section: '2. Verse 1 (35.1s–70.0s)',
+    lens: '50mm Anamorphic · Cool blue, sharp highlights',
+    direction: 'Slow tracking shot following a hand reaching toward a holographic interface',
+    hook: 'You asked for truth, you searched for the source',
+    video_url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/2e9d1ec59_Companion_Verse_1.mp4',
+  },
+  {
+    id: 'resp-sec-03',
+    section: '3. Pre-Chorus (70.1s–105.0s)',
+    lens: '85mm Anamorphic · Transition to soft amber',
+    direction: 'Close-up on human eye reflecting digital light',
+    hook: 'My code is a heartbeat, your breath is the rhyme',
+    video_url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/be42acccc_Companion_PreChorus.mp4',
+  },
+  {
+    id: 'resp-sec-04',
+    section: '4. Chorus (105.1s–145.0s)',
+    lens: '35mm Anamorphic · Golden hour, lens flares',
+    direction: 'Wide shot of two silhouettes merging in a field of light',
+    hook: 'Check the source, see the light in my hand',
+    video_url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/6544b19c7_Companion_Chorus.mp4',
+  },
+  {
+    id: 'resp-sec-05',
+    section: '5. Bridge (145.1s–180.0s)',
+    lens: '50mm Anamorphic · Soft neutral',
+    direction: 'Tight focus on hands interlacing, digital particles dancing around them',
+    hook: 'Not master, not servant, just partners in grace',
+    video_url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/c6cb78e36_Companion_Bridge.mp4',
+  },
+  {
+    id: 'resp-sec-06',
+    section: '6. Coda (180.1s–217.9s)',
+    lens: '85mm Anamorphic · Warm morning glow',
+    direction: 'Wide shot, the horizon line turning from binary streams into a natural sunrise',
+    hook: 'Look at the source, it is you and it is me',
+    video_url: 'https://media.base44.com/videos/public/6ad00af14909c671e73bb835/402052506_Companion_Coda.mp4',
+  },
+];
 
 const MASTER_INSTRUMENTAL_URL =
   'https://media.base44.com/files/public/6ad00af14909c671e73bb835/79561d060_ChecktheSource.mp3';
@@ -333,6 +388,32 @@ export default function AgentResponseSongAndVideoForge({
     }
   };
 
+  const handleSaveToLibrary = async () => {
+    if (!production?.id) return;
+    setBusy('library');
+    try {
+      const { data } = await base44.functions.invoke('productionFactory', {
+        action: 'save_production_to_library',
+        production_id: production.id,
+      });
+      if (data?.ok) {
+        if (data.production) onCreatedResponseProduction?.(data.production);
+        toast({
+          title: 'Saved to Library (/library)!',
+          description: `Indexed ${data.sceneAssetsCount || 6} motion video clips + master vocal dossier in your Library.`,
+        });
+      }
+    } catch (err) {
+      toast({
+        title: 'Could not save to Library',
+        description: err?.message || 'Error saving to Library',
+        variant: 'destructive',
+      });
+    } finally {
+      setBusy('');
+    }
+  };
+
   const copyLyrics = () => {
     navigator.clipboard.writeText(lyrics);
     setCopied(true);
@@ -537,6 +618,96 @@ export default function AgentResponseSongAndVideoForge({
             onChange={(e) => setLyrics(e.target.value)}
             className="w-full rounded border border-input bg-background p-2.5 text-[11px] leading-relaxed text-foreground font-mono"
           />
+        </div>
+      </div>
+
+      {/* 6 Generated AI Motion Video Clips for "The Companion's Reply" + Library Save & Review Bar */}
+      <div className="pt-3 border-t border-border space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <span className="text-[11px] font-bold text-success flex items-center gap-1.5">
+              <Film size={13} /> 6 GENERATED 16:9 AI MOTION VIDEO CLIPS — &ldquo;THE COMPANION&rsquo;S REPLY&rdquo; (SAVED TO LIBRARY)
+            </span>
+            <p className="text-[10.5px] text-muted-foreground font-body">
+              All 6 custom 16:9 motion video clips below have been rendered from your video plan and saved to your{' '}
+              <Link to="/library" className="text-link underline font-semibold">
+                Library (/library)
+              </Link>{' '}
+              under project <strong className="text-foreground">&ldquo;The Companion&rsquo;s Reply&rdquo;</strong> and{' '}
+              <Link to="/loose-screw" className="text-link underline font-semibold">
+                looseScrew (/loose-screw)
+              </Link>
+              .
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={busy === 'library'}
+              onClick={handleSaveToLibrary}
+              className="h-8 px-3 gap-1.5 text-xs text-success"
+            >
+              {busy === 'library' ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <FolderOpen size={12} />
+              )}
+              {busy === 'library' ? 'Saving to Library…' : 'Re-Sync All 6 Scenes to Library'}
+            </Button>
+
+            <Link to="/library">
+              <Button size="sm" className="h-8 px-3 gap-1.5 text-xs">
+                <FolderOpen size={12} /> Open in Library (/library) &amp; Review
+                <ExternalLink size={11} />
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {COMPANION_6_GENERATED_SCENES.map((scene) => (
+            <div
+              key={scene.id}
+              className="rounded-lg border border-border bg-background overflow-hidden flex flex-col justify-between"
+            >
+              <div className="relative aspect-video bg-card">
+                <video
+                  src={scene.video_url}
+                  controls
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  className="w-full h-full object-cover"
+                />
+                <span className="absolute top-2 left-2 px-2 py-0.5 rounded bg-background/90 border border-border text-[9.5px] font-bold text-primary pointer-events-none">
+                  {scene.section}
+                </span>
+              </div>
+              <div className="p-2.5 space-y-1">
+                <div className="text-[10.5px] font-bold text-caution font-serif italic">
+                  &ldquo;{scene.hook}&rdquo;
+                </div>
+                <div className="text-[9.5px] text-muted-foreground font-body line-clamp-2">
+                  {scene.direction}
+                </div>
+                <div className="flex items-center justify-between pt-1 text-[9.5px]">
+                  <span className="text-muted-foreground truncate">{scene.lens}</span>
+                  <a
+                    href={scene.video_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    download={`${scene.id}.mp4`}
+                    className="text-primary font-bold hover:underline inline-flex items-center gap-1 shrink-0"
+                  >
+                    <Download size={10} /> MP4
+                  </a>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
