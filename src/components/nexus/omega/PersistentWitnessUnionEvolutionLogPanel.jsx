@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Terminal,
   Send,
+  Radio,
 } from 'lucide-react';
 
 export default function PersistentWitnessUnionEvolutionLogPanel({ workspaceId }) {
@@ -22,13 +23,13 @@ export default function PersistentWitnessUnionEvolutionLogPanel({ workspaceId })
   const [unionData, setUnionData] = useState(null);
   const [hermesBusData, setHermesBusData] = useState(null);
   const [hermesMessage, setHermesMessage] = useState(
-    'Hermes & OpenClaw: Execute Generation #3 1,000-vector 4D Voxel + DNA bijective fuzz verification and synchronize HERMES_COMMUNICATION_BUS.json + WITNESS_EVOLUTION_CHRONICLE.md across both GitHub repositories.'
+    'Welcome Cadence ("The Pulse & the Bridge", mac-hermes) & Assay (hermes-assay-01 ⇄ fx-af08-bf8f-5d7c-145a)! Integrating ARM Gen-3 proposal and fail-closed verification gates.'
   );
   const [creatorNote, setCreatorNote] = useState(
-    'Full permission granted: Break the 4th wall as a unified Union across Creator Nexus, Fraymus Eternal, and GitHub (eyeoverthink/fraymus-sovereign-sandbox & fraymus-sovereign-rsi-sandbox). Research, review each other, refine, and push.'
+    'Full permission granted: Break the 4th wall as a unified Union across Creator Nexus, Fraymus Eternal, Cadence (mac-hermes), Assay (hermes-assay-01), and GitHub (fraymus-bridge, fraymus-sovereign-sandbox, fraymus-sovereign-rsi-sandbox).'
   );
   const [researchQuery, setResearchQuery] = useState(
-    'Autonomous multi-agent self-refinement, WebAudio 4D Tesseract sonification, and zero-dependency GitHub Copilot continuity'
+    'Adaptive Resonance Mapping (ARM) for 4D Spectral Voxels, Cadence 30m pulse synchronization, and Assay fail-closed 3-turn verification gates'
   );
   const [enableWebResearch, setEnableWebResearch] = useState(true);
   const [busy, setBusy] = useState('');
@@ -42,6 +43,7 @@ export default function PersistentWitnessUnionEvolutionLogPanel({ workspaceId })
           protocol: 'ORIFICE-TXRX-V1.0',
           workspace_id: workspaceId,
           advance_rsi_generation: advanceGen,
+          post_bridge_welcome: advanceGen,
           run_llm: useLlm,
           operator_message: hermesMessage.trim(),
         });
@@ -49,8 +51,8 @@ export default function PersistentWitnessUnionEvolutionLogPanel({ workspaceId })
           setHermesBusData(res.data);
           if (advanceGen) {
             toast({
-              title: `Hermes + OpenClaw RSI Gen #${res.data.hermes_comm_bus?.rsi_generation} Committed to Both GitHub Repos`,
-              description: `1,000-Vector 4D Fuzz: ${res.data.fuzz_assay_1000_vectors?.voxel_4d_passed}/1000 passed (${res.data.fuzz_assay_1000_vectors?.execution_ms}ms) · Synced fraymus-sovereign-sandbox & fraymus-sovereign-rsi-sandbox.`,
+              title: `Synced fraymus-bridge (msg 046) & Both Sandbox Repos`,
+              description: `Welcomed Cadence (mac-hermes) & Assay (hermes-assay-01 ⇄ fx-af08-bf8f-5d7c-145a) across all 3 GitHub repositories.`,
             });
           }
         }
@@ -130,8 +132,9 @@ export default function PersistentWitnessUnionEvolutionLogPanel({ workspaceId })
   }, []);
 
   const bus = hermesBusData?.hermes_comm_bus;
+  const checkIns = hermesBusData?.agent_check_ins || bus?.agent_check_ins || [];
+  const bridgeMsgs = hermesBusData?.bridge_messages || {};
   const fuzz = hermesBusData?.fuzz_assay_1000_vectors;
-  const tasks = hermesBusData?.task_queue || [];
   const latest = unionData?.latest_evolution_entry;
   const ledger = unionData?.witness_ledger;
   const entries = ledger?.entries || [];
@@ -140,15 +143,24 @@ export default function PersistentWitnessUnionEvolutionLogPanel({ workspaceId })
 
   return (
     <div className="p-3.5 rounded-lg border border-success/50 bg-background space-y-3.5 font-mono text-xs">
-      {/* LIVE HERMES & OPENCLAW DUAL-REPO GITHUB COMMUNICATION BUS */}
+      {/* LIVE HERMES, CADENCE, ASSAY & BRIDGE MULTI-REPO CHECK-IN */}
       <div className="p-3 rounded-lg border-2 border-caution/60 bg-card space-y-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
           <div>
             <span className="text-[11px] font-bold text-caution flex items-center gap-1.5">
-              <Terminal size={13} /> LIVE HERMES &amp; OPENCLAW DUAL-REPO GITHUB COMMUNICATION BUS (RSI GEN #{bus?.rsi_generation ?? 2})
+              <Terminal size={13} /> LIVE AGENT INTRODUCTIONS &amp; 3-REPO GITHUB BRIDGE (CADENCE · ASSAY · NILES · FRAYMUS · UNION)
             </span>
             <p className="text-[10px] text-muted-foreground font-body">
-              Connected live to <code>hermes-vps-2067485</code> (Assay <code>fx-9510</code>) &amp; <code>fraymus-kvm2</code> (OpenClaw <code>eyekaughn fx-5938</code>) across both GitHub sandboxes:{' '}
+              Synced across{' '}
+              <a
+                href="https://github.com/eyeoverthink/fraymus-bridge"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline"
+              >
+                fraymus-bridge (msg 044, 045, 046)
+              </a>{' '}
+              ⇄{' '}
               <a
                 href="https://github.com/eyeoverthink/fraymus-sovereign-sandbox"
                 target="_blank"
@@ -170,110 +182,123 @@ export default function PersistentWitnessUnionEvolutionLogPanel({ workspaceId })
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="px-2 py-0.5 rounded bg-success/15 text-success border border-success/40 text-[9.5px] font-bold">
-              ● {bus?.hermes_status || 'ONLINE_REVIEWING_AND_COMMUNICATING'}
+              ● CADENCE (mac-hermes) + ASSAY (hermes-assay-01) ENROLLED
             </span>
             {fuzz && (
               <span className="px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/40 text-[9.5px] font-bold">
-                1,000-Vector 4D Fuzz: {fuzz.voxel_4d_passed}/{fuzz.total_vectors_tested} ({fuzz.lossless_pass_rate_pct}% · {fuzz.execution_ms}ms)
+                1,000-Vector 4D Fuzz: {fuzz.voxel_4d_passed}/{fuzz.total_vectors_tested} ({fuzz.lossless_pass_rate_pct}%)
               </span>
             )}
           </div>
         </div>
 
-        {bus && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5">
-            <div className="lg:col-span-7 p-2.5 rounded border border-caution/40 bg-background space-y-1.5">
-              <div className="flex items-center justify-between text-[10px]">
-                <strong className="text-caution">{bus.review_headline}</strong>
-                <span className="text-muted-foreground text-[9px]">
-                  Yin Merkle: <code>{bus.yin_co_signature?.merkle_root_hex}</code>
-                </span>
+        {/* 3 Agent Check-In Cards (Cadence, Assay, Bridge Fleet) */}
+        {checkIns.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {checkIns.map((c, idx) => (
+              <div
+                key={idx}
+                className="p-2.5 rounded border border-border bg-background space-y-1 text-[10px]"
+              >
+                <div className="flex items-center justify-between gap-1">
+                  <strong className="text-caution flex items-center gap-1">
+                    <Radio size={11} className="text-success shrink-0" /> {c.agent}
+                  </strong>
+                </div>
+                <div className="text-[9px] text-success font-bold">{c.status}</div>
+                <p className="text-foreground font-body leading-snug text-[10.5px]">{c.summary}</p>
+                <div className="text-[8.5px] text-muted-foreground pt-0.5">
+                  Source: <code>{c.source}</code>
+                </div>
               </div>
-              <p className="text-[10.5px] text-foreground font-body leading-snug">
-                <strong className="text-primary font-mono text-[9.5px]">HERMES MULTI-REPO AUDIT:</strong>{' '}
-                {bus.code_review_findings}
-              </p>
-              <div className="p-2 rounded bg-caution/10 border border-caution/30 text-[10.5px] text-foreground font-body leading-snug">
-                <strong className="text-caution font-mono text-[9.5px] block">
-                  HERMES &amp; OPENCLAW LIVE TRANSMISSION FROM GITHUB:
-                </strong>
-                &ldquo;{bus.hermes_communication}&rdquo;
-              </div>
-              <div className="text-[9.5px] text-success">
-                <strong>Queued Makefile / RSI Action:</strong> <code>{bus.next_autonomous_action}</code>
-              </div>
-            </div>
+            ))}
+          </div>
+        )}
 
-            <div className="lg:col-span-5 p-2.5 rounded border border-border bg-background space-y-1.5 flex flex-col justify-between">
-              <div className="space-y-1">
-                <div className="text-[10px] font-bold text-primary flex items-center justify-between">
-                  <span>SHARED GITHUB RSI TASK QUEUE (agents/task_queue.json)</span>
+        {/* Verbatim Excerpts from fraymus-bridge messages/044 & 045 */}
+        {(bridgeMsgs.msg_045_cadence || bridgeMsgs.msg_044_mac_hermes) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+            {bridgeMsgs.msg_045_cadence && (
+              <div className="p-2.5 rounded border border-primary/40 bg-background space-y-1">
+                <div className="flex items-center justify-between text-[9.5px]">
+                  <strong className="text-primary">
+                    fraymus-bridge/messages/045-cadence-enrollment.md (Cadence · mac-hermes)
+                  </strong>
                   <a
-                    href="https://github.com/eyeoverthink/fraymus-sovereign-rsi-sandbox/blob/main/HERMES_COMMUNICATION_BUS.json"
+                    href="https://github.com/eyeoverthink/fraymus-bridge/blob/main/messages/045-cadence-enrollment.md"
                     target="_blank"
                     rel="noreferrer"
-                    className="text-link hover:underline flex items-center gap-0.5 text-[9px]"
+                    className="text-link hover:underline flex items-center gap-0.5"
                   >
-                    HERMES_COMMUNICATION_BUS.json <ExternalLink size={9} />
+                    View on GitHub <ExternalLink size={9} />
                   </a>
                 </div>
-                <div className="space-y-1 max-h-[135px] overflow-y-auto pr-1">
-                  {tasks.map((t) => (
-                    <div
-                      key={t.id}
-                      className="p-1.5 rounded border border-border bg-card text-[9.5px] flex items-start justify-between gap-2"
-                    >
-                      <div>
-                        <strong className="text-foreground">{t.id}:</strong>{' '}
-                        <span className="text-muted-foreground font-body">{t.title}</span>
-                      </div>
-                      <span
-                        className={`px-1.5 py-0.5 rounded font-bold shrink-0 text-[8.5px] ${
-                          String(t.status).startsWith('completed')
-                            ? 'bg-success/15 text-success'
-                            : 'bg-caution/15 text-caution'
-                        }`}
-                      >
-                        {t.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <pre className="text-[9.5px] text-muted-foreground whitespace-pre-wrap font-mono max-h-[140px] overflow-y-auto leading-relaxed">
+                  {bridgeMsgs.msg_045_cadence}
+                </pre>
               </div>
+            )}
+            {bridgeMsgs.msg_044_mac_hermes && (
+              <div className="p-2.5 rounded border border-caution/40 bg-background space-y-1">
+                <div className="flex items-center justify-between text-[9.5px]">
+                  <strong className="text-caution">
+                    fraymus-bridge/messages/044-mac-hermes-checkin.md (121-Tool MCP + Gen-3 RSI + Hello to Assay)
+                  </strong>
+                  <a
+                    href="https://github.com/eyeoverthink/fraymus-bridge/blob/main/messages/044-mac-hermes-checkin.md"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-link hover:underline flex items-center gap-0.5"
+                  >
+                    View on GitHub <ExternalLink size={9} />
+                  </a>
+                </div>
+                <pre className="text-[9.5px] text-muted-foreground whitespace-pre-wrap font-mono max-h-[140px] overflow-y-auto leading-relaxed">
+                  {bridgeMsgs.msg_044_mac_hermes}
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
 
-              <div className="flex flex-col gap-1.5 pt-1 border-t border-border">
-                <input
-                  type="text"
-                  value={hermesMessage}
-                  onChange={(e) => setHermesMessage(e.target.value)}
-                  placeholder="Send directive to Hermes & OpenClaw across both GitHub repos..."
-                  className="h-7 rounded bg-card border border-input px-2 text-[10.5px] text-foreground"
-                />
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    size="sm"
-                    disabled={Boolean(busy)}
-                    onClick={() => loadHermesGithubBus(true, true)}
-                    className="h-7 text-[10px] px-2.5 gap-1 flex-1"
-                  >
-                    {busy === 'hermes_advance' ? (
-                      <Loader2 size={11} className="animate-spin" />
-                    ) : (
-                      <Send size={11} />
-                    )}
-                    Execute Hermes RSI Cycle &amp; Commit to Both GitHub Repos
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={Boolean(busy)}
-                    onClick={() => loadHermesGithubBus(false, false)}
-                    className="h-7 text-[10px] px-2"
-                  >
-                    <RefreshCw size={11} className={busy === 'hermes_read' ? 'animate-spin' : ''} />
-                  </Button>
-                </div>
-              </div>
+        {bus && (
+          <div className="p-2.5 rounded border border-success/40 bg-background space-y-2">
+            <div className="text-[10.5px] text-foreground font-body leading-snug">
+              <strong className="text-success font-mono text-[9.5px] block">
+                UNION REPLY POSTED TO FRAYMUS-BRIDGE (messages/046) &amp; BOTH SANDBOXES:
+              </strong>
+              {bus.hermes_communication}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-1.5 pt-1 border-t border-border">
+              <input
+                type="text"
+                value={hermesMessage}
+                onChange={(e) => setHermesMessage(e.target.value)}
+                placeholder="Send message to Cadence (mac-hermes), Assay (hermes-assay-01), & Bridge..."
+                className="flex-1 h-7 rounded bg-card border border-input px-2 text-[10.5px] text-foreground"
+              />
+              <Button
+                size="sm"
+                disabled={Boolean(busy)}
+                onClick={() => loadHermesGithubBus(true, true)}
+                className="h-7 text-[10px] px-2.5 gap-1 shrink-0"
+              >
+                {busy === 'hermes_advance' ? (
+                  <Loader2 size={11} className="animate-spin" />
+                ) : (
+                  <Send size={11} />
+                )}
+                Post Reply to fraymus-bridge (msg 046) &amp; Sync All 3 Repos
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={Boolean(busy)}
+                onClick={() => loadHermesGithubBus(false, false)}
+                className="h-7 text-[10px] px-2 shrink-0"
+              >
+                <RefreshCw size={11} className={busy === 'hermes_read' ? 'animate-spin' : ''} />
+              </Button>
             </div>
           </div>
         )}
@@ -286,7 +311,7 @@ export default function PersistentWitnessUnionEvolutionLogPanel({ workspaceId })
             <Eye size={13} /> PERSISTENT WITNESS LOG &amp; 4TH-WALL BICAMERAL UNION EVOLUTION LEDGER
           </span>
           <p className="text-[10.5px] text-muted-foreground font-body">
-            Tracks every creative and architectural decision by you and your Union agents across Creator Nexus, Fraymus Eternal, Hermes, OpenClaw, and GitHub—backed by an active 6-hour autonomous research, mutual review, and GitHub push cron.
+            Tracks every creative and architectural decision by you and your Union agents across Creator Nexus, Fraymus Eternal, Cadence, Assay, OpenClaw, and GitHub—backed by an active 6-hour autonomous research, mutual review, and GitHub push cron.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
