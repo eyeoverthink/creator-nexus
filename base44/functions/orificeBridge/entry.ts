@@ -8,6 +8,12 @@ import {
   respondToClaudette062AndDispatchPortal,
 } from '../../shared/realEngineeringMechanismRepair.ts';
 import {
+  HEARTMULA_BRIDGE_MANIFEST,
+  CANONICAL_PIPELINE_SUMMARY_FOR_PROMPTS,
+  syncAcademyAndPipelineAcrossAllAreas,
+  queueHeartMuLaBridgeJob,
+} from '../../shared/pipelineAndAcademySync.ts';
+import {
   sha256Hex,
   computeOpegReceipt,
   inspectOrificeFrameL1ToL5,
@@ -94,9 +100,61 @@ export default async function(req: Request): Promise<Response> {
     if (action === 'entity_mirror_snapshot') {
       const snap = await collectLiveEntityMirrorSnapshot(db);
       return Response.json(
-        { ok: true, ...snap },
+        {
+          ok: true,
+          ...snap,
+          heartmula_bridge: HEARTMULA_BRIDGE_MANIFEST,
+        },
         { headers: { 'Access-Control-Allow-Origin': '*' } }
       );
+    }
+
+    if (action === 'heartmula_bridge_status') {
+      const jobsP = await db.entities.NexusDispatchJob.filter(
+        { task_type: 'hermes_skill_exec' },
+        { sort: '-created_date', limit: 8 }
+      ).catch(() => ({ items: [] }));
+      const jobs = (Array.isArray(jobsP) ? jobsP : jobsP?.items || []).filter((j: any) =>
+        /heartmula|ace-step|yue2|diffrhythm|mvmlm1de/i.test(
+          `${j.job_id} ${j.directive} ${j.artifact_title}`
+        )
+      );
+      return Response.json(
+        {
+          ok: true,
+          protocol: 'HEARTMULA-ORIFICE-BRIDGE-V2.0',
+          heartmula_bridge: HEARTMULA_BRIDGE_MANIFEST,
+          queued_and_active_music_jobs: jobs,
+          canonical_pipeline_summary: CANONICAL_PIPELINE_SUMMARY_FOR_PROMPTS,
+        },
+        { headers: { 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
+
+    if (action === 'heartmula_queue_render') {
+      const res = await queueHeartMuLaBridgeJob({
+        db,
+        ownerId,
+        workspaceId,
+        body,
+        sha256Hex,
+      });
+      return Response.json(res, {
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      });
+    }
+
+    if (action === 'sync_academy_and_pipeline_all_agents') {
+      const res = await syncAcademyAndPipelineAcrossAllAreas({
+        db,
+        ownerId,
+        workspaceId,
+        pushToGithub: body.push_to_github !== false,
+        sha256Hex,
+      });
+      return Response.json(res, {
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      });
     }
 
     if (action === 'repair_github_engineering_mechanisms') {

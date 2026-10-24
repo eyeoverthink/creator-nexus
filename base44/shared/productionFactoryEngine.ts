@@ -138,6 +138,7 @@ export const HERMES_33_SKILL_MANIFEST = [
   { id: 'har-derived-api-client', name: 'har-derived-api-client', category: 'Web & Media Deployment', verdict: 'SAFE', replaces: 'Enterprise API paywalls', summary: 'Captures browser .har traffic via CDP and reverse-engineers clean Python/TS API clients.' },
   { id: 'page-agent', name: 'page-agent', category: 'Web & Media Deployment', verdict: 'SAFE', replaces: 'Custom DOM tool handlers', summary: 'Embeds an in-page natural-language DOM copilot into Base44 and creative web apps.' },
   { id: 'scrollcraft', name: 'scrollcraft', category: 'Web & Media Deployment', verdict: 'SAFE', replaces: 'Framer Pro / GSAP Club ($45/mo)', summary: '3D-feeling scrollytelling viewport animation engine, video frame encoder (shoot.mjs/encode.sh), and taste verifier.' },
+  { id: 'heartmula-music', name: 'heartmula-music', category: 'Web & Media Deployment', verdict: 'SAFE ($0 BRIDGE + GPU)', replaces: 'Suno Pro / Udio ($30/mo)', summary: 'Open-source full-song & vocal synthesis via HeartMuLa-oss-3B + MuLaCover, ACE-Step 1.5, YuE2-3B, and DiffRhythm 2 connected through orificeBridge (mac-hermes & tn-desktopgpu).' },
 ];
 
 export const DEFAULT_FACTORY_PERSONAS = [
@@ -152,7 +153,7 @@ export const DEFAULT_FACTORY_PERSONAS = [
       'Anchor pacing to 138 BPM (beat = 0.435s, bar = 1.74s) in E minor when scoring contemplative-to-anthemic arcs.',
       'Hold intimate piano breakdowns (152.2s–166.6s) to 1 cut per lyric line with near-locked 100mm macro framing.',
     ],
-    assigned_skills: ['scrollcraft', 'here-now', 'rss-feeds', 'bioinformatics'],
+    assigned_skills: ['heartmula-music', 'scrollcraft', 'here-now', 'rss-feeds', 'bioinformatics'],
     eligible_locations: ['base44_cloud', 'local_pc_windows', 'vps_hermes'],
   },
   {

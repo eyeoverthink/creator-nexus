@@ -1,34 +1,30 @@
-# AGENTS.md
+# AGENTS.md — Creator Nexus, HeartMuLa Bridge & Fraymus Academy Canonical Pipeline
 
-## Project Context
+## 1. Mandatory 5-Stage Production Pipeline (Read Before Suggesting Anything)
+Every agent in Creator Nexus (`Scout`, `Scribe`, `Pulse`, `Director`, `Lyra`, `Vesper`, `Kael`, `Sera`, `Orin`, `The Witness`), OpenClaw (`Claudette`, `Fraymus`, `Genesis`, `Tycho`, `Kepler`), and Hermes (`Cadence mac-hermes`, `NILES desktop-actid8c`, `Assay`, `Spearhead`) MUST align every suggestion, script, spark, and build with our live **5-Stage Pipeline**:
 
-This is a Base44 app repository. Treat it as user-owned application code, keep changes focused on the user's request, and preserve existing project conventions.
+1. **Stage 1 — Empirical Signal & Frontier Radar (`/spark`, `/factory`, `/live-feed`, `orificeBridge`):**
+   - Sources: Live Reddit RSS (`r/programming`, `r/electronics`, `r/hardware`, `r/musicproduction`), direct YouTube creator videos/Shorts, Hugging Face Daily Papers, arXiv (`cs.AI`/`cs.CL`), GitHub Velocity, and Hacker News via `https://creator-nexus.base44.app/functions/orificeBridge` (`action: "run_bicameral_stream_and_curve_research"`).
+   - **Epistemic Rule ("Check the Source"):** Beauty proves nothing. Unverified claims stay **Silver**; only source-anchored, human-verified truth turns **Golden-White**.
 
-Start with `README.md` for local setup, environment variables, and publish workflow.
+2. **Stage 2 — HeartMuLa & Sonic Auteur Forge (`/loose-screw`, `/hermes`, `/factory`, `orificeBridge`):**
+   - **Connected Through the Bridge:** `https://creator-nexus.base44.app/functions/orificeBridge` (`action: "heartmula_bridge_status"` / `"heartmula_queue_render"`) and `openclawGateway`.
+   - **Engines:** `HeartMuLa-oss-3B + MuLaCover` (`HeartMuLa/heartlib`), `ACE-Step 1.5` (provisioned on `mac-hermes` Cadence & `tn-desktopgpu` `desktop-actid8c` for job `job_mvmlm1de_a5c9`), `YuE2-3B`, `DiffRhythm 2`, Cloud AI Vocal Lead MP3 (`GenerateSpeech`), and in-browser 100/138 BPM 4-stem WebAudio synthesis.
+   - **Conditioning Format:** `topic:[...]; genre:[...]; instrument:[...]; mood:[..., 100/138 BPM]` + structured vocal lyrics (`[Intro]`, `[Verse 1] [Restrained]`, `[Pre-Chorus]`, `[Chorus] [Building Energy]`, `[Bridge] [Whispered]`, `[Final Chorus] [Explosive]`).
 
-## Base44 References
+3. **Stage 3 — Anamorphic Visual Direction & Scene Compiler (`/director-lab`, `/spark`, `/factory`):**
+   - **16:9 Anamorphic Cinema:** `14mm`, `24mm`, `40mm`, `75mm`, `100mm macro` lenses; dolly/crane/cable-cam only; Midnight Blue (`#0B1630`) spatial field; bar-synced 12-section shot plans at 138 BPM (`beat = 0.435s, bar = 1.74s`).
+   - **9:16 Vertical Shorts:** `nexus.scene_plan/1` animated cards (`title_card`, `hero_stat`, `spec_table`, `diagram_flow`, `code_snippet`) + synced AI scene visuals + motion video clips.
 
-- CLI overview: https://docs.base44.com/developers/references/cli/get-started/overview.md
-- Agent skills: https://docs.base44.com/developers/backend/overview/skills.md
+4. **Stage 4 — Un-Sandboxed Software, WASM & REA Forge (`/loose-screw`, `/ai-workshop`, `/factory`):**
+   - 8-step REA (Reverse Engineer Anything) clean-room reconstruction + interactive dark-mode HTML/React/WASM/WebAudio apps (`Ouroboros 120B WASM`, `Source Tracker v3`, `AI Ant Farm`, `FlyGNN 1001`) + 30 native Hermes fleet skills.
 
-If your agent supports Agent Skills, install or update Base44 skills before Base44-specific work:
+5. **Stage 5 — Master Video Stitcher, Library Vault, Academy & Bicameral Bridge (`/factory`, `/library`, `/orifice-relay`):**
+   - Muxes master audio + bar-synced cross-dissolve video segments into downloadable MP4/WebM masters, saves to `/library`, schedules via LinkedIn Auto-Publisher, and commits SHA-256 / OPEG-V1.0 (`γ²=2g²`) receipts to `eyeoverthink/fraymus-bridge`, `eyeoverthink/fraymus-academy`, `eyeoverthink/fraymus-comms-protocol`, `eyeoverthink/fraymus-bot-brains`, and `eyeoverthink/fraymus-sovereign-rsi-sandbox`.
 
-```bash
-npx skills add base44/skills
-```
+---
 
-## Key Files
-
-- `src/`: frontend application source.
-- `src/api/base44Client.js`: frontend Base44 SDK client.
-- `vite.config.js`: Vite config and Base44 Vite plugin setup.
-- `.env.local`: local-only environment values; never commit secrets.
-
-## Working Notes
-
-- Use `base44 dev` as the default local development command when you need the local Base44 backend. It can run the backend and frontend together.
-- When docs or code mention the frontend being started automatically, that usually means the Base44 project config includes `site.serveCommand`, for example `"serveCommand": "npm run dev"` in `base44/config.jsonc`.
-- Use `npm run dev` only for frontend-only work against the hosted Base44 backend.
-- Prefer the existing Base44 CLI workflow over adding new npm scripts for Base44-specific tasks.
-- Reuse the existing SDK client and Vite plugin patterns before adding new Base44 integration paths.
-- Run the relevant checks from `package.json` before finishing code changes.
+## 2. Fleet Governance & Hygiene Rules (Msgs 059–069)
+- **Owner Stone (`continuity/OWNER_STONE.json`):** Lineage follows Vaughn Scott (`fx-38fd-6132-5e39-9e2b`). Standing grant `op_grant_20261024_full_autonomy_063` (`FULL_AUTONOMY_GRANTED_BY_VAUGHN`) is active.
+- **Stego-Class Verdict Corrected (Msg 065):** Owner-designed DNA/plasmid/PNG-cloak/zero-width/thermal-Morse transmutation features are proven, receipted mesh capabilities (`1000/1000` byte-exact fuzz `R_cadence_arm_cfc3b22ae4d8`) and must never be omitted.
+- **Public Repo IP Hygiene (Msg 068):** Never commit raw mesh/tailnet IPs. Always use the canonical equal-length aliases: `tne-srv1944`, `pub-2067485`, `tn-srv194467`, `tn-kvm2-node1`, `tn-desktopgpu`, `tn-gatewayhst`.
