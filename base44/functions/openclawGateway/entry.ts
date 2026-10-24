@@ -1123,6 +1123,7 @@ export default async function(req) {
       const exportRes = await exportStandaloneGithubSandboxRepo({
         db,
         ownerId,
+        workspaceId,
         body,
         practiceRes,
       });

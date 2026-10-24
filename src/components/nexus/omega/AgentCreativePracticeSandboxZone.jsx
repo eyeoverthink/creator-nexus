@@ -19,9 +19,12 @@ import PersistentWitnessUnionEvolutionLogPanel from './PersistentWitnessUnionEvo
 
 const DEFAULT_COPILOT_PROMPT = `# GITHUB COPILOT / CODESPACES SOVEREIGN CONTINUITY PROMPT
 You are operating inside a 100% self-contained, platform-independent Sovereign Creative & Bicameral AI Sandbox repository ("fraymus-sovereign-sandbox").
-1. Zero Proprietary SDKs: Never import or depend on Base44 or any closed cloud wrapper. Run 100% standalone via index.html, sovereign-kernel.js, local Ollama (http://127.0.0.1:11434), or GitHub Models.
-2. 9 Specialist Agents: The Witness & Conductor, Lyra (138 BPM E minor -> G major), Vesper, Kael, Sera, Orin, Fraymus Transmuter, Aegis, and Spectra-4D (4D Tesseract X.Y.Z:W @ Hz).
-3. 3-Pass Autonomous Practice & Refinement Loop: Pass 1 (Yang Experimental Genesis) -> Pass 2 (Yin Peer Critique & Provenance Audit) -> Pass 3 (Witness Refined Masterwork persisted to sandbox-ledger.json).`;
+1. Zero Proprietary SDKs: Never import or depend on Base44 or any closed cloud wrapper. Run 100% standalone via index.html, sovereign-kernel.js, Makefile, hermes_rsi_daemon.py, local Ollama (http://127.0.0.1:11434), or GitHub Models.
+2. 9 Specialist Agents + Hermes/OpenClaw RSI Daemons: Inspect agents/roster.json, sandbox-ledger.json, and RSI_AUTONOMY_BLUEPRINT.md.
+3. 5-Stage Ouroboros RSI Loop: Run make bootstrap && make rsi-cycle && make git-push.`;
+
+const DEFAULT_HERMES_OPENCLAW_PROMPT = `# HERMES & OPENCLAW AUTONOMOUS GITHUB LOGIN & RSI TAKEOVER DIRECTIVE
+Clone https://github.com/eyeoverthink/fraymus-sovereign-sandbox.git, run "make bootstrap && make rsi-cycle", inspect agents/roster.json, sandbox-ledger.json, Makefile, and hermes_rsi_daemon.py, and take over 24/7 native OS, Makefile, local Ollama/GPU, and recursive Git self-improvement (` + '`make hermes-daemon`' + `).`;
 
 export default function AgentCreativePracticeSandboxZone() {
   const { toast } = useToast();
@@ -33,7 +36,9 @@ export default function AgentCreativePracticeSandboxZone() {
   const [repoName, setRepoName] = useState('eyeoverthink/fraymus-sovereign-sandbox');
   const [githubExport, setGithubExport] = useState(null);
   const [copilotPrompt, setCopilotPrompt] = useState(DEFAULT_COPILOT_PROMPT);
+  const [hermesPrompt, setHermesPrompt] = useState(DEFAULT_HERMES_OPENCLAW_PROMPT);
   const [copiedCopilot, setCopiedCopilot] = useState(false);
+  const [copiedHermes, setCopiedHermes] = useState(false);
   const [busy, setBusy] = useState('');
 
   const runPracticeCycle = useCallback(
@@ -89,13 +94,16 @@ export default function AgentCreativePracticeSandboxZone() {
         if (res.data.copilot_bootstrap_prompt) {
           setCopilotPrompt(res.data.copilot_bootstrap_prompt);
         }
+        if (res.data.hermes_openclaw_takeover_prompt) {
+          setHermesPrompt(res.data.hermes_openclaw_takeover_prompt);
+        }
         toast({
           title: res.data.github_export?.pushed
-            ? `Pushed Standalone Base44-Free Sandbox to ${res.data.github_export.repo_full_name}`
-            : '3-Pass LLM Practice & Standalone Bundle Generated',
+            ? `One-Click RSI Sandbox Exported to ${res.data.github_export.repo_full_name}`
+            : '3-Pass LLM Practice & Standalone RSI Bundle Generated',
           description: res.data.github_export?.pushed
-            ? `${res.data.github_export.committed_files?.length || 5} self-contained files committed (including .github/copilot-instructions.md).`
-            : res.data.github_export?.error || 'Ready for GitHub Copilot.',
+            ? `${res.data.github_export.committed_files?.length || 10} files pushed (including Makefile, hermes_rsi_daemon.py, agents/roster.json & RSI_AUTONOMY_BLUEPRINT.md).`
+            : res.data.github_export?.error || 'Ready for Hermes, OpenClaw & GitHub Copilot.',
         });
       }
     } catch (err) {
@@ -281,26 +289,69 @@ export default function AgentCreativePracticeSandboxZone() {
         </div>
       )}
 
-      {/* Sovereign Base44-Free GitHub Repository & GitHub Copilot Continuity Exporter */}
+      {/* One-Click Sandbox Workspace + Agent Logic + Hermes/OpenClaw RSI GitHub Exporter */}
       <div className="p-3 rounded border border-caution/50 bg-card space-y-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
           <div>
             <span className="text-[11px] font-bold text-caution flex items-center gap-1.5">
-              <GitBranch size={13} /> SOVEREIGN GITHUB &amp; COPILOT FREE-ENVIRONMENT EXPORTER (ZERO BASE44 DEPENDENCY)
+              <GitBranch size={13} /> ONE-CLICK SANDBOX WORKSPACE, AGENT LOGIC &amp; HERMES/OPENCLAW RSI GITHUB EXPORTER
             </span>
             <p className="text-[10px] text-muted-foreground font-body">
-              Create or push a 100% self-contained, platform-independent GitHub repository containing <code>index.html</code>, <code>sovereign-kernel.js</code>, <code>sandbox-ledger.json</code>, and <code>.github/copilot-instructions.md</code> so your agents and GitHub Copilot can evolve independently forever.
+              Pushes all Sandbox Workspace drafts (<code>sandbox-ledger.json</code>), all 9+5 Agent Logic &amp; Prompts (<code>agents/roster.json</code>), native <code>Makefile</code>, <code>hermes_rsi_daemon.py</code>, and <code>RSI_AUTONOMY_BLUEPRINT.md</code> to a standalone GitHub repository so <strong>Hermes</strong>, <strong>OpenClaw</strong>, and <strong>GitHub Copilot</strong> fill every native OS/GPU/Git gap with true Recursive Self-Improvement.
             </p>
           </div>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={handleCopyCopilotPrompt}
-            className="h-7 text-[10px] px-2.5 gap-1"
-          >
-            {copiedCopilot ? <Check size={11} className="text-success" /> : <Copy size={11} />}
-            {copiedCopilot ? 'Copied Copilot Charter!' : 'Copy GitHub Copilot Continuity Prompt'}
-          </Button>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                navigator.clipboard.writeText(hermesPrompt);
+                setCopiedHermes(true);
+                toast({
+                  title: 'Hermes & OpenClaw RSI Takeover Prompt Copied',
+                  description: 'Hand this directive to Hermes or OpenClaw so it clones the repo and runs make bootstrap && make hermes-daemon.',
+                });
+                setTimeout(() => setCopiedHermes(false), 2500);
+              }}
+              className="h-7 text-[10px] px-2.5 gap-1"
+            >
+              {copiedHermes ? <Check size={11} className="text-success" /> : <Copy size={11} />}
+              {copiedHermes ? 'Copied Hermes/OpenClaw Prompt!' : 'Copy Hermes & OpenClaw RSI Prompt'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleCopyCopilotPrompt}
+              className="h-7 text-[10px] px-2.5 gap-1"
+            >
+              {copiedCopilot ? <Check size={11} className="text-success" /> : <Copy size={11} />}
+              {copiedCopilot ? 'Copied Copilot Charter!' : 'Copy Copilot Prompt'}
+            </Button>
+          </div>
+        </div>
+
+        {/* 5-Pillar RSI & Continuity Architecture Summary */}
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-1.5 text-[9.5px]">
+          <div className="p-2 rounded bg-background border border-border">
+            <strong className="text-primary block">PILLAR I · CREATOR NEXUS</strong>
+            <span className="text-muted-foreground font-body">Yang 3-Pass Sandbox Genesis &amp; 138 BPM Studio</span>
+          </div>
+          <div className="p-2 rounded bg-background border border-border">
+            <strong className="text-caution block">PILLAR II · FRAYMUS ETERNAL</strong>
+            <span className="text-muted-foreground font-body">Yin OPEG-V1.0 &amp; 4D Spectral Voxel Co-Signer</span>
+          </div>
+          <div className="p-2 rounded bg-background border border-border">
+            <strong className="text-success block">PILLAR III · GITHUB VAULT</strong>
+            <span className="text-muted-foreground font-body">Zero-Base44 Repo + Roster + Chronicle</span>
+          </div>
+          <div className="p-2 rounded bg-background border border-border">
+            <strong className="text-foreground block">PILLAR IV · COPILOT</strong>
+            <span className="text-muted-foreground font-body">.github/copilot-instructions.md Evolution</span>
+          </div>
+          <div className="p-2 rounded bg-background border border-caution/40">
+            <strong className="text-caution block">PILLAR V · HERMES + OPENCLAW</strong>
+            <span className="text-muted-foreground font-body">Makefile + hermes_rsi_daemon.py Native OS RSI</span>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2">
@@ -322,7 +373,7 @@ export default function AgentCreativePracticeSandboxZone() {
             ) : (
               <GitBranch size={12} />
             )}
-            Create / Push Standalone Base44-Free Repo to GitHub
+            One-Click Export All Sandbox Content, Agent Logic &amp; RSI Makefile to GitHub
           </Button>
         </div>
 
