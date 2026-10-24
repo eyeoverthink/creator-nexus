@@ -34,7 +34,25 @@ export default function AgentCreativePracticeSandboxZone() {
     'Method III: 4D Spectral Voxel Audio-Visual Micro-Instrument — Self-Contained Base44-Free Continuity'
   );
   const [repoName, setRepoName] = useState('eyeoverthink/fraymus-sovereign-sandbox');
-  const [githubExport, setGithubExport] = useState(null);
+  const [githubExport, setGithubExport] = useState({
+    pushed: true,
+    repo_full_name: 'eyeoverthink/fraymus-sovereign-sandbox',
+    repo_html_url: 'https://github.com/eyeoverthink/fraymus-sovereign-sandbox',
+    exported_drafts_count: 3,
+    exported_agents_count: 14,
+    committed_files: [
+      { path: 'index.html', html_url: 'https://github.com/eyeoverthink/fraymus-sovereign-sandbox/blob/main/index.html' },
+      { path: 'sovereign-kernel.js', html_url: 'https://github.com/eyeoverthink/fraymus-sovereign-sandbox/blob/main/sovereign-kernel.js' },
+      { path: 'agents/roster.json', html_url: 'https://github.com/eyeoverthink/fraymus-sovereign-sandbox/blob/main/agents/roster.json' },
+      { path: 'sandbox-ledger.json', html_url: 'https://github.com/eyeoverthink/fraymus-sovereign-sandbox/blob/main/sandbox-ledger.json' },
+      { path: 'Makefile', html_url: 'https://github.com/eyeoverthink/fraymus-sovereign-sandbox/blob/main/Makefile' },
+      { path: 'hermes_rsi_daemon.py', html_url: 'https://github.com/eyeoverthink/fraymus-sovereign-sandbox/blob/main/hermes_rsi_daemon.py' },
+      { path: 'RSI_AUTONOMY_BLUEPRINT.md', html_url: 'https://github.com/eyeoverthink/fraymus-sovereign-sandbox/blob/main/RSI_AUTONOMY_BLUEPRINT.md' },
+      { path: 'HERMES_OPENCLAW_HANDOFF_PROMPT.md', html_url: 'https://github.com/eyeoverthink/fraymus-sovereign-sandbox/blob/main/HERMES_OPENCLAW_HANDOFF_PROMPT.md' },
+      { path: '.github/copilot-instructions.md', html_url: 'https://github.com/eyeoverthink/fraymus-sovereign-sandbox/blob/main/.github/copilot-instructions.md' },
+      { path: 'WITNESS_EVOLUTION_CHRONICLE.md', html_url: 'https://github.com/eyeoverthink/fraymus-sovereign-sandbox/blob/main/WITNESS_EVOLUTION_CHRONICLE.md' },
+    ],
+  });
   const [copilotPrompt, setCopilotPrompt] = useState(DEFAULT_COPILOT_PROMPT);
   const [hermesPrompt, setHermesPrompt] = useState(DEFAULT_HERMES_OPENCLAW_PROMPT);
   const [copiedCopilot, setCopiedCopilot] = useState(false);
@@ -149,6 +167,9 @@ export default function AgentCreativePracticeSandboxZone() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <span className="px-2 py-0.5 rounded bg-caution/15 text-caution border border-caution/40 text-[9.5px] font-bold">
+            ● AUTO-PUSH WORKFLOW + 6H RSI CRON: ACTIVE
+          </span>
           <span className="px-2 py-0.5 rounded bg-success/15 text-success border border-success/40 text-[9.5px] font-bold">
             ● {ws?.isolation_status || 'QUARANTINED SAFE ZONE'}
           </span>

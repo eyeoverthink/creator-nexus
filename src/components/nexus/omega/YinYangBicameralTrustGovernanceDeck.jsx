@@ -61,7 +61,7 @@ const DEFAULT_CHARTERS = [
 
 export default function YinYangBicameralTrustGovernanceDeck({ workspaceId, onPulseComplete }) {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('reputation_organism'); // 'reputation_organism' | 'yinyang' | 'governance'
+  const [activeTab, setActiveTab] = useState('sandbox_synapse'); // 'sandbox_synapse' | 'reputation_organism' | 'yinyang' | 'governance'
   const [pulseData, setPulseData] = useState(null);
   const [busy, setBusy] = useState('');
   const [autoStream, setAutoStream] = useState(false);
