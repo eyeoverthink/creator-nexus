@@ -47,6 +47,10 @@ import {
   runStageProgressionWithAgentFeedback,
   spawnAgentCreatedSpecialist,
 } from '../../shared/agentReputationAndOrganism.ts';
+import {
+  runCrossAppAutonomySandboxAndSynapse,
+} from '../../shared/crossAppAutonomySandbox.ts';
+// Bundled with crossAppAutonomySandbox.ts
 
 function slugify(str) {
   return (
@@ -227,6 +231,7 @@ export default async function(req) {
       'load_reputation_ledger',
       'run_stage_agent_feedback',
       'agent_spawn_specialist',
+      'cross_app_autonomy_sandbox',
       'list_dispatch_jobs',
       'hermes_fleet_manifest',
       'execute_native_skill',
@@ -1043,6 +1048,25 @@ export default async function(req) {
         workspaceId,
         body,
         rSan,
+      });
+      return Response.json(res);
+    }
+
+    if (action === 'cross_app_autonomy_sandbox') {
+      const rSan = computeOpegReceipt({
+        g: 1.0,
+        gamma: 1.41421356,
+        epsilon: 0.001,
+        goal: `Cross-App Connective Tissue & Autonomy Sandbox: ${body.one_line_directive || 'Awakening Method'}`,
+      });
+      const res = await runCrossAppAutonomySandboxAndSynapse({
+        db,
+        ownerId,
+        workspaceId,
+        body,
+        rSan,
+        computeSha256Hex: sha256Hex,
+        inspectOrificeFrameL1ToL5,
       });
       return Response.json(res);
     }

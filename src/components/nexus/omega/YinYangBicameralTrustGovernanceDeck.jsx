@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import EarnedTrustAndOrganismSpawnerPanel from '@/components/nexus/omega/EarnedTrustAndOrganismSpawnerPanel';
+import SynapticSandboxAndConnectiveTissuePanel from '@/components/nexus/omega/SynapticSandboxAndConnectiveTissuePanel';
 import {
   Radio,
   ShieldCheck,
@@ -262,6 +263,17 @@ export default function YinYangBicameralTrustGovernanceDeck({ workspaceId, onPul
           </button>
           <button
             type="button"
+            onClick={() => setActiveTab('sandbox_synapse')}
+            className={`px-3 py-1.5 rounded text-[11px] font-bold border transition-colors inline-flex items-center gap-1.5 ${
+              activeTab === 'sandbox_synapse'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-muted-foreground border-border hover:text-foreground'
+            }`}
+          >
+            <Sparkles size={12} /> 2. One-Line Autonomy Sandbox &amp; Cross-App Connective Tissue
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab('yinyang')}
             className={`px-3 py-1.5 rounded text-[11px] font-bold border transition-colors inline-flex items-center gap-1.5 ${
               activeTab === 'yinyang'
@@ -269,7 +281,7 @@ export default function YinYangBicameralTrustGovernanceDeck({ workspaceId, onPul
                 : 'bg-background text-muted-foreground border-border hover:text-foreground'
             }`}
           >
-            <Orbit size={12} /> 2. Live Yin-Yang Brain &amp; Reciprocal Stream Trust
+            <Orbit size={12} /> 3. Live Yin-Yang Brain &amp; Reciprocal Stream Trust
           </button>
           <button
             type="button"
@@ -280,7 +292,7 @@ export default function YinYangBicameralTrustGovernanceDeck({ workspaceId, onPul
                 : 'bg-background text-muted-foreground border-border hover:text-foreground'
             }`}
           >
-            <Scale size={12} /> 3. Constitutional Governance &amp; Community ({charters.length} Articles)
+            <Scale size={12} /> 4. Constitutional Governance &amp; Community ({charters.length} Articles)
           </button>
         </div>
 
@@ -294,6 +306,8 @@ export default function YinYangBicameralTrustGovernanceDeck({ workspaceId, onPul
 
       {activeTab === 'reputation_organism' ? (
         <EarnedTrustAndOrganismSpawnerPanel workspaceId={workspaceId} />
+      ) : activeTab === 'sandbox_synapse' ? (
+        <SynapticSandboxAndConnectiveTissuePanel workspaceId={workspaceId} />
       ) : activeTab === 'yinyang' ? (
         <div className="space-y-3">
           {/* 4-Pillar Trust Matrix Strip */}
