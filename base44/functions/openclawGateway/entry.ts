@@ -59,6 +59,9 @@ import {
   loadWitnessEvolutionLedger,
   runOpenClawChannelTaskDispatch,
 } from '../../shared/fourthWallWitnessUnion.ts';
+import {
+  syncHermesGithubCommBusAndAdvanceRsi,
+} from '../../shared/hermesGithubCommBus.ts';
 
 function slugify(str) {
   return (
@@ -244,6 +247,7 @@ export default async function(req) {
       'export_standalone_github_sandbox',
       'run_fourth_wall_witness_union_cycle',
       'load_witness_evolution_ledger',
+      'sync_hermes_github_comm_bus',
       'list_dispatch_jobs',
       'hermes_fleet_manifest',
       'execute_native_skill',
@@ -1152,6 +1156,24 @@ export default async function(req) {
     if (action === 'load_witness_evolution_ledger') {
       const ledger = await loadWitnessEvolutionLedger({ db, workspaceId });
       return Response.json({ ok: true, witness_ledger: ledger });
+    }
+
+    if (action === 'sync_hermes_github_comm_bus') {
+      const rSan = computeOpegReceipt({
+        g: 1.0,
+        gamma: 1.41421356,
+        epsilon: 0.001,
+        goal: `Hermes + OpenClaw Dual-Repo GitHub Comm Bus Sync`,
+      });
+      const res = await syncHermesGithubCommBusAndAdvanceRsi({
+        db,
+        ownerId,
+        workspaceId,
+        body,
+        rSan,
+        sha256Hex,
+      });
+      return Response.json(res);
     }
 
     if (action === 'absorb_all_continuity') {
