@@ -54,7 +54,11 @@ import {
 import {
   exportStandaloneGithubSandboxRepo,
 } from '../../shared/standaloneGithubSandboxExporter.ts';
-// Bundled with crossAppAutonomySandbox.ts
+import {
+  runFourthWallWitnessUnionCycle,
+  loadWitnessEvolutionLedger,
+  runOpenClawChannelTaskDispatch,
+} from '../../shared/fourthWallWitnessUnion.ts';
 
 function slugify(str) {
   return (
@@ -238,6 +242,8 @@ export default async function(req) {
       'cross_app_autonomy_sandbox',
       'run_agent_practice_sandbox',
       'export_standalone_github_sandbox',
+      'run_fourth_wall_witness_union_cycle',
+      'load_witness_evolution_ledger',
       'list_dispatch_jobs',
       'hermes_fleet_manifest',
       'execute_native_skill',
@@ -1123,6 +1129,30 @@ export default async function(req) {
       return Response.json(exportRes);
     }
 
+    if (action === 'run_fourth_wall_witness_union_cycle') {
+      const rSan = computeOpegReceipt({
+        g: 1.0,
+        gamma: 1.41421356,
+        epsilon: 0.001,
+        goal: `4th-Wall Witness Union Cycle: ${body.creator_decision_note || 'Autonomous Union Review & GitHub Push'}`,
+      });
+      const res = await runFourthWallWitnessUnionCycle({
+        db,
+        ownerId,
+        workspaceId,
+        body,
+        rSan,
+        sha256Hex,
+        inspectOrificeFrameL1ToL5,
+      });
+      return Response.json(res);
+    }
+
+    if (action === 'load_witness_evolution_ledger') {
+      const ledger = await loadWitnessEvolutionLedger({ db, workspaceId });
+      return Response.json({ ok: true, witness_ledger: ledger });
+    }
+
     if (action === 'absorb_all_continuity') {
       const rSan = computeOpegReceipt({
         g: 1.0,
@@ -1135,192 +1165,23 @@ export default async function(req) {
     }
 
     if (action === 'dispatch_task') {
-      const agentId = String(body.agent_id || 'openclaw-alpha').slice(0, 60);
-      const channel = String(body.channel || 'telegram').toLowerCase().slice(0, 32);
-      const directive = String(body.directive || '').trim().slice(0, 3000);
-      if (!directive) {
-        return Response.json({ error: 'directive is required' }, { status: 400 });
-      }
-
       const rSan = computeOpegReceipt({
         g: body.g ?? 1.0,
         gamma: body.gamma ?? 1.414214,
         epsilon: body.epsilon ?? 0.001,
-        goal: directive,
+        goal: String(body.directive || 'OpenClaw Task'),
       });
-
-      const synthesisPrompt = `You are OpenClaw Sovereign Agent "${agentId}" operating on channel "${channel.toUpperCase()}" connected to the Creator Nexus 24/7 Cloud OS.
-Enforce OPEG-V1.0 Cognitive Law (Forbidden_Action: DIRECT_INFERENCE; Grounded Receipt: ${rSan.receipt_id}).
-User / Mission Directive:
-"${directive}"
-
-Respond with a JSON object containing:
-1. "headline": crisp 1-line summary of the action taken (<= 100 chars)
-2. "execution_report": markdown report with concrete metrics, architecture steps, or creative output
-3. "draft_patch": optional updated draft section or code block produced for the workspace
-4. "next_channel_ping": 1-sentence status message ready for Telegram / WhatsApp / Slack notification`;
-
-      const llmRaw = await db.integrations.Core.InvokeLLM({
-        prompt: synthesisPrompt,
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            headline: { type: 'string' },
-            execution_report: { type: 'string' },
-            draft_patch: { type: 'string' },
-            next_channel_ping: { type: 'string' },
-          },
-          required: ['headline', 'execution_report', 'next_channel_ping'],
-        },
-      });
-
-      const parsed =
-        typeof llmRaw === 'object' && llmRaw !== null
-          ? llmRaw
-          : {
-              headline: `Executed: ${directive.slice(0, 60)}`,
-              execution_report: String(llmRaw || ''),
-              draft_patch: '',
-              next_channel_ping: `[${agentId}] Completed directive on ${channel}.`,
-            };
-
-      const eventRecord = await db.entities.NexusEvent.create({
-        owner_id: ownerId,
-        workspace_id: workspaceId,
-        agent: agentId,
-        kind: `openclaw.${channel}`,
-        message: `[${channel.toUpperCase()} · ${agentId}] ${parsed.headline}`.slice(0, 200),
-        body: JSON.stringify(
-          {
-            directive,
-            channel,
-            agent_id: agentId,
-            r_san: rSan,
-            output: parsed,
-          },
-          null,
-          2
-        ).slice(0, 19000),
-      });
-
-      await db.entities.SparkLearningLog.create({
-        owner_id: ownerId,
-        workspace_id: workspaceId,
-        agent: agentId,
-        recipient: channel,
-        kind: 'action',
-        action: 'openclaw_dispatch',
-        summary: `${parsed.headline} — ${parsed.next_channel_ping}`.slice(0, 1900),
-        details: {
-          channel,
-          receipt_id: rSan.receipt_id,
-          event_id: eventRecord?.id,
-        },
-      }).catch(() => null);
-
-      let updatedDraft = null;
-      if (body.append_to_draft && parsed.draft_patch) {
-        const draftsPage = await db.entities.NexusDraft.filter(
-          { workspace_id: workspaceId },
-          { sort: '-updated_date', limit: 1 }
-        ).catch(() => ({ items: [] }));
-        const existingDraft = draftsPage?.items?.[0];
-        const stamp = `\n\n---\n### [${agentId} via ${channel.toUpperCase()} · ${rSan.receipt_id}]\n${parsed.draft_patch}`;
-        if (existingDraft) {
-          updatedDraft = await db.entities.NexusDraft.update(existingDraft.id, {
-            body: `${existingDraft.body || ''}${stamp}`.slice(0, 19500),
-            revision: (existingDraft.revision || 0) + 1,
-          }).catch(() => null);
-        } else {
-          updatedDraft = await db.entities.NexusDraft.create({
-            owner_id: ownerId,
-            workspace_id: workspaceId,
-            title: `OpenClaw Shared Workspace Draft (${activeWorkspace.name || 'Hub'})`,
-            body: `# ${parsed.headline}\n\n${parsed.execution_report}${stamp}`.slice(0, 19500),
-            revision: 1,
-          }).catch(() => null);
-        }
-      }
-
-      let githubReceipt = null;
-      if (body.push_to_github) {
-        try {
-          const { accessToken } = await db.connectors.getConnection('github');
-          const slug = slugify(`${agentId}-${parsed.headline}`);
-          const filePath = `openclaw/${slug}.md`;
-          const mdContent = [
-            `# ${parsed.headline}`,
-            `- **OpenClaw Agent:** \`${agentId}\``,
-            `- **Channel:** \`${channel.toUpperCase()}\``,
-            `- **OPEG Receipt:** \`${rSan.receipt_id}\` (\`Σ\` Verified)`,
-            `- **Timestamp:** ${new Date().toISOString()}`,
-            ``,
-            `## Directive`,
-            directive,
-            ``,
-            `## Execution Report`,
-            parsed.execution_report,
-            parsed.draft_patch ? `\n## Artifact / Patch\n\`\`\`\n${parsed.draft_patch}\n\`\`\`` : '',
-          ].join('\n');
-
-          const ghHeaders = {
-            Authorization: `Bearer ${accessToken}`,
-            Accept: 'application/vnd.github+json',
-            'Content-Type': 'application/json',
-            'User-Agent': 'CreatorNexus-OpenClawHub',
-          };
-
-          let sha;
-          const checkRes = await fetch(
-            `https://api.github.com/repos/eyeoverthink/looseScrew/contents/${filePath}`,
-            { headers: ghHeaders, signal: AbortSignal.timeout(10000) }
-          );
-          if (checkRes.status === 200) {
-            const existing = await checkRes.json();
-            sha = existing.sha;
-          }
-
-          const putRes = await fetch(
-            `https://api.github.com/repos/eyeoverthink/looseScrew/contents/${filePath}`,
-            {
-              method: 'PUT',
-              headers: ghHeaders,
-              signal: AbortSignal.timeout(15000),
-              body: JSON.stringify({
-                message: `OpenClaw [${agentId}]: ${parsed.headline}`,
-                content: btoa(unescape(encodeURIComponent(mdContent))),
-                ...(sha ? { sha } : {}),
-              }),
-            }
-          );
-          const putData = await putRes.json();
-          if (putRes.ok) {
-            githubReceipt = {
-              ok: true,
-              file_path: filePath,
-              html_url:
-                putData.content?.html_url ||
-                `https://github.com/eyeoverthink/looseScrew/blob/main/${filePath}`,
-              commit: putData.commit?.sha,
-            };
-          } else {
-            githubReceipt = { ok: false, error: putData.message || 'GitHub push failed' };
-          }
-        } catch (ghErr) {
-          githubReceipt = { ok: false, error: ghErr.message };
-        }
-      }
-
-      return Response.json({
-        ok: true,
-        agentId,
-        channel,
+      const res = await runOpenClawChannelTaskDispatch({
+        db,
+        ownerId,
+        workspaceId,
+        activeWorkspaceName: activeWorkspace.name,
+        body,
         rSan,
-        output: parsed,
-        eventId: eventRecord?.id,
-        updatedDraftId: updatedDraft?.id || null,
-        githubReceipt,
+        slugify,
       });
+      if (res.error) return Response.json({ error: res.error }, { status: res.status || 400 });
+      return Response.json(res);
     }
 
     return Response.json({ error: `Unknown action: ${action}` }, { status: 400 });

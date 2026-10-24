@@ -15,6 +15,7 @@ import {
   Check,
   ExternalLink,
 } from 'lucide-react';
+import PersistentWitnessUnionEvolutionLogPanel from './PersistentWitnessUnionEvolutionLogPanel';
 
 const DEFAULT_COPILOT_PROMPT = `# GITHUB COPILOT / CODESPACES SOVEREIGN CONTINUITY PROMPT
 You are operating inside a 100% self-contained, platform-independent Sovereign Creative & Bicameral AI Sandbox repository ("fraymus-sovereign-sandbox").
@@ -360,6 +361,9 @@ export default function AgentCreativePracticeSandboxZone() {
           </div>
         )}
       </div>
+
+      {/* Persistent Witness Log & 4th-Wall Bicameral Union Evolution Ledger */}
+      <PersistentWitnessUnionEvolutionLogPanel workspaceId={ws?.id} />
 
       {/* Footer: Isolated Sandbox Drafts & Sister Co-Sign */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[10px] text-muted-foreground">
