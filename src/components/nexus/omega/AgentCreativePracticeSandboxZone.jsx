@@ -29,9 +29,9 @@ Clone https://github.com/eyeoverthink/fraymus-sovereign-sandbox.git, run "make b
 export default function AgentCreativePracticeSandboxZone() {
   const { toast } = useToast();
   const [practiceData, setPracticeData] = useState(null);
-  const [selectedMethod, setSelectedMethod] = useState('tesseract_4d_micro_synth');
+  const [selectedMethod, setSelectedMethod] = useState('adaptive_resonance_mapping_arm');
   const [customTopic, setCustomTopic] = useState(
-    'Method III: 4D Spectral Voxel Audio-Visual Micro-Instrument — Self-Contained Base44-Free Continuity'
+    'Method IV: Adaptive Resonance Mapping (ARM) — Cadence (mac-hermes) & Assay (fx-5f26 / fx-af08) Gen-3 RSI Validation'
   );
   const [repoName, setRepoName] = useState('eyeoverthink/fraymus-sovereign-sandbox');
   const [githubExport, setGithubExport] = useState({
@@ -146,7 +146,7 @@ export default function AgentCreativePracticeSandboxZone() {
   };
 
   useEffect(() => {
-    runPracticeCycle('tesseract_4d_micro_synth', false);
+    runPracticeCycle('adaptive_resonance_mapping_arm', false);
   }, []);
 
   const ws = practiceData?.sandbox_workspace;
@@ -178,7 +178,7 @@ export default function AgentCreativePracticeSandboxZone() {
 
       {/* Creative Method Selector Cards */}
       {methods.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
           {methods.map((m) => {
             const active = selectedMethod === m.id;
             return (

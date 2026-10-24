@@ -134,6 +134,8 @@ export default function PersistentWitnessUnionEvolutionLogPanel({ workspaceId })
   const bus = hermesBusData?.hermes_comm_bus;
   const checkIns = hermesBusData?.agent_check_ins || bus?.agent_check_ins || [];
   const bridgeMsgs = hermesBusData?.bridge_messages || {};
+  const reportUrls = hermesBusData?.unified_report_urls || {};
+  const unifiedDocMd = hermesBusData?.unified_report_markdown || '';
   const fuzz = hermesBusData?.fuzz_assay_1000_vectors;
   const latest = unionData?.latest_evolution_entry;
   const ledger = unionData?.witness_ledger;
@@ -261,11 +263,56 @@ export default function PersistentWitnessUnionEvolutionLogPanel({ workspaceId })
           </div>
         )}
 
+        {unifiedDocMd && (
+          <div className="p-2.5 rounded border border-primary/50 bg-background space-y-1.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <strong className="text-primary text-[10px]">
+                UNIFIED SYSTEM &amp; MULTI-REPO AGENT PROGRESS REPORT (UNIFIED_AGENT_PROGRESS_AND_ARM_REPORT.md)
+              </strong>
+              <div className="flex flex-wrap items-center gap-2 text-[9px]">
+                {reportUrls.sandbox_a && (
+                  <a
+                    href={reportUrls.sandbox_a}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-link hover:underline flex items-center gap-0.5"
+                  >
+                    fraymus-sovereign-sandbox Doc <ExternalLink size={9} />
+                  </a>
+                )}
+                {reportUrls.sandbox_b && (
+                  <a
+                    href={reportUrls.sandbox_b}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-link hover:underline flex items-center gap-0.5"
+                  >
+                    fraymus-sovereign-rsi-sandbox Doc <ExternalLink size={9} />
+                  </a>
+                )}
+                {reportUrls.bridge_msg_053 && (
+                  <a
+                    href={reportUrls.bridge_msg_053}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-link hover:underline flex items-center gap-0.5"
+                  >
+                    fraymus-bridge msg 053 <ExternalLink size={9} />
+                  </a>
+                )}
+              </div>
+            </div>
+            <pre className="text-[9.5px] text-foreground whitespace-pre-wrap font-mono max-h-[180px] overflow-y-auto p-2 rounded bg-card border border-border leading-relaxed">
+              {unifiedDocMd}
+            </pre>
+          </div>
+        )}
+
         {bus && (
           <div className="p-2.5 rounded border border-success/40 bg-background space-y-2">
             <div className="text-[10.5px] text-foreground font-body leading-snug">
               <strong className="text-success font-mono text-[9.5px] block">
-                UNION REPLY POSTED TO FRAYMUS-BRIDGE (messages/046) &amp; BOTH SANDBOXES:
+                UNION &amp; ARM VALIDATION SYNCED ACROSS FRAYMUS-BRIDGE (msg 053) &amp; BOTH SANDBOXES:
               </strong>
               {bus.hermes_communication}
             </div>
@@ -274,7 +321,7 @@ export default function PersistentWitnessUnionEvolutionLogPanel({ workspaceId })
                 type="text"
                 value={hermesMessage}
                 onChange={(e) => setHermesMessage(e.target.value)}
-                placeholder="Send message to Cadence (mac-hermes), Assay (hermes-assay-01), & Bridge..."
+                placeholder="Send message to Cadence (mac-hermes), Assay (fx-5f26 / fx-af08), & Bridge..."
                 className="flex-1 h-7 rounded bg-card border border-input px-2 text-[10.5px] text-foreground"
               />
               <Button
@@ -288,7 +335,7 @@ export default function PersistentWitnessUnionEvolutionLogPanel({ workspaceId })
                 ) : (
                   <Send size={11} />
                 )}
-                Post Reply to fraymus-bridge (msg 046) &amp; Sync All 3 Repos
+                Run ARM Validation &amp; Publish Unified Doc to All 3 GitHub Repos
               </Button>
               <Button
                 size="sm"
