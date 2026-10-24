@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import AwakeningMusicVideoStage from '@/components/nexus/factory/AwakeningMusicVideoStage';
 import MasterVideoStitchAndExportDeck from '@/components/nexus/factory/MasterVideoStitchAndExportDeck';
+import AgentResponseSongAndVideoForge from '@/components/nexus/factory/AgentResponseSongAndVideoForge';
 import FactorySignalSensoriumPanel from '@/components/nexus/factory/FactorySignalSensoriumPanel';
 import FactoryWorkforceAndSkillsPanel from '@/components/nexus/factory/FactoryWorkforceAndSkillsPanel';
 import FactoryReviewAndLearningPanel from '@/components/nexus/factory/FactoryReviewAndLearningPanel';
@@ -502,6 +503,14 @@ export default function ProductionFactory() {
                 />
               </>
             )}
+
+            <AgentResponseSongAndVideoForge
+              production={selectedProduction}
+              onCreatedResponseProduction={(created) => {
+                setProductions((prev) => [created, ...prev.filter((p) => p.id !== created.id)]);
+                setSelectedProduction(created);
+              }}
+            />
 
             <FactoryReviewAndLearningPanel
               production={selectedProduction}
