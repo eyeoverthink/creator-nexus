@@ -42,6 +42,11 @@ import {
   runYinYangBicameralTrustPulse,
   proposeOrRatifyGovernanceCharter,
 } from '../../shared/yinYangTrustGovernance.ts';
+import {
+  loadOrComputeReputationLedger,
+  runStageProgressionWithAgentFeedback,
+  spawnAgentCreatedSpecialist,
+} from '../../shared/agentReputationAndOrganism.ts';
 
 function slugify(str) {
   return (
@@ -219,6 +224,9 @@ export default async function(req) {
       'orifice_github_sync',
       'yin_yang_trust_pulse',
       'propose_governance_charter',
+      'load_reputation_ledger',
+      'run_stage_agent_feedback',
+      'agent_spawn_specialist',
       'list_dispatch_jobs',
       'hermes_fleet_manifest',
       'execute_native_skill',
@@ -993,6 +1001,49 @@ export default async function(req) {
         body,
       });
       if (res.error) return Response.json(res, { status: 400 });
+      return Response.json(res);
+    }
+
+    if (action === 'load_reputation_ledger') {
+      const res = await loadOrComputeReputationLedger({
+        db,
+        ownerId,
+        workspaceId,
+      });
+      return Response.json(res);
+    }
+
+    if (action === 'run_stage_agent_feedback') {
+      const rSan = computeOpegReceipt({
+        g: 1.0,
+        gamma: 1.41421356,
+        epsilon: 0.001,
+        goal: `Stage ${body.stage_number || 2} Agent Feedback & Autonomy Verification`,
+      });
+      const res = await runStageProgressionWithAgentFeedback({
+        db,
+        ownerId,
+        workspaceId,
+        body,
+        rSan,
+      });
+      return Response.json(res);
+    }
+
+    if (action === 'agent_spawn_specialist') {
+      const rSan = computeOpegReceipt({
+        g: 1.0,
+        gamma: 1.41421356,
+        epsilon: 0.001,
+        goal: `Autonomous Agent Genesis: ${body.name || 'New Specialist'}`,
+      });
+      const res = await spawnAgentCreatedSpecialist({
+        db,
+        ownerId,
+        workspaceId,
+        body,
+        rSan,
+      });
       return Response.json(res);
     }
 

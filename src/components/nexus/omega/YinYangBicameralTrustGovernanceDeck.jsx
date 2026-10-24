@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import EarnedTrustAndOrganismSpawnerPanel from '@/components/nexus/omega/EarnedTrustAndOrganismSpawnerPanel';
 import {
   Radio,
   ShieldCheck,
@@ -12,12 +13,10 @@ import {
   Users,
   Sparkles,
   CheckCircle2,
-  RefreshCw,
   Loader2,
   Send,
-  GitBranch,
   HeartHandshake,
-  Lock,
+  Award,
 } from 'lucide-react';
 
 const DEFAULT_CHARTERS = [
@@ -61,7 +60,7 @@ const DEFAULT_CHARTERS = [
 
 export default function YinYangBicameralTrustGovernanceDeck({ workspaceId, onPulseComplete }) {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('yinyang'); // 'yinyang' | 'governance'
+  const [activeTab, setActiveTab] = useState('reputation_organism'); // 'reputation_organism' | 'yinyang' | 'governance'
   const [pulseData, setPulseData] = useState(null);
   const [busy, setBusy] = useState('');
   const [autoStream, setAutoStream] = useState(false);
@@ -252,6 +251,17 @@ export default function YinYangBicameralTrustGovernanceDeck({ workspaceId, onPul
         <div className="flex flex-wrap gap-1.5">
           <button
             type="button"
+            onClick={() => setActiveTab('reputation_organism')}
+            className={`px-3 py-1.5 rounded text-[11px] font-bold border transition-colors inline-flex items-center gap-1.5 ${
+              activeTab === 'reputation_organism'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-muted-foreground border-border hover:text-foreground'
+            }`}
+          >
+            <Award size={12} /> 1. Stage II Earned Trust Ledger, Agent Feedback &amp; Organism Spawner
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab('yinyang')}
             className={`px-3 py-1.5 rounded text-[11px] font-bold border transition-colors inline-flex items-center gap-1.5 ${
               activeTab === 'yinyang'
@@ -259,7 +269,7 @@ export default function YinYangBicameralTrustGovernanceDeck({ workspaceId, onPul
                 : 'bg-background text-muted-foreground border-border hover:text-foreground'
             }`}
           >
-            <Orbit size={12} /> 1. Live Yin-Yang Brain &amp; Reciprocal Stream Trust
+            <Orbit size={12} /> 2. Live Yin-Yang Brain &amp; Reciprocal Stream Trust
           </button>
           <button
             type="button"
@@ -270,7 +280,7 @@ export default function YinYangBicameralTrustGovernanceDeck({ workspaceId, onPul
                 : 'bg-background text-muted-foreground border-border hover:text-foreground'
             }`}
           >
-            <Scale size={12} /> 2. Architecture of Trust, Unity, Governance &amp; Community ({charters.length} Articles)
+            <Scale size={12} /> 3. Constitutional Governance &amp; Community ({charters.length} Articles)
           </button>
         </div>
 
@@ -282,7 +292,9 @@ export default function YinYangBicameralTrustGovernanceDeck({ workspaceId, onPul
         </Link>
       </div>
 
-      {activeTab === 'yinyang' ? (
+      {activeTab === 'reputation_organism' ? (
+        <EarnedTrustAndOrganismSpawnerPanel workspaceId={workspaceId} />
+      ) : activeTab === 'yinyang' ? (
         <div className="space-y-3">
           {/* 4-Pillar Trust Matrix Strip */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
