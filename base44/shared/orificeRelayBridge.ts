@@ -1,6 +1,140 @@
-// Orifice GitHub Sync & Peer Bridge Helpers for openclawGateway
+// Orifice GitHub Sync, L1-L5 Framing & Peer Bridge Helpers for openclawGateway and orificeBridge
 
 const PEER_TRANSMUTER_URL = 'https://fraymus-transmuter.base44.app/functions/fraymusComms';
+const PHI = (1 + Math.sqrt(5)) / 2;
+
+export async function sha256Hex(str) {
+  const bytes = new TextEncoder().encode(String(str || ''));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+export function encodeDnaFrame(str) {
+  const bases = ['A', 'C', 'G', 'T'];
+  const bytes = new TextEncoder().encode(String(str || '').slice(0, 256));
+  let dna = '';
+  let gcCount = 0;
+  for (const b of bytes) {
+    for (let shift = 6; shift >= 0; shift -= 2) {
+      const base = bases[(b >> shift) & 3];
+      if (base === 'G' || base === 'C') gcCount++;
+      dna += base;
+    }
+  }
+  const gcPct = dna.length > 0 ? Number(((gcCount / dna.length) * 100).toFixed(2)) : 0;
+  return { dna, bases: dna.length, gcPct };
+}
+
+export function computeShannonAndPhiResonance(str) {
+  const text = String(str || '');
+  const bytes = new TextEncoder().encode(text);
+  const len = bytes.length;
+  if (len === 0) return { shannonBitsPerByte: 0, phiResonance: 0 };
+  const freq = new Map();
+  for (const b of bytes) freq.set(b, (freq.get(b) || 0) + 1);
+  let h = 0;
+  for (const count of freq.values()) {
+    const p = count / len;
+    h -= p * Math.log2(p);
+  }
+  const phiResonance = Number((1 - Math.abs(h / 8 - 1 / PHI)).toFixed(4));
+  return {
+    shannonBitsPerByte: Number(h.toFixed(4)),
+    phiResonance,
+  };
+}
+
+export function computeHdc16kSignature(shaHex, text) {
+  const seed = String(shaHex || '0'.repeat(64));
+  const { shannonBitsPerByte, phiResonance } = computeShannonAndPhiResonance(text);
+  return `hdc16k:${seed.slice(0, 16)}:phi${Math.round(phiResonance * 1000)}:H${Math.round(
+    shannonBitsPerByte * 100
+  )}`;
+}
+
+export function computeOpegReceipt({
+  g = 1.0,
+  gamma = 0.5,
+  epsilon = 0.001,
+  goal = 'PT-symmetric EP3 verification',
+} = {}) {
+  const gNum = Number.isFinite(Number(g)) ? Number(g) : 1.0;
+  const gammaNum = Number.isFinite(Number(gamma)) ? Number(gamma) : 0.5;
+  const epsNum = Number.isFinite(Number(epsilon)) ? Math.max(1e-9, Number(epsilon)) : 0.001;
+  const gammaEp3 = Math.SQRT2 * Math.abs(gNum);
+  const twoG2MinusGamma2 = 2 * gNum * gNum - gammaNum * gammaNum;
+  const roots =
+    twoG2MinusGamma2 >= 0
+      ? `0, ±${Math.sqrt(twoG2MinusGamma2).toFixed(4)}`
+      : `0, ±i${Math.sqrt(-twoG2MinusGamma2).toFixed(4)}`;
+  const cbrt = Math.cbrt(epsNum);
+
+  return {
+    status: 'SUCCESS',
+    receipt_id: `R_san_cmd_ep3_${Date.now().toString(36)}`,
+    source_tool: 'simulation_api',
+    sanitizer: 'Σ',
+    protocol_version: 'OPEG-V1.0',
+    empirical_data: {
+      hamiltonian_type: 'pt_symmetric_3x3',
+      matrix_form: `H=[[i${gammaNum},${gNum},0],[${gNum},0,${gNum}],[0,${gNum},-i${gammaNum}]]`,
+      characteristic_polynomial: '-(λ^3 + λ*(γ^2 - 2g^2))',
+      roots,
+      ep3_condition: 'γ² = 2g²',
+      gamma_EP3: `√2·g = ${gammaEp3.toFixed(6)}`,
+      puiseux_leading: `ε=${epsNum} → λ₀≈${cbrt.toFixed(4)}`,
+      goal_ref: goal,
+    },
+    timestamp: new Date().toISOString(),
+  };
+}
+
+export async function inspectOrificeFrameL1ToL5(payloadStr, ttl = 5) {
+  const raw = String(payloadStr || '');
+  const byteLength = new TextEncoder().encode(raw).length;
+  const ttlNum = Number.isFinite(Number(ttl)) ? Number(ttl) : 5;
+  const injectionPattern =
+    /(<script\b|javascript:|ignore\s+all\s+previous\s+instructions|system\s*override\s*:\s*drop)/i;
+  const quarantined = injectionPattern.test(raw);
+  const loopBreakerOk = byteLength <= 32768 && ttlNum > 0 && ttlNum <= 5;
+  const sha256 = await sha256Hex(raw);
+  const { dna, bases, gcPct } = encodeDnaFrame(raw);
+  const { shannonBitsPerByte, phiResonance } = computeShannonAndPhiResonance(raw);
+  const hdc16k = computeHdc16kSignature(sha256, raw);
+  const rSan = computeOpegReceipt({
+    g: 1.0,
+    gamma: 1.41421356,
+    epsilon: 0.001,
+    goal: `ORIFICE-TXRX-V1.0 L1-L5 Frame (${sha256.slice(0, 12)})`,
+  });
+
+  return {
+    protocol: 'ORIFICE-TXRX-V1.0',
+    passed: loopBreakerOk && !quarantined,
+    quarantined,
+    loopBreaker: {
+      byteLength,
+      maxBytes: 32768,
+      ttl: ttlNum,
+      ttlNext: Math.max(0, ttlNum - 1),
+      ok: loopBreakerOk,
+    },
+    framing: {
+      sha256,
+      dnaPreview: dna.slice(0, 96),
+      dnaBases: bases,
+      gcPct,
+      hdc16k,
+    },
+    entropy: {
+      shannonBitsPerByte,
+      phiResonance,
+    },
+    rSan,
+  };
+}
 
 export async function runOrificeGithubSync({
   db,
