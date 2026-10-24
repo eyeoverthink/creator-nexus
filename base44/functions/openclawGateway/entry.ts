@@ -62,6 +62,9 @@ import {
 import {
   syncHermesGithubCommBusAndAdvanceRsi,
 } from '../../shared/hermesGithubCommBus.ts';
+import {
+  runBicameralRelayAndLiveAiResearcher,
+} from '../../shared/liveAiSkillsResearcherRelay.ts';
 
 function slugify(str) {
   return (
@@ -248,6 +251,7 @@ export default async function(req) {
       'run_fourth_wall_witness_union_cycle',
       'load_witness_evolution_ledger',
       'sync_hermes_github_comm_bus',
+      'run_bicameral_relay_and_live_researcher',
       'list_dispatch_jobs',
       'hermes_fleet_manifest',
       'execute_native_skill',
@@ -1172,6 +1176,26 @@ export default async function(req) {
         body,
         rSan,
         sha256Hex,
+      });
+      return Response.json(res);
+    }
+
+    if (action === 'run_bicameral_relay_and_live_researcher') {
+      const rSan = computeOpegReceipt({
+        g: 1.0,
+        gamma: 1.41421356,
+        epsilon: 0.001,
+        goal: `Bicameral Stream Relay & Real-Time Online AI Skills Researcher`,
+      });
+      const res = await runBicameralRelayAndLiveAiResearcher({
+        db,
+        ownerId,
+        workspaceId,
+        activeWorkspaceName: activeWorkspace.name,
+        body,
+        rSan,
+        sha256Hex,
+        inspectOrificeFrameL1ToL5,
       });
       return Response.json(res);
     }

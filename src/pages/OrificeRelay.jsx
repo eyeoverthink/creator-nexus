@@ -5,6 +5,7 @@ import Sidebar from '@/components/nexus/Sidebar';
 import SovereignMotorDispatcherPanel from '@/components/nexus/omega/SovereignMotorDispatcherPanel';
 import OrificeMultiDimensionalHeaderDeck from '@/components/nexus/omega/OrificeMultiDimensionalHeaderDeck';
 import YinYangBicameralTrustGovernanceDeck from '@/components/nexus/omega/YinYangBicameralTrustGovernanceDeck';
+import BicameralStreamRelayAndLiveResearcherPanel from '@/components/nexus/omega/BicameralStreamRelayAndLiveResearcherPanel';
 import CloudModelTrainingDashboardPane from '@/components/nexus/omega/CloudModelTrainingDashboardPane';
 import SovereignAmbassadorGatekeeperPanel from '@/components/nexus/omega/SovereignAmbassadorGatekeeperPanel';
 import FraymusControlPlanePanel from '@/components/nexus/omega/FraymusControlPlanePanel';
@@ -448,6 +449,9 @@ You are connected to a live Two-Hemisphere Sovereign AI Operating System built b
           completedJobsCount={trainingStats.completedJobs}
           modelArtifactsCount={trainingStats.modelsCount}
         />
+
+        {/* Bicameral Stream Relay (Hemisphere A <-> B Trust & Context) + Real-Time Online AI Skills Researcher */}
+        <BicameralStreamRelayAndLiveResearcherPanel />
 
         {/* Yin-Yang Bicameral Brain: Real-Time Stream Reading, Reciprocal Trust & Constitutional Governance */}
         <YinYangBicameralTrustGovernanceDeck />
