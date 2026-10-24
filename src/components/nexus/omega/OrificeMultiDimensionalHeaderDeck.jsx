@@ -45,24 +45,24 @@ const MESH_TOPOLOGY_NODES = [
     phiScore: 0.964,
   },
   {
-    id: 'hostinger-gpu',
-    label: 'Hostinger Cloud GPU Burst',
-    short: 'GPU-6000',
-    role: 'RTX PRO 6000 (96GB) · Unsloth QLoRA',
-    ip: 'LA-GPU · 525 cred/hr',
+    id: 'github-vault',
+    label: 'GitHub Continuity Vault (@eyeoverthink)',
+    short: 'GITHUB-VAULT',
+    role: 'Immutable TX/RX Ledger & Artifact Bus',
+    ip: 'github.com/eyeoverthink/fraymus-continuity',
     x: 405,
     y: 62,
     r: 18,
     color: '#22c55e',
-    status: 'BURST-READY',
-    latencyMs: 12,
+    status: 'SYNCED',
+    latencyMs: 14,
     phiScore: 0.991,
   },
   {
     id: 'hermes-vps-1',
     label: 'Hermes VPS Primary (srv1944678)',
     short: 'HERMES-VPS1',
-    role: '29-Skill Fleet + Motor Worker Daemon',
+    role: '30-Skill Fleet + Motor Worker Daemon',
     ip: '45.82.73.49 / 100.110.6.44',
     x: 95,
     y: 195,
@@ -73,9 +73,9 @@ const MESH_TOPOLOGY_NODES = [
     phiScore: 0.948,
   },
   {
-    id: 'windows-gpu',
-    label: 'Windows GPU (desktop-actid8c)',
-    short: 'WIN-OLLAMA',
+    id: 'local-ollama',
+    label: 'Local Workstation (desktop-actid8c)',
+    short: 'LOCAL-OLLAMA',
     role: 'Local Ollama + φ⁷⁵-Ternary (.phit)',
     ip: '100.88.61.56:11434',
     x: 420,
@@ -88,15 +88,15 @@ const MESH_TOPOLOGY_NODES = [
   },
   {
     id: 'vps-kvm2',
-    label: 'VPS-2 Failover (fraymus-kvm2)',
-    short: 'KVM2-MIRROR',
-    role: 'Secondary Relay & Scraper Node',
+    label: 'Canonical Agent Core (VPS 2067485)',
+    short: 'VPS-2067485',
+    role: 'Canonical Hermes + Ollama Worker Plane',
     ip: '2.24.68.223 / 100.72.161.48',
     x: 190,
     y: 225,
     r: 14,
     color: '#f97316',
-    status: 'STANDBY',
+    status: '24/7 ACTIVE',
     latencyMs: 42,
     phiScore: 0.912,
   },
@@ -104,7 +104,7 @@ const MESH_TOPOLOGY_NODES = [
     id: 'claude-supervisor',
     label: 'Claude Code / MCP Supervisor',
     short: 'CLAUDE-MCP',
-    role: '1-Hour GPU Guard & Repo Verifier',
+    role: 'Bicameral Mesh & Repo Verifier',
     ip: '100.89.103.65 · /api/mcp',
     x: 335,
     y: 225,
@@ -118,13 +118,13 @@ const MESH_TOPOLOGY_NODES = [
 
 const MESH_EDGES = [
   ['hemisphere-a', 'hemisphere-b'],
-  ['hemisphere-a', 'hostinger-gpu'],
+  ['hemisphere-a', 'github-vault'],
   ['hemisphere-a', 'hermes-vps-1'],
-  ['hemisphere-a', 'windows-gpu'],
+  ['hemisphere-a', 'local-ollama'],
   ['hemisphere-a', 'vps-kvm2'],
   ['hemisphere-a', 'claude-supervisor'],
-  ['hermes-vps-1', 'windows-gpu'],
-  ['hostinger-gpu', 'claude-supervisor'],
+  ['hermes-vps-1', 'local-ollama'],
+  ['github-vault', 'claude-supervisor'],
   ['hemisphere-b', 'hermes-vps-1'],
 ];
 
@@ -135,7 +135,7 @@ export default function OrificeMultiDimensionalHeaderDeck({
   completedJobsCount = 0,
   modelArtifactsCount = 0,
 }) {
-  const [selectedNodeId, setSelectedNodeId] = useState('hostinger-gpu');
+  const [selectedNodeId, setSelectedNodeId] = useState('hemisphere-a');
 
   const selectedNode = useMemo(
     () => MESH_TOPOLOGY_NODES.find((n) => n.id === selectedNodeId) || MESH_TOPOLOGY_NODES[0],
@@ -155,7 +155,7 @@ export default function OrificeMultiDimensionalHeaderDeck({
       { axis: 'DNA GC Balance', value: Math.min(100, Math.round(gcPct * 1.4)), fullMark: 100 },
       { axis: 'φ⁷⁵ Ternary', value: 94, fullMark: 100 },
       { axis: 'Hermes $0 Offload', value: 92, fullMark: 100 },
-      { axis: 'GPU Throughput', value: 96, fullMark: 100 },
+      { axis: 'Vault Continuity', value: 96, fullMark: 100 },
     ];
   }, [bridgePacket]);
 
@@ -198,16 +198,16 @@ export default function OrificeMultiDimensionalHeaderDeck({
 
         <div className="p-2.5 rounded border border-border bg-background">
           <div className="text-[9.5px] text-muted-foreground flex items-center justify-between">
-            <span>CLOUD GPU BURST</span>
+            <span>SOVEREIGN MESH CORE</span>
             <Zap size={11} className="text-success" />
           </div>
-          <div className="text-sm font-bold text-success mt-0.5">96GB RTX PRO 6000</div>
-          <div className="text-[9.5px] text-muted-foreground">4,996.57 cred (~9.5h bank)</div>
+          <div className="text-sm font-bold text-success mt-0.5">VPS 1944678 + 2067485</div>
+          <div className="text-[9.5px] text-muted-foreground">24/7 Persistent Mesh &amp; Vault</div>
         </div>
 
         <div className="p-2.5 rounded border border-border bg-background">
           <div className="text-[9.5px] text-muted-foreground flex items-center justify-between">
-            <span>TRAINING &amp; MOTOR JOBS</span>
+            <span>MESH &amp; MOTOR JOBS</span>
             <Cpu size={11} className="text-caution" />
           </div>
           <div className="text-sm font-bold text-caution mt-0.5">

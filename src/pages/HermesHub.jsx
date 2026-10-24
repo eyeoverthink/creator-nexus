@@ -97,14 +97,14 @@ export default function HermesHub() {
                 HERMES SOVEREIGN FLEET // 29 SKILLS + SOLO SUB-AGENT ORCHESTRATOR
               </span>
               <h1 className="text-sm font-semibold text-foreground">
-                Hermes VPS Daemon (srv1944678 · 45.82.73.49 / 100.110.6.44) + Cloud GPU Burst Bridge
+                Hermes VPS Daemon (srv1944678 · 45.82.73.49 / 100.110.6.44) + Canonical VPS 2067485 Mesh
               </h1>
               <span className="px-2 py-0.5 rounded bg-success/15 text-success text-[10px] font-bold">
                 ● KEYLESS ORIFICE-TXRX-V1.0 VERIFIED
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground font-body">
-              Central command deck for your 29 installed Hermes agent skills across 9 categories, zero-LLM-cost script execution (<code>/script/exec</code>), solo dual-site sub-agent DAG pipelines, and real-time cloud GPU model evolution.
+              Central command deck for your 29 installed Hermes agent skills across 9 categories, zero-LLM-cost script execution (<code>/script/exec</code>), solo dual-site sub-agent DAG pipelines, and sovereign model evolution.
             </p>
           </div>
 

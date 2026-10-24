@@ -78,9 +78,7 @@ export default function SovereignMotorDispatcherPanel() {
         setUnifiedHermesDaemon(res.data.unifiedHermesDaemon || '');
         const list = res.data.jobs || [];
         setJobs(list);
-        if (list.length > 0 && !selectedJob) {
-          setSelectedJob(list[0]);
-        }
+        setSelectedJob((cur) => cur || list[0] || null);
       }
     } catch (err) {
       toast({
@@ -91,7 +89,7 @@ export default function SovereignMotorDispatcherPanel() {
     } finally {
       setBusy('');
     }
-  }, [selectedJob, toast]);
+  }, [toast]);
 
   useEffect(() => {
     loadQueueAndNodes();

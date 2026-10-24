@@ -93,6 +93,14 @@ export default function OrificeRelay() {
   const hemisphereAUrl = 'https://nexus-create-sync.base44.app/functions/openclawGateway';
   const hemisphereBUrl = 'https://fraymus-transmuter.base44.app/functions/fraymusComms';
 
+  const handleTrainingStateChange = useCallback(({ jobs = [], models = [] }) => {
+    setTrainingStats({
+      activeJobs: jobs.filter((j) => j.status !== 'completed' && j.status !== 'cancelled').length,
+      completedJobs: jobs.filter((j) => j.status === 'completed').length,
+      modelsCount: models.length,
+    });
+  }, []);
+
   const appendLocalSignal = useCallback((sig) => {
     setLocalSignals((prev) => [
       {
@@ -440,16 +448,8 @@ You are connected to a live Two-Hemisphere Sovereign AI Operating System built b
           modelArtifactsCount={trainingStats.modelsCount}
         />
 
-        {/* Dedicated Cloud Model Training Progress & Active Training Job Management Pane */}
-        <CloudModelTrainingDashboardPane
-          onTrainingStateChange={({ jobs = [], models = [] }) => {
-            setTrainingStats({
-              activeJobs: jobs.filter((j) => j.status !== 'completed').length,
-              completedJobs: jobs.filter((j) => j.status === 'completed').length,
-              modelsCount: models.length,
-            });
-          }}
-        />
+        {/* Dedicated Sovereign Model Evolution & Active Mesh Job Management Pane */}
+        <CloudModelTrainingDashboardPane onTrainingStateChange={handleTrainingStateChange} />
 
         {/* FRAYMUS v16 Protocol: Ed25519 Identity, Hash-Chained Signed Mail, Client Triple-Proof & 64-Agent Bus */}
         <FraymusV16TrustVerificationPanel />

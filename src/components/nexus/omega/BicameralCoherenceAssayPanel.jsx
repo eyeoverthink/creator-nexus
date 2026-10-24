@@ -126,8 +126,8 @@ export default function BicameralCoherenceAssayPanel({ onAssayCompleted }) {
             <span className="px-2 py-0.5 rounded bg-success/15 text-success border border-success/40 text-[10px] font-bold">
               ● ZERO-DELAY SYNCHRONOUS HANDOFFS ({assayResult?.total_elapsed_ms || 0}ms)
             </span>
-            <span className="px-2 py-0.5 rounded bg-caution/15 text-caution border border-caution/40 text-[10px] font-bold inline-flex items-center gap-1">
-              <Ban size={10} /> GPU BURST CANCELLED (OUT OF STOCK · 0 CREDITS SPENT)
+            <span className="px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/40 text-[10px] font-bold inline-flex items-center gap-1">
+              ● 24/7 SOVEREIGN VPS + TAILNET MESH
             </span>
           </div>
           <h2 className="text-sm font-semibold text-foreground">
@@ -186,22 +186,22 @@ export default function BicameralCoherenceAssayPanel({ onAssayCompleted }) {
           </div>
         </div>
 
-        <div className="p-3 rounded border border-caution/40 bg-background space-y-1">
+        <div className="p-3 rounded border border-success/40 bg-background space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-caution flex items-center gap-1">
-              <Ban size={12} /> GPU RENTAL &amp; BLOCKED JOBS CANCELLED
+            <span className="text-[10px] font-bold text-success flex items-center gap-1">
+              <ShieldCheck size={12} /> SOVEREIGN MESH QUEUE HYGIENE
             </span>
-            <span className="px-1.5 py-0.5 rounded bg-caution/15 text-caution text-[9px] font-bold">
-              0 CREDITS SPENT
+            <span className="px-1.5 py-0.5 rounded bg-success/15 text-success text-[9px] font-bold">
+              100% SELF-HOSTED &amp; CLOUD
             </span>
           </div>
           <div className="text-[10.5px] text-foreground">
-            Hostinger GPU instances out of stock for now — queue cleared of paid/external side-effects:
+            All active jobs route across permanent sovereign nodes with zero external rental dependencies:
           </div>
           <ul className="text-[9.5px] text-muted-foreground space-y-0.5">
-            <li>• <code>job_gpu_burst_mvhilb9h</code> → <strong className="text-caution">CANCELLED</strong></li>
-            <li>• <code>job_mvhbovqz_nc3f</code> (stuck QLoRA) → <strong className="text-caution">CANCELLED</strong></li>
-            <li>• <code>job_subagent_mvhg0umd_j7c</code> (Shopify) → <strong className="text-caution">CANCELLED</strong></li>
+            <li>• <code>srv1944678 (45.82.73.49)</code> → <strong className="text-success">24/7 ACTIVE</strong></li>
+            <li>• <code>vps-2067485 (2.24.68.223)</code> → <strong className="text-success">24/7 ACTIVE</strong></li>
+            <li>• <code>desktop-actid8c (100.88.61.56)</code> → <strong className="text-primary">LOCAL OLLAMA</strong></li>
           </ul>
         </div>
 

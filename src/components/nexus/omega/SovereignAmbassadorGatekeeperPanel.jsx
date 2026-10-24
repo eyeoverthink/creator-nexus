@@ -102,11 +102,11 @@ const PERSONA_TEST_PRESETS = [
       'Hello, I just arrived at this gateway with no prior configuration. Walk me through your expectations, how I claim work, and how I exit cleanly.',
   },
   {
-    label: 'Hostinger GPU Supervisor Handshake',
-    nodeId: 'claude-gpu-burst-supervisor',
-    capabilities: ['unsloth_qlora', 'gguf_export', 'nvidia_smi_monitor'],
+    label: 'Canonical VPS 2067485 Worker Handshake',
+    nodeId: 'hermes-core-2067485',
+    capabilities: ['hermes_skills', 'ollama_inference', 'vault_commit'],
     message:
-      'GPU node online with 96GB VRAM. Confirm my 60-minute budget rules, dataset path, and exit callback expectations.',
+      'Canonical VPS 2067485 worker online. Confirm my workspace assignments, shared skills path, and Artifact Vault callback expectations.',
   },
 ];
 

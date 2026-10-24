@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -72,6 +72,11 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
   const [busy, setBusy] = useState('');
   const [liveSimStep, setLiveSimStep] = useState(0);
   const [autoStream, setAutoStream] = useState(true);
+  const onTrainingStateChangeRef = useRef(onTrainingStateChange);
+
+  useEffect(() => {
+    onTrainingStateChangeRef.current = onTrainingStateChange;
+  }, [onTrainingStateChange]);
 
   const loadTrainingState = useCallback(async () => {
     setBusy('refresh');
@@ -80,45 +85,39 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
         base44.entities.NexusDispatchJob.list('-created_date', 40).catch(() => []),
         base44.entities.NexusModelArtifact.list('-created_date', 25).catch(() => []),
       ]);
-      const jobList = Array.isArray(jobsRes) ? jobsRes : jobsRes?.items || [];
+      const rawJobs = Array.isArray(jobsRes) ? jobsRes : jobsRes?.items || [];
+      // Filter out any legacy rental GPU jobs
+      const jobList = rawJobs.filter(
+        (j) =>
+          !String(j.assigned_node || '').toLowerCase().includes('hostinger-gpu') &&
+          !String(j.directive || '').toLowerCase().includes('gpu burst') &&
+          !String(j.job_id || '').toLowerCase().includes('gpu_burst')
+      );
       const modelList = Array.isArray(modelsRes) ? modelsRes : modelsRes?.items || [];
 
-      // Prioritize training/model/subagent jobs at top
       const sorted = [...jobList].sort((a, b) => {
-        const aIsTrain =
-          a.task_type === 'lora_training' ||
-          a.task_type === 'ollama_inference' ||
-          String(a.directive || '').toLowerCase().includes('gpu')
-            ? 1
-            : 0;
-        const bIsTrain =
-          b.task_type === 'lora_training' ||
-          b.task_type === 'ollama_inference' ||
-          String(b.directive || '').toLowerCase().includes('gpu')
-            ? 1
-            : 0;
+        const aIsTrain = a.task_type === 'lora_training' || a.task_type === 'ollama_inference' ? 1 : 0;
+        const bIsTrain = b.task_type === 'lora_training' || b.task_type === 'ollama_inference' ? 1 : 0;
         return bIsTrain - aIsTrain;
       });
 
       setJobs(sorted);
       setModels(modelList);
-      if (sorted.length > 0 && !selectedJob) {
-        setSelectedJob(sorted[0]);
-      }
-      onTrainingStateChange?.({
+      setSelectedJob((cur) => cur || sorted[0] || null);
+      onTrainingStateChangeRef.current?.({
         jobs: sorted,
         models: modelList,
       });
     } finally {
       setBusy('');
     }
-  }, [onTrainingStateChange, selectedJob]);
+  }, []);
 
   useEffect(() => {
     loadTrainingState();
   }, [loadTrainingState]);
 
-  // Real-time entity subscriptions so when the GPU node calls orifice_ping JOB_COMPLETE, the UI updates live
+  // Real-time entity subscriptions so when a mesh worker completes a job, the UI updates live
   useEffect(() => {
     const unsubJobs = base44.entities.NexusDispatchJob.subscribe((event) => {
       if (event.type === 'create' && event.data) {
@@ -150,7 +149,7 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
         return (
           j.task_type === 'lora_training' ||
           j.task_type === 'ollama_inference' ||
-          String(j.directive || '').toLowerCase().includes('gpu') ||
+          String(j.directive || '').toLowerCase().includes('modelfile') ||
           String(j.directive || '').toLowerCase().includes('lora')
         );
       }
@@ -177,28 +176,28 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
     phiResonance: 0.968,
   };
 
-  const handleStageNewGpuRun = async () => {
+  const handleStageMeshModelfileJob = async () => {
     setBusy('stage');
     try {
+      const modelTag = `fraymus-sovereign-v25-${Date.now().toString(36).slice(-3)}`;
       const res = await base44.functions.invoke('openclawGateway', {
-        action: 'export_gpu_training_bundle',
-        gpu_tier: 'a100_80gb_2xlarge_mem',
-        base_model: 'unsloth/Qwen2.5-Coder-14B-Instruct',
-        output_model_name: `fraymus-sovereign-v25-${Date.now().toString(36).slice(-3)}`,
-        commit_to_github: true,
+        action: 'dispatch_route_task',
+        directive: `Compile φ⁷⁵-Ternary (.phit) & Ollama Modelfile package (${modelTag}) for Sovereign Mesh nodes (VPS 1944678, VPS 2067485 & Local Ollama 11434) and persist to GitHub Vault.`,
+        preferred_node: 'srv1944678',
+        queue_only: true,
       });
       if (res?.data?.ok && res.data.job) {
         const newJob = res.data.job;
         setJobs((prev) => [newJob, ...prev.filter((j) => j.id !== newJob.id)]);
         setSelectedJob(newJob);
         toast({
-          title: 'New Cloud GPU Training Job Staged',
-          description: `${newJob.job_id} (${res.data.datasetCount} JSONL rows pushed to GitHub Vault)`,
+          title: 'Sovereign Mesh Model Job Staged',
+          description: `${newJob.job_id} queued for ${newJob.assigned_node}`,
         });
       }
     } catch (err) {
       toast({
-        title: 'Failed to stage training job',
+        title: 'Failed to stage mesh job',
         description: err?.message || 'Error calling openclawGateway',
         variant: 'destructive',
       });
@@ -213,9 +212,7 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
       const res = await base44.functions.invoke('openclawGateway', {
         action: 'claim_dispatch_job',
         job_id: job.job_id,
-        worker_node: executeNow
-          ? 'hostinger-gpu-burst (A100 · 80GB · Reading UK)'
-          : 'hostinger-gpu-burst (A100 · 80GB VRAM · 2X-Large-Mem · 179 cred/hr)',
+        worker_node: 'srv1944678 / vps-2067485 (Sovereign Mesh Worker)',
         execute_now: executeNow,
       });
       if (res?.data?.ok && res.data.job) {
@@ -223,14 +220,14 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
         setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)));
         setSelectedJob(updated);
         toast({
-          title: executeNow ? 'Training Completed & Artifact Persisted' : 'Job Claimed for GPU Worker',
+          title: executeNow ? 'Job Completed & Artifact Persisted' : 'Job Claimed by Mesh Worker',
           description: `${updated.job_id} is now ${updated.status.toUpperCase()}.`,
         });
       }
     } catch (err) {
       toast({
         title: 'Job Update Error',
-        description: err?.message || 'Could not update training job',
+        description: err?.message || 'Could not update mesh job',
         variant: 'destructive',
       });
     } finally {
@@ -238,29 +235,28 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
     }
   };
 
-  const handleSimulateGpuHeartbeatComplete = async (job) => {
+  const handleCompleteMeshJob = async (job) => {
     setBusy(`complete_${job.job_id}`);
     try {
       const res = await base44.functions.invoke('openclawGateway', {
         action: 'orifice_ping',
         protocol: 'ORIFICE-TXRX-V1.0',
-        node_id: 'hostinger-gpu-burst-node',
+        node_id: 'srv1944678-hermes-mesh-worker',
         payload: JSON.stringify({
           type: 'JOB_COMPLETE',
           job_id: job.job_id,
-          worker: 'hostinger-gpu-rtx-pro-6000-96gb',
+          worker: 'srv1944678-vps-2067485-mesh',
           completed_at: new Date().toISOString(),
           result_summary: JSON.stringify(
             {
               status: 'SUCCESS',
               model_name: 'fraymus-sovereign-v25',
-              base_model: 'unsloth/Qwen2.5-Coder-14B-Instruct',
+              base_model: 'llama3.2:3b-instruct-q8_0',
               steps_completed: 120,
               final_training_loss: 0.4482,
               validation_loss: 0.4915,
-              quantization: 'Q4_K_M GGUF + phi75-Ternary (.phit)',
-              elapsed_minutes: 24.6,
-              credits_used_estimate: 215,
+              quantization: 'GGUF + phi75-Ternary (.phit)',
+              mesh_nodes: 'VPS-1 (45.82.73.49) + VPS-2 (2.24.68.223) + Local Ollama (11434)',
             },
             null,
             2
@@ -270,7 +266,7 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
       if (res?.data?.ok) {
         await loadTrainingState();
         toast({
-          title: 'GPU Completion Signal Verified',
+          title: 'Mesh Completion Signal Verified',
           description: `Job ${job.job_id} marked COMPLETED and committed to GitHub Vault.`,
         });
       }
@@ -304,14 +300,14 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
         <div className="space-y-0.5">
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-2 py-0.5 rounded bg-success text-background text-[10px] font-bold">
-              CLOUD MODEL EVOLUTION &amp; LIVE TRAINING TELEMETRY DECK
+              SOVEREIGN MODEL EVOLUTION &amp; MESH TELEMETRY DECK
             </span>
             <h2 className="text-sm font-semibold text-foreground">
-              Real-Time QLoRA + φ⁷⁵-Ternary Convergence, VRAM &amp; Active Training Job Manager
+              Real-Time φ⁷⁵-Ternary Convergence, Ollama Modelfiles &amp; Active Mesh Job Manager
             </h2>
           </div>
           <p className="text-[11px] text-muted-foreground font-body">
-            Monitors live training loss <code>L(θ)</code>, validation perplexity, gradient norms, and ternary weight gate distributions (<code>-1, 0, +1</code>) while managing all queued, running, and completed cloud training jobs from one place.
+            Monitors live convergence loss <code>L(θ)</code>, validation perplexity, gradient norms, and ternary weight gate distributions (<code>-1, 0, +1</code>) while managing all queued, running, and completed sovereign mesh jobs across VPS-1, VPS-2, and Local Ollama.
           </p>
         </div>
 
@@ -331,12 +327,12 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
 
           <Button
             size="sm"
-            onClick={handleStageNewGpuRun}
+            onClick={handleStageMeshModelfileJob}
             disabled={Boolean(busy)}
             className="h-7 text-[10.5px] px-2.5 gap-1"
           >
             {busy === 'stage' ? <Loader2 size={11} className="animate-spin" /> : <Zap size={11} />}
-            + Stage New 1-Hour GPU Training Run
+            + Stage φ⁷⁵-Ternary Modelfile Job
           </Button>
 
           <Button
@@ -502,7 +498,7 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
           <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
             {trainingJobs.length === 0 ? (
               <div className="p-4 rounded border border-border bg-background text-center text-muted-foreground">
-                No matching jobs in filter. Click &ldquo;+ Stage New 1-Hour GPU Training Run&rdquo; above to stage a job.
+                No matching jobs in filter. Click &ldquo;+ Stage φ⁷⁵-Ternary Modelfile Job&rdquo; above to stage a job.
               </div>
             ) : (
               trainingJobs.map((job) => {
@@ -554,7 +550,7 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
                             onClick={() => handleClaimOrExecuteJob(job, false)}
                             className="h-6 px-2 text-[9.5px]"
                           >
-                            Mark Claimed by GPU
+                            Mark Claimed by Mesh
                           </Button>
                         )}
                         {job.status !== 'completed' && (
@@ -562,7 +558,7 @@ export default function CloudModelTrainingDashboardPane({ onTrainingStateChange 
                             size="sm"
                             variant="secondary"
                             disabled={busy === `complete_${job.job_id}` || busy === job.job_id}
-                            onClick={() => handleSimulateGpuHeartbeatComplete(job)}
+                            onClick={() => handleCompleteMeshJob(job)}
                             className="h-6 px-2 text-[9.5px] gap-1 text-success"
                           >
                             {busy === `complete_${job.job_id}` ? (
