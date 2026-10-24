@@ -8,6 +8,7 @@ import WorkspaceSentimentPanel from '@/components/nexus/ouroboros/WorkspaceSenti
 import LinkedInAutoPublisherPanel from '@/components/nexus/spark/LinkedInAutoPublisherPanel';
 import GoogleCalendarSyncPanel from '@/components/nexus/calendar/GoogleCalendarSyncPanel';
 import FraymusV16TrustVerificationPanel from '@/components/nexus/omega/FraymusV16TrustVerificationPanel';
+import YinYangBicameralTrustGovernanceDeck from '@/components/nexus/omega/YinYangBicameralTrustGovernanceDeck';
 import SovereignMasterworkShowcase from '@/components/nexus/home/SovereignMasterworkShowcase';
 import HomeAwakeningVideoProofBanner from '@/components/nexus/home/HomeAwakeningVideoProofBanner';
 import useHomeData from '@/components/nexus/home/useHomeData';
@@ -16,6 +17,7 @@ export default function Home(){
  const home=useHomeData();
  return <ProShell><main className="nexus-home space-y-8 pb-12">
   <HomeHero/>
+  <YinYangBicameralTrustGovernanceDeck workspaceId={(home.boot.data?.workspace || home.boot.data)?.id}/>
   <HomeAwakeningVideoProofBanner/>
   <SovereignMasterworkShowcase/>
   <FraymusV16TrustVerificationPanel/>

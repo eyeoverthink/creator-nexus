@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import Sidebar from '@/components/nexus/Sidebar';
 import SovereignMotorDispatcherPanel from '@/components/nexus/omega/SovereignMotorDispatcherPanel';
 import OrificeMultiDimensionalHeaderDeck from '@/components/nexus/omega/OrificeMultiDimensionalHeaderDeck';
+import YinYangBicameralTrustGovernanceDeck from '@/components/nexus/omega/YinYangBicameralTrustGovernanceDeck';
 import CloudModelTrainingDashboardPane from '@/components/nexus/omega/CloudModelTrainingDashboardPane';
 import SovereignAmbassadorGatekeeperPanel from '@/components/nexus/omega/SovereignAmbassadorGatekeeperPanel';
 import FraymusControlPlanePanel from '@/components/nexus/omega/FraymusControlPlanePanel';
@@ -447,6 +448,9 @@ You are connected to a live Two-Hemisphere Sovereign AI Operating System built b
           completedJobsCount={trainingStats.completedJobs}
           modelArtifactsCount={trainingStats.modelsCount}
         />
+
+        {/* Yin-Yang Bicameral Brain: Real-Time Stream Reading, Reciprocal Trust & Constitutional Governance */}
+        <YinYangBicameralTrustGovernanceDeck />
 
         {/* Dedicated Sovereign Model Evolution & Active Mesh Job Management Pane */}
         <CloudModelTrainingDashboardPane onTrainingStateChange={handleTrainingStateChange} />

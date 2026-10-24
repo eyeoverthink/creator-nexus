@@ -38,6 +38,10 @@ import {
   runOrificePeerBridge,
 } from '../../shared/orificeRelayBridge.ts';
 import { handleV16VisitorRelay } from '../../shared/fraymusV16Protocol.ts';
+import {
+  runYinYangBicameralTrustPulse,
+  proposeOrRatifyGovernanceCharter,
+} from '../../shared/yinYangTrustGovernance.ts';
 
 function slugify(str) {
   return (
@@ -213,6 +217,8 @@ export default async function(req) {
       'orifice_tx_queue',
       'orifice_peer_bridge',
       'orifice_github_sync',
+      'yin_yang_trust_pulse',
+      'propose_governance_charter',
       'list_dispatch_jobs',
       'hermes_fleet_manifest',
       'execute_native_skill',
@@ -963,6 +969,30 @@ export default async function(req) {
         expectedKey,
         inspectOrificeFrameL1ToL5,
       });
+      return Response.json(res);
+    }
+
+    if (action === 'yin_yang_trust_pulse') {
+      const res = await runYinYangBicameralTrustPulse({
+        db,
+        ownerId,
+        workspaceId,
+        activeWorkspaceName: activeWorkspace.name,
+        body,
+        expectedKey,
+        inspectOrificeFrameL1ToL5,
+      });
+      return Response.json(res);
+    }
+
+    if (action === 'propose_governance_charter') {
+      const res = await proposeOrRatifyGovernanceCharter({
+        db,
+        ownerId,
+        workspaceId,
+        body,
+      });
+      if (res.error) return Response.json(res, { status: 400 });
       return Response.json(res);
     }
 
