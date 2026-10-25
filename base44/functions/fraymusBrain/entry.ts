@@ -1,12 +1,18 @@
 import {createClientFromRequest} from 'npm:@base44/sdk@0.8.54';
 import {executeFraymusBrain} from '../../shared/fraymusBrainOperation.ts';
+import {handleNeedleWorker} from '../../shared/fraymusNeedleWorker.ts';
+import {handleNeedleUser} from '../../shared/fraymusNeedleUser.ts';
+import {readInput} from '../../shared/runnerBridge.ts';
 export default async function(req){
  try{
   if(req.method!=='POST')return Response.json({error:'Use POST.'},{status:405});
-  const base44=createClientFromRequest(req),user=await base44.auth.me();
+  const base44=createClientFromRequest(req);
+  const input=await readInput(req,48000);if(input.error)return input.error;
+  const a=input.value;
+  if(['needle_worker_hello','needle_worker_poll','needle_worker_report'].includes(a.action))return await handleNeedleWorker(base44,req,a);
+  const user=await base44.auth.me();
   if(!user)return Response.json({error:'Sign in required.'},{status:401});
-  const text=await req.text();if(text.length>48000)return Response.json({error:'Request exceeds 48,000 characters.'},{status:400});
-  let a;try{a=JSON.parse(text);}catch{return Response.json({error:'Invalid JSON request.'},{status:400});}
+  if(typeof a.action==='string'&&a.action.startsWith('needle_'))return await handleNeedleUser(base44,user,a);
   if(!a||!['run','history','read'].includes(a.action))return Response.json({error:'Choose run, history or read.'},{status:400});
   for(const key of ['workspace_id','state_id','cursor'])if(a[key]!==undefined&&(typeof a[key]!=='string'||!a[key]||a[key].length>2000))return Response.json({error:`Invalid ${key}.`},{status:400});
   const page=await base44.entities.NexusWorkspace.filter({owner_id:user.id,...(a.workspace_id?{id:a.workspace_id}:{})},{sort:'created_date',limit:1});

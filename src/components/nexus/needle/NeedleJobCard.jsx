@@ -1,0 +1,9 @@
+import {useEffect,useState} from 'react';
+import {Button} from '@/components/ui/button';
+import verifyNeedleReceipt from '@/components/nexus/needle/verifyNeedleReceipt';
+import downloadBrainReport from '@/components/nexus/brain/downloadBrainReport';
+export default function NeedleJobCard({job,onCancel,busy}){
+ const [verified,setVerified]=useState(null);
+ useEffect(()=>{let live=true;if(job.result_json&&job.receipt_sha256)verifyNeedleReceipt(job).then(ok=>{if(live)setVerified(ok);});return()=>{live=false;};},[job.result_json,job.receipt_sha256]);
+ return <article className="border border-border rounded-md p-3 space-y-2"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-mono">{job.status} · {job.id}</span><time className="text-muted-foreground">{new Date(job.created_date).toLocaleString()}</time></div>{job.input_json&&<p className="whitespace-pre-wrap break-words">{JSON.parse(job.input_json).prompt}</p>}{job.error&&<p className="text-destructive">{job.error}</p>}{job.result_json&&<pre className="whitespace-pre-wrap break-all overflow-auto max-h-80 bg-background p-3 rounded-md font-mono">{JSON.stringify(JSON.parse(job.result_json),null,2)}</pre>}{verified!==null&&<p className={verified?'text-success':'text-destructive'}>{verified?'Request/output receipt consistency verified in this browser.':'Receipt integrity check failed.'}</p>}{job.receipt_sha256&&<p className="font-mono break-all text-muted-foreground">Receipt SHA-256: {job.receipt_sha256}</p>}<div className="flex gap-2">{['queued','running'].includes(job.status)&&<Button variant="outline" disabled={busy} onClick={()=>onCancel(job.id)}>Cancel request</Button>}<Button variant="ghost" onClick={()=>downloadBrainReport(job,`fraymus-needle-${job.id}.json`)}>Download request record</Button></div></article>;
+}

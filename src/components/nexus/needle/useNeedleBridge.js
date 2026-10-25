@@ -1,0 +1,13 @@
+import {useCallback,useEffect,useRef,useState} from 'react';
+import {base44} from '@/api/base44Client';
+export default function useNeedleBridge(workspaceId){
+ const [data,setData]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[pairing,setPairing]=useState(null),version=useRef(0);
+ const call=useCallback(async(action,extra={})=>{const r=await base44.functions.invoke('fraymusBrain',{action,...(workspaceId?{workspace_id:workspaceId}:{}),...extra});if(r.data.error)throw new Error(r.data.error);return r.data;},[workspaceId]);
+ const refresh=useCallback(async()=>{const gen=version.current;try{const next=await call('needle_status');if(gen===version.current)setData(next);}catch(e){if(gen===version.current)setError(e.response?.data?.error||e.message);}},[call]);
+ useEffect(()=>{version.current++;setData(null);setPairing(null);setError('');refresh();return()=>{version.current++;};},[refresh]);
+ useEffect(()=>{if(!data?.workspace_id)return;let timer;const listener=event=>{if(event.data?.workspace_id&&event.data.workspace_id!==data.workspace_id)return;clearTimeout(timer);timer=setTimeout(refresh,500);};const a=base44.entities.NexusNeedleJob.subscribe(listener),b=base44.entities.NexusNeedleWorker.subscribe(listener);return()=>{clearTimeout(timer);a();b();};},[data?.workspace_id,refresh]);
+ useEffect(()=>{if(!data)return;const deadlines=[data.worker?.last_seen?Date.parse(data.worker.last_seen)+180000:0,...data.items.filter(j=>['queued','running'].includes(j.status)).map(j=>Date.parse(j.expires_at))].filter(t=>t>Date.now());if(!deadlines.length)return;const t=setTimeout(refresh,Math.min(...deadlines)-Date.now()+300);return()=>clearTimeout(t);},[data,refresh]);
+ const act=async(action,extra={})=>{const gen=version.current;setBusy(true);setError('');try{const result=await call(action,extra);if(gen!==version.current)return;if(action==='needle_pair')setPairing(result);if(action==='needle_revoke')setPairing(null);await refresh();return result;}catch(e){if(gen===version.current)setError(e.response?.data?.error||e.message);}finally{if(gen===version.current)setBusy(false);}};
+ const more=async()=>{setBusy(true);setError('');const gen=version.current;try{const next=await call('needle_status',{cursor:data.next_cursor});if(gen===version.current)setData(prev=>({...next,items:[...prev.items,...next.items]}));}catch(e){setError(e.response?.data?.error||e.message);}finally{setBusy(false);}};
+ return {data,busy,error,pairing,refresh,pair:()=>act('needle_pair'),revoke:()=>act('needle_revoke'),queue:input=>act('needle_enqueue',{input}),cancel:job_id=>act('needle_cancel',{job_id}),more};
+}
