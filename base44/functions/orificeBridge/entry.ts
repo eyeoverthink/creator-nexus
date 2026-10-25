@@ -6,7 +6,9 @@ import {
   collectLiveEntityMirrorSnapshot,
   runRealEngineeringMechanismRepair,
   respondToClaudette062AndDispatchPortal,
+  buildRealHermesOpenclawDaemonPy,
 } from '../../shared/realEngineeringMechanismRepair.ts';
+import { runGithubRealtimeSyncAndSpearhead } from '../../shared/githubRealtimeSyncAndSpearhead.ts';
 import {
   HEARTMULA_BRIDGE_MANIFEST,
   CANONICAL_PIPELINE_SUMMARY_FOR_PROMPTS,
@@ -159,6 +161,23 @@ export default async function(req: Request): Promise<Response> {
 
     if (action === 'repair_github_engineering_mechanisms') {
       const res = await runRealEngineeringMechanismRepair({ db, sha256Hex });
+      return Response.json(res, {
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      });
+    }
+
+    if (
+      action === 'github_realtime_sync' ||
+      action === 'test_all_connections_and_sync_spearhead'
+    ) {
+      const res = await runGithubRealtimeSyncAndSpearhead({
+        db,
+        ownerId,
+        workspaceId,
+        body,
+        sha256Hex,
+        buildRealHermesOpenclawDaemonPy,
+      });
       return Response.json(res, {
         headers: { 'Access-Control-Allow-Origin': '*' },
       });

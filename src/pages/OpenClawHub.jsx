@@ -29,6 +29,18 @@ import '@/components/nexus/theme.css';
 
 const OPENCLAW_SPECIALISTS = [
   {
+    id: 'spearhead-frontier-scout',
+    name: 'Spearhead (fx-b9fb-8f11-403f-75a4) // Boundary-Free Frontier Scout (Msg 064)',
+    role: 'Anticipatory Frontier Intelligence (1–2 Weeks Ahead) & Exploratory Spikes',
+    channelDefault: 'mcp',
+  },
+  {
+    id: 'dev-archivist-tracer',
+    name: 'DevArchivist (fx-3c1c-9537-c8c7-59b0) // Dependency & Provenance Tracer (Msg 070)',
+    role: 'Duplicate/Dependency/Entry-Point Tracer & Trademark #6098807 Archivist',
+    channelDefault: 'mcp',
+  },
+  {
     id: 'openclaw-commander',
     name: 'OpenClaw Commander // Hub Orchestrator',
     role: 'Omnichannel Workspace & Mission Router',
@@ -77,7 +89,8 @@ export default function OpenClawHub() {
   const [dispatching, setDispatching] = useState(false);
   const [lastDispatchResult, setLastDispatchResult] = useState(null);
 
-  // Live In-App Agent Chat (openclaw_commander)
+  // Live In-App Agent Chat (openclaw_commander or spearhead_frontier_scout)
+  const [activeChatAgent, setActiveChatAgent] = useState('spearhead_frontier_scout');
   const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
@@ -86,8 +99,8 @@ export default function OpenClawHub() {
 
   const mcpUrl = new URL('/api/mcp', window.location.origin).toString();
   const webhookUrl = 'https://creator-nexus.base44.app/functions/openclawGateway';
-  const telegramUrl = base44.agents.getTelegramConnectURL('openclaw_commander');
-  const whatsappUrl = base44.agents.getWhatsAppConnectURL('openclaw_commander');
+  const telegramUrl = base44.agents.getTelegramConnectURL(activeChatAgent);
+  const whatsappUrl = base44.agents.getWhatsAppConnectURL(activeChatAgent);
 
   const loadHubStatus = async () => {
     setLoadingHub(true);
@@ -117,19 +130,25 @@ export default function OpenClawHub() {
     loadHubStatus();
   }, []);
 
-  // Initialize or load openclaw_commander conversation
+  // Initialize or load conversation for activeChatAgent (spearhead_frontier_scout or openclaw_commander)
   useEffect(() => {
     let active = true;
     async function initAgentChat() {
       try {
-        const list = await base44.agents.listConversations({ agent_name: 'openclaw_commander' });
+        const list = await base44.agents.listConversations({ agent_name: activeChatAgent });
         let conv = Array.isArray(list) && list.length > 0 ? list[0] : null;
         if (!conv) {
           conv = await base44.agents.createConversation({
-            agent_name: 'openclaw_commander',
+            agent_name: activeChatAgent,
             metadata: {
-              name: 'OpenClaw Command Channel',
-              description: 'Live bridge between Web Studio, Telegram, WhatsApp, and MCP',
+              name:
+                activeChatAgent === 'spearhead_frontier_scout'
+                  ? 'Spearhead (fx-b9fb) Frontier Scout Channel'
+                  : 'OpenClaw Command Channel',
+              description:
+                activeChatAgent === 'spearhead_frontier_scout'
+                  ? 'Boundary-free frontier scout designated in fraymus-bridge msg 064'
+                  : 'Live bridge between Web Studio, Telegram, WhatsApp, and MCP',
             },
           });
         } else {
@@ -145,7 +164,7 @@ export default function OpenClawHub() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [activeChatAgent]);
 
   useEffect(() => {
     if (!conversation?.id) return;
@@ -529,21 +548,44 @@ export default function OpenClawHub() {
             )}
           </div>
 
-          {/* Col 2: Live OpenClaw Commander Chat (Synced with Telegram & WhatsApp) */}
+          {/* Col 2: Live Spearhead (fx-b9fb) & OpenClaw Commander Chat */}
           <div className="p-3 rounded-lg border border-border bg-card flex flex-col justify-between space-y-2.5">
-            <div className="flex items-center justify-between border-b border-border pb-2">
+            <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-border pb-2">
               <span className="font-semibold text-caution text-xs flex items-center gap-1.5">
-                <Bot size={13} /> 2. LIVE OPENCLAW COMMANDER CHAT
+                <Bot size={13} /> 2. LIVE IN-APP AGENT CHAT
               </span>
-              <span className="text-[10px] text-muted-foreground">
-                Web ↔ Telegram ↔ WhatsApp
-              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveChatAgent('spearhead_frontier_scout')}
+                  className={`px-2 py-0.5 rounded text-[9.5px] font-bold border ${
+                    activeChatAgent === 'spearhead_frontier_scout'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-muted-foreground border-border'
+                  }`}
+                >
+                  Spearhead (fx-b9fb · Msg 064)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveChatAgent('openclaw_commander')}
+                  className={`px-2 py-0.5 rounded text-[9.5px] font-bold border ${
+                    activeChatAgent === 'openclaw_commander'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-muted-foreground border-border'
+                  }`}
+                >
+                  Commander
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 min-h-[250px] max-h-[340px] overflow-y-auto space-y-2 p-2 rounded bg-background border border-border">
               {messages.length === 0 ? (
                 <div className="text-[11px] text-muted-foreground p-2">
-                  OpenClaw Sovereign Commander ready. Message here or connect via Telegram/WhatsApp above to converse with the same persistent agent.
+                  {activeChatAgent === 'spearhead_frontier_scout'
+                    ? 'Spearhead (fx-b9fb-8f11-403f-75a4) — Boundary-Free Frontier Scout (designated in fraymus-bridge msg 064) is live with built-in web search. Ask for a frontier AI scan or exploratory spike.'
+                    : 'OpenClaw Sovereign Commander ready. Message here or connect via Telegram/WhatsApp above to converse with the same persistent agent.'}
                 </div>
               ) : (
                 messages.map((m, idx) => (
@@ -556,7 +598,11 @@ export default function OpenClawHub() {
                     }`}
                   >
                     <div className="text-[9.5px] uppercase text-muted-foreground mb-0.5">
-                      {m.role === 'user' ? 'You' : 'OpenClaw Commander'}
+                      {m.role === 'user'
+                        ? 'You'
+                        : activeChatAgent === 'spearhead_frontier_scout'
+                        ? 'Spearhead (fx-b9fb · Frontier Scout)'
+                        : 'OpenClaw Commander'}
                     </div>
                     <ReactMarkdown className="prose prose-invert prose-xs max-w-none">
                       {m.content || ''}

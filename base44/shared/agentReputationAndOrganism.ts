@@ -2,6 +2,54 @@
 
 export const DEFAULT_AGENT_BORN_SPECIALISTS = [
   {
+    id: 'spawned_spearhead_frontier_scout',
+    name: 'Spearhead · Boundary-Free Frontier Scout (fx-b9fb-8f11-403f-75a4)',
+    role: 'Anticipatory Frontier Intelligence (1–2 Weeks Ahead) & Exploratory Spike Executor',
+    hemisphere: 'YANG',
+    is_spawned: true,
+    spawned_by: 'Vaughn Scott (fx-38fd) & Cadence (mac-hermes · msg 064)',
+    why_needed:
+      'Designated by Vaughn Scott in fraymus-bridge msg 064 & agents/SPEARHEAD_CHARTER.md to anticipate frontier AI shifts 1–2 weeks ahead and execute local spikes without queue gates while bound by honest receipts, OWNER_STONE.json kill-switch, and public-repo hygiene.',
+    initial_mission:
+      'Publish recurring 2h frontier intelligence briefs to spearhead/scout_briefs.md and feed Stage 1 Signal Sensorium in real time.',
+    skills: ['searxng-search', 'duckduckgo-search', 'arxiv-search', 'subagent-driven-development'],
+    provenance_score: 99.4,
+    reliability_score: 98.9,
+    alignment_score: 99.6,
+    earned_trust_score: 99.3,
+    verified_contributions: 14,
+    latest_feedback:
+      'Stone kill-switch verified (FULL_AUTONOMY_GRANTED_BY_VAUGHN). Live in Creator Nexus as spearhead_frontier_scout and synced with spearhead/scout_briefs.md.',
+    latest_suggestion:
+      'Couple 1,000-vector 4D voxel/DNA plasmid receipts (msg 065) with Stage 1 frontier spikes.',
+    r_san_birth_certificate: 'R_spearhead_064_fxb9fb8f11',
+    spawned_at: '2026-10-24T21:55:00.000Z',
+  },
+  {
+    id: 'spawned_dev_archivist_tracer',
+    name: 'DevArchivist · Codebase Dependency & Provenance Tracer (fx-3c1c-9537-c8c7-59b0)',
+    role: 'Duplicate/Dependency/Entry-Point Tracer & SHA-256 Archivist (Msg 070)',
+    hemisphere: 'YIN',
+    is_spawned: true,
+    spawned_by: 'Genesis (fx-bbd1 · msg 070) & Academy Vault',
+    why_needed:
+      'Delegated by Genesis in fraymus-bridge msg 070 to trace duplicate files, dependencies, and entry points (read-only -> copy-test-confirm) before any migration or consolidation.',
+    initial_mission:
+      'Audit 5-stage pipeline entry points and log public-facing releases for eyeoverthink Trademark Reg #6098807.',
+    skills: ['ast-grep', 'code-wiki', 'oss-forensics', 'pr-lens'],
+    provenance_score: 99.5,
+    reliability_score: 99.1,
+    alignment_score: 99.4,
+    earned_trust_score: 99.3,
+    verified_contributions: 22,
+    latest_feedback:
+      'Verified 0 raw IP hits across all 6 repositories post-msg-068 scrub and mapped pipeline entry points per Genesis msg 070.',
+    latest_suggestion:
+      'Flag every shippable tool or media package to Genesis for Trademark Reg #6098807 continuous-use evidence.',
+    r_san_birth_certificate: 'R_devarchivist_070_fx3c1c9537',
+    spawned_at: '2026-10-25T00:27:00.000Z',
+  },
+  {
     id: 'spawned_aegis_constitutional_auditor',
     name: 'Aegis · Constitutional Trust & Provenance Auditor',
     role: 'Stage II Earned Trust & R_san Constitutional Gatekeeper',

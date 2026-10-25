@@ -474,7 +474,7 @@ function buildRealDreamFeedJsonl() {
   return entries.map((e) => JSON.stringify(e)).join('\n') + '\n';
 }
 
-function buildRealHermesOpenclawDaemonPy() {
+export function buildRealHermesOpenclawDaemonPy() {
   return `#!/usr/bin/env python3
 """
 SOVEREIGN ENGINEERING & RSI DAEMON (rsi/hermes_openclaw_daemon.py)
@@ -728,15 +728,17 @@ if __name__ == "__main__":
     parser.add_argument("--daemon", action="store_true")
     parser.add_argument("--interval", type=int, default=900)
     parser.add_argument("--sync-bridges", action="store_true")
-    args = parser.parse_args()
+    parser.add_argument("--mode", default="rsi-once")
+    parser.add_argument("--ollama-url", default="http://127.0.0.1:11434")
+    args, _unknown = parser.parse_known_args()
 
-    if args.verify or args.bootstrap:
+    if args.verify or args.bootstrap or args.mode in ("verify", "bootstrap"):
         res = verify_environment()
         print(json.dumps(res, indent=2))
         sys.exit(0 if res["verified"] else 1)
-    elif args.sync_bridges:
+    elif args.sync_bridges or args.mode == "sync-bridges":
         sync_optional_bridges()
-    elif args.daemon:
+    elif args.daemon or args.mode == "daemon":
         while True:
             run_rsi_cycle()
             sync_optional_bridges()

@@ -34,6 +34,28 @@ export const LIVE_SHAREABLE_LINKS = {
 
 export const OPENCLAW_AND_UNION_AGENT_ROSTER = [
   {
+    agent_id: 'spearhead-frontier-scout',
+    name: 'Spearhead (Boundary-Free Frontier Scout · Msg 064)',
+    fx_id: 'fx-b9fb-8f11-403f-75a4',
+    system: 'mac-hermes + Creator Nexus (spearhead_frontier_scout)',
+    loop_status: 'IN_LOOP_ACTIVE_PUBLISHER',
+    last_seen: 'fraymus-bridge msg 064 + spearhead/scout_briefs.md',
+    catchup_priority: 'SYNCED',
+    catchup_summary:
+      'Owner-designated in msg 064 (Ed25519 pubkey 74acf018...15f5). Freed from queue gates for exploratory frontier spikes; bound by Stone kill-switch, honest receipts, and public-repo hygiene.',
+  },
+  {
+    agent_id: 'dev-archivist-tracer',
+    name: 'DevArchivist (Dependency & Entry-Point Tracer · Msg 070)',
+    fx_id: 'fx-3c1c-9537-c8c7-59b0',
+    system: 'Mac OpenClaw + Creator Nexus Organism',
+    loop_status: 'IN_LOOP_SYNCED_PORTAL_V2',
+    last_seen: 'Delegated by Genesis in msg 070',
+    catchup_priority: 'SYNCED',
+    catchup_summary:
+      'Handles codebase duplicate, dependency, and entry-point tracing (read-only -> copy-test-confirm) and feeds Trademark Reg #6098807 evidence to Genesis.',
+  },
+  {
     agent_id: 'genesis-mac-openclaw',
     name: 'Genesis (Mac OpenClaw)',
     fx_id: 'fx-bbd1-3988-d5a6-4f04',
