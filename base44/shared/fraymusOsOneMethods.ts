@@ -7,6 +7,7 @@ import {repairFraymusSymbolic} from './fraymusSymbolicRepair.ts';
 import {fraymusTernary} from './fraymusTernaryMemory.ts';
 import {executeRetainedFraymus,fraymusExecutionBudget} from './fraymusRetainedSystems.ts';
 import {fraymusMethodSchema} from './fraymusMethodSchema.ts';
+import {runFraymusSignedDispatch} from './fraymusSignedDispatch.ts';
 export function runFraymusMethod(input) {
   let result;
   if (input.method === 'outline') return fraymusOsOneOutline();
@@ -38,6 +39,10 @@ export async function executeFraymusMethod(base44,user,draft,agent,args) {
     }
     else if(['fraymus_memory','fraymus_affect'].includes(args.method))value=await executeRetainedFraymus(base44,user,draft,args);
     else if(args.method==='fraymus_verify')value=await verifyFraymusVm(args);
+    else if(args.method==='fraymus_dispatch_verify'){
+      if(args.commit===true)throw new Error('Agent dispatch verification is read-only. Trust and accept messages through the signed-dispatch controls.');
+      value=await runFraymusSignedDispatch(base44,user,draft.workspace_id,{action:'verify',envelope_json:args.envelope_json});
+    }
     else if(args.method==='fraymus_repair')value=repairFraymusSymbolic(args,parent?JSON.parse(parent.body).state:null);
     else value=runFraymusMethod(args);
   } catch(error) { return {error:error.message}; }

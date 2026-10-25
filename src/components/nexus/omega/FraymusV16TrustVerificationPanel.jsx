@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useFraymus, useFraymusDirectory } from '@/lib/FraymusContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import FraymusSignedDispatchPanel from '@/components/nexus/omega/FraymusSignedDispatchPanel';
 import {
   ShieldCheck,
   KeyRound,
@@ -591,6 +592,7 @@ export default function FraymusV16TrustVerificationPanel() {
           </div>
         </div>
       </div>
+      <FraymusSignedDispatchPanel />
     </section>
   );
 }

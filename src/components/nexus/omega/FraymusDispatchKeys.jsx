@@ -1,0 +1,5 @@
+import {Button} from '@/components/ui/button';
+export default function FraymusDispatchKeys({visitor,keys,busy,onTrust,onRevoke}){
+ const trusted=keys.some(k=>k.public_key===visitor?.public);
+ return <div className="space-y-2 min-w-0"><p className="text-muted-foreground break-all">Current browser identity: {visitor?.number||'Loading…'}</p><p className="font-mono text-xs break-all">Public key: {visitor?.public||'Loading…'}</p><div className="flex flex-wrap gap-2"><Button variant="outline" disabled={busy||!visitor||trusted} onClick={onTrust}>{trusted?'Browser Key Trusted':'Trust This Browser Key'}</Button><Button variant="outline" disabled={busy||!trusted} onClick={onRevoke}>Revoke This Key</Button></div><p className="text-muted-foreground text-xs">Trust is scoped to this workspace. The private key stays in this browser. Revoking blocks future acceptance, not access to existing receipts.</p></div>;
+}
