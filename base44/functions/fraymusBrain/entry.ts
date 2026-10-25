@@ -3,6 +3,7 @@ import {executeFraymusBrain} from '../../shared/fraymusBrainOperation.ts';
 import {handleNeedleWorker} from '../../shared/fraymusNeedleWorker.ts';
 import {handleNeedleUser} from '../../shared/fraymusNeedleUser.ts';
 import {readInput} from '../../shared/runnerBridge.ts';
+import {executeFraymusAssociative} from '../../shared/fraymusAssociativeMemory.ts';
 export default async function(req){
  try{
   if(req.method!=='POST')return Response.json({error:'Use POST.'},{status:405});
@@ -13,6 +14,10 @@ export default async function(req){
   const user=await base44.auth.me();
   if(!user)return Response.json({error:'Sign in required.'},{status:401});
   if(typeof a.action==='string'&&a.action.startsWith('needle_'))return await handleNeedleUser(base44,user,a);
+  if(['memory_learn','memory_recall','memory_preview'].includes(a.action)){
+   const result=await executeFraymusAssociative(base44,user,a.workspace_id,{text:a.text,label:a.label,minimum_similarity:a.minimum_similarity,memory_action:a.action==='memory_recall'?'recall':'learn',commit:a.action==='memory_learn'});
+   return Response.json({result,...(result.error?{error:result.error}:{})},{status:result.status_code||200});
+  }
   if(!a||!['run','history','read'].includes(a.action))return Response.json({error:'Choose run, history or read.'},{status:400});
   for(const key of ['workspace_id','state_id','cursor'])if(a[key]!==undefined&&(typeof a[key]!=='string'||!a[key]||a[key].length>2000))return Response.json({error:`Invalid ${key}.`},{status:400});
   const page=await base44.entities.NexusWorkspace.filter({owner_id:user.id,...(a.workspace_id?{id:a.workspace_id}:{})},{sort:'created_date',limit:1});

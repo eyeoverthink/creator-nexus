@@ -1,4 +1,5 @@
 import {fraymusMemory} from './fraymusTernaryMemory.ts';
+import {executeFraymusAssociative} from './fraymusAssociativeMemory.ts';
 import {fraymusAffect} from './fraymusAffectiveControls.ts';
 const systems={fraymus_memory:{project:'Fraymus Ternary Memory',source:'FraymusTernaryState'},fraymus_affect:{project:'Fraymus Affective Controls',source:'FraymusAffectiveState'}};
 export async function loadFraymusState(base44,user,workspaceId,method,stateId){
@@ -9,6 +10,11 @@ export async function loadFraymusState(base44,user,workspaceId,method,stateId){
  return {parent,state:parent?JSON.parse(parent.body).state:null};
 }
 export async function executeRetainedFraymus(base44,user,draft,args){
+ if(args.method==='fraymus_memory'&&args.memory_mode==='associative'){
+  const result=await executeFraymusAssociative(base44,user,draft.workspace_id,args);
+  if(result.error)throw new Error(result.error);
+  return result;
+ }
  if(args.method==='fraymus_memory'&&args.memory_action==='recall'&&args.commit===true)throw new Error('Recall is read-only; it cannot commit or reinforce itself.');
  const {parent,state}=await loadFraymusState(base44,user,draft.workspace_id,args.method,args.state_id);
  let value=args.method==='fraymus_memory'?fraymusMemory(args,state):fraymusAffect(args,state);
