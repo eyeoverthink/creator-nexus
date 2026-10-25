@@ -10,6 +10,7 @@ import FactorySignalSensoriumPanel from '@/components/nexus/factory/FactorySigna
 import FactoryWorkforceAndSkillsPanel from '@/components/nexus/factory/FactoryWorkforceAndSkillsPanel';
 import FactoryReviewAndLearningPanel from '@/components/nexus/factory/FactoryReviewAndLearningPanel';
 import WitnessConductorAgentPanel from '@/components/nexus/factory/WitnessConductorAgentPanel';
+import UniversalCreativeBlueprintStudio from '@/components/nexus/blueprint/UniversalCreativeBlueprintStudio';
 import {
   Clapperboard,
   Code2,
@@ -317,6 +318,14 @@ export default function ProductionFactory() {
     <div className="nexus-shell">
       <Sidebar collapsed={collapsed} onCollapse={() => setCollapsed((v) => !v)} />
       <main className="nexus-main p-4 md:p-5 space-y-4 overflow-y-auto font-mono text-xs">
+        {/* Streamlined Creative Blueprint Studio (Awakening of AI Method) */}
+        <UniversalCreativeBlueprintStudio
+          onLaunchInFactory={({ brief: bpBrief, deliverableKind: bpKind }) => {
+            setBrief(bpBrief);
+            setDeliverableKind(bpKind);
+          }}
+        />
+
         {/* Top Command Header */}
         <div className="p-4 rounded-lg border border-primary/50 bg-card space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">

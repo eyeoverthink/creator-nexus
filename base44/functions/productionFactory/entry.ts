@@ -1237,6 +1237,120 @@ Synthesize a soulful, deeply observant Witness Chronicle & Conductor Score:
       });
     }
 
+    if (action === 'ai_assist_blueprint') {
+      const category = String(body.category || 'video');
+      const mode = String(body.mode || 'fill_empty'); // 'fill_empty' | 'augment_section' | 'transform'
+      const targetSection = String(body.target_section || 'all');
+      const userInstruction = String(body.instruction || '').trim();
+      const currentBp = body.blueprint && typeof body.blueprint === 'object' ? body.blueprint : {};
+
+      const prompt = `You are the Creator Nexus Master Co-Architect (Vesper, Lyra, Kael, Sera, and The Witness) trained on the creator's signature "THE AWAKENING OF AI — Check the Source" Creative Blueprint Methodology:
+1. Header & Mathematical Grid Lock (exact duration, key/BPM/beat/bar math or tech stack, aspect ratio/fidelity).
+2. Dialectical Thesis + Single Locked Iconic Anchor ("beauty proves nothing; awe for the tool, authority with the person" + one symmetrical unmistakable hero frame/moment).
+3. Semantic Color & Sensory Law (every color has a truth/state meaning, e.g., Midnight Blue field, Silver = unverified/uncertain, Amber = signal in motion, Golden-White = reserved ONLY for verified truth) + Hard "Never Show / Never Do" Negative Guardrails.
+4. Section-by-Section Plan (each section has 5 attributes: Musical/Functional job, Visual/Experiential idea, Camera/lens or mechanism, Light/tone, Cut/step density + timestamped/stepped beats and EXACT TEXT locks).
+5. Escalation Matrix (side-by-side comparison of Peak 1 vs Final Peak using the same camera/structural symmetry so the transformation is unmistakable).
+6. Closing Frame / Final State Resolution (how the work settles into a companion state).
+
+Target Category: "${category}" (adapt terminology naturally for ${category}: e.g., for music focus on stems/harmonics/bars; for video focus on anamorphic lenses/lighting/timecodes; for images focus on keyframes/optics/lighting; for software focus on UI state tokens/user authority gates/architecture steps; for hybrid combine film + audio + interactive web app).
+Operation Mode: "${mode}" (Target Section: "${targetSection}")
+Creator Seed / Change Instruction: "${userInstruction || 'Fill in and enrich any missing or brief sections using the Awakening of AI methodology while preserving existing detailed content.'}"
+
+Current Blueprint JSON:
+${JSON.stringify(currentBp).slice(0, 12000)}
+
+Return the complete, updated blueprint JSON object matching the exact structure below so the creator can immediately review, edit, save, or launch it.`;
+
+      const updatedBp = await db.integrations.Core.InvokeLLM({
+        prompt,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            category: { type: 'string' },
+            description: { type: 'string' },
+            spec: {
+              type: 'object',
+              properties: {
+                title: { type: 'string' },
+                subtitle: { type: 'string' },
+                duration: { type: 'string' },
+                grid: { type: 'string' },
+                format: { type: 'string' },
+              },
+            },
+            thesis: {
+              type: 'object',
+              properties: {
+                coreThesis: { type: 'string' },
+                iconicAnchor: { type: 'string' },
+              },
+            },
+            rules: {
+              type: 'object',
+              properties: {
+                palette: { type: 'string' },
+                light: { type: 'string' },
+                world: { type: 'string' },
+                entity: { type: 'string' },
+                human: { type: 'string' },
+                lensing: { type: 'string' },
+                textPolicy: { type: 'string' },
+                neverShow: { type: 'string' },
+              },
+            },
+            sections: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  header: { type: 'string' },
+                  musicalJob: { type: 'string' },
+                  visualIdea: { type: 'string' },
+                  cameraLens: { type: 'string' },
+                  light: { type: 'string' },
+                  cutDensity: { type: 'string' },
+                  beats: { type: 'string' },
+                },
+              },
+            },
+            escalation: {
+              type: 'object',
+              properties: {
+                col1Label: { type: 'string' },
+                col2Label: { type: 'string' },
+                rows: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      element: { type: 'string' },
+                      peak1: { type: 'string' },
+                      peak2: { type: 'string' },
+                    },
+                  },
+                },
+                note: { type: 'string' },
+              },
+            },
+            closingFrame: { type: 'string' },
+          },
+          required: ['spec', 'thesis', 'rules', 'sections', 'escalation', 'closingFrame'],
+        },
+      });
+
+      return Response.json({
+        ok: true,
+        blueprint: {
+          ...currentBp,
+          ...updatedBp,
+          id: currentBp.id || `bp_${Date.now().toString(36)}`,
+          category: updatedBp?.category || category,
+        },
+      });
+    }
+
     if (action === 'sync_production_github') {
       const productionId = String(body.production_id || '');
       const existing = await db.entities.NexusFactoryProduction.get(productionId);
