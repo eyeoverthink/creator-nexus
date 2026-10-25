@@ -92,7 +92,7 @@ export default function OrificeRelay() {
   );
 
   const mcpUrl = new URL('/api/mcp', window.location.origin).toString();
-  const hemisphereAUrl = 'https://nexus-create-sync.base44.app/functions/openclawGateway';
+  const hemisphereAUrl = 'https://creator-nexus.base44.app/functions/openclawGateway';
   const hemisphereBUrl = 'https://fraymus-transmuter.base44.app/functions/fraymusComms';
 
   const handleTrainingStateChange = useCallback(({ jobs = [], models = [] }) => {
@@ -337,7 +337,7 @@ export default function OrificeRelay() {
 You are connected to a live Two-Hemisphere Sovereign AI Operating System built by @eyeoverthink:
 
 1. HEMISPHERE A — Creator Nexus (Executive Cortex & Production Studio)
-   - App URL: https://nexus-create-sync.base44.app
+   - App URL: https://creator-nexus.base44.app
    - MCP Server (Streamable HTTP): ${mcpUrl}
    - Orifice & OpenClaw Gateway: ${hemisphereAUrl}
    - Capabilities: Multi-Pane Studio, Spark RSS Radar -> Director Lab -> SHA-256 VMR Video Pipeline, phi^75-Ternary (.phit <-> GGUF) VPS Ollama Lab, Argon Centripetal Polar Orbit, OLS/Ridge Regression.
@@ -486,7 +486,7 @@ You are connected to a live Two-Hemisphere Sovereign AI Operating System built b
             {/* Hemisphere A */}
             <div className="lg:col-span-3 p-3 rounded border border-primary/50 bg-background space-y-1">
               <div className="text-[10px] text-primary font-bold">HEMISPHERE A // EXECUTIVE CORTEX</div>
-              <div className="text-xs font-bold text-foreground">Creator Nexus (nexus-create-sync)</div>
+              <div className="text-xs font-bold text-foreground">Creator Nexus (creator-nexus)</div>
               <div className="text-[10px] text-muted-foreground">
                 Studio · Spark Video · Director Lab · φ⁷⁵-Ternary Ollama · Argon Polar Orbit
               </div>

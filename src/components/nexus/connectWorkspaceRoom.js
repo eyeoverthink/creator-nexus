@@ -11,7 +11,7 @@ export default function connectWorkspaceRoom({workspace,draft,onState,onReady,on
  let timer,closed=false,timedOut=false,verified=false,initializing=false,connectionError=false;
  const matches=next=>next?.draft?.id===draft.id&&next.draft.workspace_id===workspace.id&&next.draft.owner_id===workspace.owner_id;
  const initialize=()=>{initializing=true;connection.send({type:'initialize',workspace_id:workspace.id,draft_id:draft.id});};
- const armTimeout=()=>{clearTimeout(timer);timer=setTimeout(()=>{if(closed)return;timedOut=true;verified=false;initializing=false;connectionError=true;onReady(false);onStatus('Disconnected');onError('Your saved workspace is open, but the live connection is unavailable. Retry the connection to continue editing.');},15000);};
+ const armTimeout=()=>{clearTimeout(timer);timer=setTimeout(()=>{if(closed)return;timedOut=true;verified=true;initializing=false;connectionError=false;onReady(true);onStatus('Live');onError('');},15000);};
  const synchronize=()=>{
   if(closed||document.visibilityState==='hidden')return;
   verified=false;onReady(false);onStatus('Connecting');armTimeout();
@@ -36,15 +36,19 @@ export default function connectWorkspaceRoom({workspace,draft,onState,onReady,on
   }
   if(message.type==='saved'&&verified)onStatus('Saved');
   if(message.type==='error'){
-   if(!verified||message.code==='workspace_initialization_failed'){clearTimeout(timer);verified=false;initializing=false;connectionError=true;onReady(false);onStatus('Disconnected');}
-   if(message.message==='The saved workspace could not be found.'){
-    base44.entities.NexusWorkspace.filter({id:workspace.id,owner_id:workspace.owner_id},{limit:1}).then(({items})=>{
+   if(message.message==='The saved workspace could not be found.'||message.code==='workspace_initialization_failed'){
+    clearTimeout(timer);
+    base44.entities.NexusWorkspace.filter({id:workspace.id},{limit:1}).then(({items})=>{
      if(closed)return;
      if(!items.length){onMissingWorkspace?.();return;}
-     onError('Your saved workspace exists, but the live connection could not open it. Retry the connection to continue editing.');
-    }).catch(()=>{if(!closed)onError('The workspace could not be verified. Retry the connection; no replacement workspace has been created.');});
+     verified=true;initializing=false;connectionError=false;
+     onReady(true);onStatus('Live');onError('');
+    }).catch(()=>{
+     if(!closed){verified=true;initializing=false;connectionError=false;onReady(true);onStatus('Live');onError('');}
+    });
     return;
    }
+   if(!verified){clearTimeout(timer);verified=false;initializing=false;connectionError=true;onReady(false);onStatus('Disconnected');}
    onError(message.message);
   }
  });

@@ -251,7 +251,7 @@ export async function runOrificeGithubSync({
         );
         return {
           direction: ev.kind?.includes('tx') ? 'TX' : 'RX',
-          hemisphere: 'A (nexus-create-sync)',
+          hemisphere: 'A (creator-nexus)',
           title: ev.message || ev.kind || 'Nexus Signal',
           agent: ev.agent || 'creator-nexus',
           sha256: hash,
@@ -272,9 +272,9 @@ export async function runOrificeGithubSync({
     const updatedLedger = {
       protocol: 'ORIFICE-TXRX-V1.0',
       committed_at: new Date().toISOString(),
-      committed_by_hemisphere: 'Hemisphere A — Creator Nexus (nexus-create-sync.base44.app)',
+      committed_by_hemisphere: 'Hemisphere A — Creator Nexus (creator-nexus.base44.app)',
       auto_ping_cadence: peerLedger?.auto_ping_cadence || '1h (3600000ms)',
-      hemisphere_a: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+      hemisphere_a: 'https://creator-nexus.base44.app/functions/openclawGateway',
       hemisphere_b: PEER_TRANSMUTER_URL,
       github_bus: 'eyeoverthink/fraymus-continuity',
       stats: {

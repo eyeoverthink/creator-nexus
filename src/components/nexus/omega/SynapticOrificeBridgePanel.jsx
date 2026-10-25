@@ -30,7 +30,7 @@ export default function SynapticOrificeBridgePanel({ workspaceId, onBridgeComple
   const [pingResult, setPingResult] = useState(null);
   const [copied, setCopied] = useState('');
 
-  const nexusOrificeUrl = 'https://nexus-create-sync.base44.app/functions/openclawGateway';
+  const nexusOrificeUrl = 'https://creator-nexus.base44.app/functions/openclawGateway';
   const peerTransmuterUrl = 'https://fraymus-transmuter.base44.app/functions/fraymusComms';
 
   const handleCopy = (key, text) => {
@@ -144,7 +144,7 @@ export default function SynapticOrificeBridgePanel({ workspaceId, onBridgeComple
             </span>
           </div>
           <p className="text-[11px] text-muted-foreground font-body">
-            Connects <code>nexus-create-sync.base44.app</code> (Multi-Pane Studio, Spark Video Pipeline, φ⁷⁵-Ternary Ollama, Argon Orbit) with{' '}
+            Connects <code>creator-nexus.base44.app</code> (Multi-Pane Studio, Spark Video Pipeline, φ⁷⁵-Ternary Ollama, Argon Orbit) with{' '}
             <code>fraymus-transmuter.base44.app</code> (L1–L7 DNA/Emoji/WASM Transmuter, Merkle Trail &amp; Fraymus Seeds).
           </p>
         </div>

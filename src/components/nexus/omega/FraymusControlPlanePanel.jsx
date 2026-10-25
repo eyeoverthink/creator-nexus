@@ -36,7 +36,7 @@ mkdir -p /opt/fraymus/skills/shared /opt/fraymus/memory/shared
 cd /shared/hermes-skills && git clone https://github.com/eyeoverthink/fraymus-continuity.git . || git pull
 
 # 4. ENROLL CANONICAL AGENT CORE (VPS 2067485) WITH TWO-STAGE SIGNED TOKEN:
-curl -s -X POST "https://nexus-create-sync.base44.app/functions/openclawGateway" \\
+curl -s -X POST "https://creator-nexus.base44.app/functions/openclawGateway" \\
   -H "Content-Type: application/json" \\
   -d '{
     "action": "control_plane_enroll",

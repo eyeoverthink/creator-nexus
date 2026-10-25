@@ -437,7 +437,7 @@ export const HERMES_SUBAGENT_PIPELINES = [
       'code-wiki',
     ],
     stages: [
-      'Sub-Agent 1 (Inspector): Runs rest-graphql-debug + har-derived-api-client across nexus-create-sync.base44.app & fraymus-transmuter.base44.app.',
+      'Sub-Agent 1 (Inspector): Runs rest-graphql-debug + har-derived-api-client across creator-nexus.base44.app & fraymus-transmuter.base44.app.',
       'Sub-Agent 2 (Transmuter Bridge): Relays REA v6.5 bundle & DNA/Merkle state from Hemisphere B into Creator Nexus Polar Orbit.',
       'Sub-Agent 3 (Refactor & Gate): Runs ast-grep + grill-me + pr-lens across eyeoverthink/creator-nexus & Fraynix-Studios.',
       'Sub-Agent 4 (Wiki & Vault): Generates updated code-wiki architecture docs and commits signed PDF + Markdown dossier to fraymus-continuity.',
@@ -542,7 +542,7 @@ Unifies:
   2. All 29 Hermes Built-in Skills (Zero-LLM-cost /script/exec + full agentic 'hermes run')
   3. Autonomous Sub-Agent Spawner ('subagent-driven-development' with context budgets & quality gates)
   4. Solo Dual-Site Control over BOTH Base44 Hemispheres:
-     - Hemisphere A: https://nexus-create-sync.base44.app/functions/openclawGateway
+     - Hemisphere A: https://creator-nexus.base44.app/functions/openclawGateway
      - Hemisphere B: https://fraymus-transmuter.base44.app/functions/fraymusComms
   5. Tailnet GPU Router (routes QLoRA/Ollama to Windows 100.88.61.56:11434 when awake, else local VPS)
   6. FastAPI Webhook Bridge (/health, /agent/run, /script/exec, /subagent/spawn)
@@ -563,7 +563,7 @@ import uvicorn
 
 # ── Endpoints & Topology ────────────────────────────────────────
 POLL_INTERVAL  = int(os.environ.get("POLL_INTERVAL", "20"))
-GATEWAY_URL    = "https://nexus-create-sync.base44.app/functions/openclawGateway"
+GATEWAY_URL    = "https://creator-nexus.base44.app/functions/openclawGateway"
 TRANSMUTER_URL = "https://fraymus-transmuter.base44.app/functions/fraymusComms"
 GITHUB_API     = "https://api.github.com"
 REPO           = "eyeoverthink/fraymus-continuity"
@@ -647,7 +647,7 @@ def spawn_subagent_pipeline(directive: str) -> dict:
     meta_prompt = (
         "[Use skill: subagent-driven-development] "
         "Break this mission into isolated sub-agents with strict context budgets and quality gates. "
-        "Coordinate both Base44 sites (Creator Nexus https://nexus-create-sync.base44.app and "
+        "Coordinate both Base44 sites (Creator Nexus https://creator-nexus.base44.app and "
         "Fraymus Transmuter https://fraymus-transmuter.base44.app) and our 29 local skills: "
         f"{directive}"
     )
@@ -972,7 +972,7 @@ export async function handleHermesOrificePing({
 
 /**
  * Executes a Solo Dual-Site Sub-Agent Pipeline across BOTH Base44 hemispheres:
- *   - Hemisphere A: Creator Nexus (nexus-create-sync.base44.app)
+ *   - Hemisphere A: Creator Nexus (creator-nexus.base44.app)
  *   - Hemisphere B: Fraymus Transmuter (fraymus-transmuter.base44.app)
  *   - Hermes VPS: srv1944678 (45.82.73.49 / 100.110.6.44)
  */

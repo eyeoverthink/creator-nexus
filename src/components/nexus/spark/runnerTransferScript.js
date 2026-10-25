@@ -1,7 +1,7 @@
 export default String.raw`#!/usr/bin/env python3
 """Private Spark video transfer companion. Python 3 standard library only."""
 import argparse, getpass, json, os, pathlib, re, shutil, subprocess, sys, time, urllib.request, uuid
-APP = "https://nexus-create-sync.base44.app"
+APP = "https://creator-nexus.base44.app"
 ROOT = pathlib.Path("/opt/nexus-runner")
 MAX_SIZE = 50 * 1024 * 1024
 

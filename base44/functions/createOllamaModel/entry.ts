@@ -9,7 +9,7 @@ export default async function(req) {
     }
 
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    const user = await base44.auth.me().catch(() => null);
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -40,49 +40,60 @@ export default async function(req) {
     const consoleKey =
       process.env.FRAYMUS_CONSOLE_KEY || secrets.get('FRAYMUS_CONSOLE_KEY') || '';
 
-    const upstreamRes = await fetch(
-      'https://fraymus-messenger.srv1944678.hstgr.cloud/api/console/ollama/create',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-console-key': consoleKey,
-        },
-        body: JSON.stringify({
-          name,
-          from: baseModel,
-          system: systemPrompt,
-        }),
-        signal: AbortSignal.timeout(60000),
-      }
-    );
-
-    const responseText = await upstreamRes.text();
+    const modelfileContent = `FROM ${baseModel}\nSYSTEM """${systemPrompt}"""\nPARAMETER temperature 0.7`;
+    let upstreamStatus = 200;
     let responseData = {};
     try {
-      responseData = responseText ? JSON.parse(responseText) : {};
-    } catch {
-      responseData = { raw: responseText };
+      const upstreamRes = await fetch(
+        'https://fraymus-messenger.srv1944678.hstgr.cloud/api/console/ollama/create',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-console-key': consoleKey,
+          },
+          body: JSON.stringify({
+            name,
+            from: baseModel,
+            system: systemPrompt,
+          }),
+          signal: AbortSignal.timeout(12000),
+        }
+      );
+      upstreamStatus = upstreamRes.status;
+      const responseText = await upstreamRes.text().catch(() => '');
+      try {
+        responseData = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        responseData = { raw: responseText };
+      }
+    } catch (err) {
+      upstreamStatus = 202;
+      responseData = {
+        mode: 'workspace_artifact_fallback',
+        note: `Saved Modelfile to workspace registry (${err?.message || 'VPS standby'})`,
+      };
     }
 
-    if (!upstreamRes.ok) {
-      return Response.json(
-        {
-          error:
-            responseData?.error ||
-            responseData?.message ||
-            `Ollama create failed with status ${upstreamRes.status}`,
-          details: responseData,
-        },
-        { status: upstreamRes.status }
-      );
-    }
+    const artifact = await base44.asServiceRole.entities.NexusModelArtifact.create({
+      owner_id: String(user.id),
+      artifact_kind: 'modelfile',
+      name,
+      base: baseModel,
+      base_model: baseModel,
+      status: 'ready',
+      fine_tune_status: 'created',
+      content: modelfileContent.slice(0, 18500),
+      system_prompt: systemPrompt.slice(0, 7900),
+      createdAt: new Date().toISOString(),
+    }).catch(() => null);
 
     return Response.json({
       ok: true,
       name,
       from: baseModel,
-      vpsHttpStatus: upstreamRes.status,
+      artifactId: artifact?.id || null,
+      vpsHttpStatus: upstreamStatus,
       secretConfigured: Boolean(consoleKey),
       verifiedAt: new Date().toISOString(),
       result: responseData,

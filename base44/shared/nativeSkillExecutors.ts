@@ -5,7 +5,7 @@
 import { HERMES_SKILL_FLEET } from './hermesSkillFleet.ts';
 import { commitArtifactToGithubVault } from './motorDispatcher.ts';
 
-const UA = 'CreatorNexus-SovereignSkillEngine/2.0 (+https://nexus-create-sync.base44.app)';
+const UA = 'CreatorNexus-SovereignSkillEngine/2.0 (+https://creator-nexus.base44.app)';
 
 function stripHtmlToMarkdown(html = '') {
   return String(html || '')
@@ -298,7 +298,7 @@ async function runNativeOssForensics(pkgInput) {
 // 5. Live Scope-Enforced Web Security & API Debugger (web-pentest & rest-graphql-debug)
 async function runNativeWebPentestAndApiDebug(targetInput) {
   const urlMatch = String(targetInput || '').match(/https?:\/\/[^\s"']+/);
-  const targetUrl = urlMatch ? urlMatch[0] : 'https://nexus-create-sync.base44.app';
+  const targetUrl = urlMatch ? urlMatch[0] : 'https://creator-nexus.base44.app';
   const t0 = Date.now();
   try {
     const res = await fetch(targetUrl, {
@@ -539,7 +539,7 @@ Produce a concrete, production-ready execution output in JSON with:
       directive: `[NATIVE IN-APP SKILL: ${skill.id}] ${query}`,
       task_type: 'hermes_skill_exec',
       assigned_node: 'creator-nexus-native-engine (In-App Zero-Middleman)',
-      assigned_ip: 'nexus-create-sync.base44.app',
+      assigned_ip: 'creator-nexus.base44.app',
       fallback_node: 'local-standalone-script',
       routing_reason: `Executed natively inside Creator Nexus without external Hermes dependency (${skill.replaces}).`,
       execution_mode: 'immediate_cloud',

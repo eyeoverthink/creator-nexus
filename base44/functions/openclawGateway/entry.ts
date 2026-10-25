@@ -446,8 +446,8 @@ export default async function(req) {
             'Send any question, concern, or persona handshake to ambassador_greet to speak with the Sovereign Ambassador on @eyeoverthink behalf.',
         },
         topology: {
-          hemisphere_a_gateway: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
-          hemisphere_a_mcp: 'https://nexus-create-sync.base44.app/api/mcp',
+          hemisphere_a_gateway: 'https://creator-nexus.base44.app/functions/openclawGateway',
+          hemisphere_a_mcp: 'https://creator-nexus.base44.app/api/mcp',
           hemisphere_b_gateway: 'https://fraymus-transmuter.base44.app/functions/fraymusComms',
           hemisphere_b_mcp: 'https://fraymus-transmuter.base44.app/api/mcp',
           shared_github_bus: 'https://github.com/eyeoverthink/fraymus-continuity',
@@ -459,7 +459,7 @@ export default async function(req) {
         worker_protocol: {
           step_1_list_or_poll: {
             method: 'POST',
-            url: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+            url: 'https://creator-nexus.base44.app/functions/openclawGateway',
             body: {
               action: 'list_dispatch_jobs',
               protocol: 'ORIFICE-TXRX-V1.0',
@@ -468,7 +468,7 @@ export default async function(req) {
           },
           step_2_claim_next_job: {
             method: 'POST',
-            url: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+            url: 'https://creator-nexus.base44.app/functions/openclawGateway',
             body: {
               action: 'claim_dispatch_job',
               protocol: 'ORIFICE-TXRX-V1.0',
@@ -477,7 +477,7 @@ export default async function(req) {
           },
           step_3_complete_and_persist_artifact: {
             method: 'POST',
-            url: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+            url: 'https://creator-nexus.base44.app/functions/openclawGateway',
             body: {
               action: 'complete_dispatch_job',
               protocol: 'ORIFICE-TXRX-V1.0',
@@ -489,7 +489,7 @@ export default async function(req) {
           },
           step_4_heartbeat_ping: {
             method: 'POST',
-            url: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+            url: 'https://creator-nexus.base44.app/functions/openclawGateway',
             body: {
               action: 'orifice_ping',
               node_id: nodeId,

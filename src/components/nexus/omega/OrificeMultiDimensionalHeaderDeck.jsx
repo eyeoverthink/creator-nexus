@@ -21,7 +21,7 @@ const MESH_TOPOLOGY_NODES = [
     label: 'Hemisphere A · Creator Nexus',
     short: 'NEXUS-A',
     role: 'Executive Cortex & Studio Hub',
-    ip: 'nexus-create-sync.base44.app',
+    ip: 'creator-nexus.base44.app',
     x: 260,
     y: 130,
     r: 22,

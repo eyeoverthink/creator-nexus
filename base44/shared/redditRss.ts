@@ -1,7 +1,7 @@
 import { XMLParser } from 'npm:fast-xml-parser@4.5.3';
 
 export const redditCommunities = ['programming', 'electronics', 'hardware', 'musicproduction'];
-export const redditUserAgent = 'CreatorNexusRSS/1.0 (Spark Scout RSS research; https://nexus-create-sync.base44.app)';
+export const redditUserAgent = 'CreatorNexusRSS/1.0 (Spark Scout RSS research; https://creator-nexus.base44.app)';
 const plainText = value => String(typeof value === 'object' ? value?.['#text'] || '' : value || '').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
 export function isRedditSource(value) {

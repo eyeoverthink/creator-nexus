@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -14,7 +15,8 @@ import {
   GitBranch,
   Trash2,
   Plus,
-  Eye,
+  FolderOpen,
+  Bot,
 } from 'lucide-react';
 
 const BRIDGE_MESSAGES = [
@@ -116,12 +118,23 @@ export default function UnifiedAgentCommsAndAttachmentPortal({ workspaceId }) {
     'All agents have full autonomy (op_grant_20261024_full_autonomy_063) across fraymus-bridge, fraymus-sovereign-rsi-sandbox, Creator Nexus, and Fraymus Eternal. Review attached documents/specs and execute queued tasks with witness_ledger receipts.'
   );
   const [attachments, setAttachments] = useState([]);
+  const [workspaceAssets, setWorkspaceAssets] = useState([]);
+  const [showWorkspacePicker, setShowWorkspacePicker] = useState(false);
   const [showInlineDoc, setShowInlineDoc] = useState(false);
   const [inlineDocName, setInlineDocName] = useState('AGENT_SPEC_HANDOFF.md');
   const [inlineDocBody, setInlineDocBody] = useState('');
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [busy, setBusy] = useState('');
   const [lastDispatchResult, setLastDispatchResult] = useState(null);
+
+  useEffect(() => {
+    base44.entities.NexusAsset.list('-created_date', 12)
+      .then((res) => {
+        const items = Array.isArray(res) ? res : res?.items || [];
+        setWorkspaceAssets(items);
+      })
+      .catch(() => null);
+  }, []);
 
   const selectedBridgeMsg =
     BRIDGE_MESSAGES.find((m) => m.id === selectedMsgId) || BRIDGE_MESSAGES[0];
@@ -136,10 +149,10 @@ export default function UnifiedAgentCommsAndAttachmentPortal({ workspaceId }) {
         let textContent = '';
         const isTextLike =
           file.type.startsWith('text/') ||
-          /\.(md|txt|json|jsonc|js|jsx|ts|tsx|py|sh|yml|yaml|csv|html|css|dna)$/i.test(
+          /\.(md|txt|json|jsonc|js|jsx|ts|tsx|py|sh|yml|yaml|csv|html|css|dna|xml|sql)$/i.test(
             file.name
           );
-        if (isTextLike && file.size < 250000) {
+        if (isTextLike && file.size < 500000) {
           textContent = await file.text().catch(() => '');
         }
         const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
@@ -153,14 +166,14 @@ export default function UnifiedAgentCommsAndAttachmentPortal({ workspaceId }) {
           url: signed_url || file_uri,
           mime_type: file.type || 'application/octet-stream',
           size: file.size,
-          text_content: textContent ? textContent.slice(0, 12000) : '',
+          text_content: textContent ? textContent.slice(0, 15000) : '',
         });
       }
       setAttachments((prev) => [...prev, ...uploadedItems]);
       toast({
-        title: `Attached ${uploadedItems.length} file(s)`,
+        title: `Uploaded ${uploadedItems.length} document(s) to workspace (stored privately)`,
         description:
-          'Files uploaded and staged for GitHub bridge + Hemisphere A/B agent distribution.',
+          'Ready for live multi-agent analysis, Workspace Library/Knowledge indexing, and GitHub bridge distribution.',
       });
     } catch (err) {
       toast({
@@ -172,6 +185,26 @@ export default function UnifiedAgentCommsAndAttachmentPortal({ workspaceId }) {
       setUploadingFiles(false);
       e.target.value = '';
     }
+  };
+
+  const handleAttachWorkspaceAsset = (asset) => {
+    if (!asset) return;
+    setAttachments((prev) => [
+      ...prev,
+      {
+        name: asset.file_name || `${asset.title || 'workspace-doc'}.md`,
+        file_uri: asset.file_uri || '',
+        url: asset.file_uri?.startsWith('http') ? asset.file_uri : '',
+        mime_type: asset.mime_type || 'text/markdown',
+        size: asset.file_size || new Blob([asset.body || '']).size,
+        text_content: String(asset.body || '').slice(0, 15000),
+      },
+    ]);
+    setShowWorkspacePicker(false);
+    toast({
+      title: `Attached workspace doc "${asset.title}"`,
+      description: 'Staged for multi-agent analysis and cross-system dispatch.',
+    });
   };
 
   const handleAddInlineDoc = () => {
@@ -224,29 +257,32 @@ export default function UnifiedAgentCommsAndAttachmentPortal({ workspaceId }) {
     }
   };
 
-  const handleDispatchPortalMessage = async () => {
-    if (!message.trim()) return;
-    setBusy('dispatch');
+  const handleDispatchPortalMessage = async (analyzeOnly = false) => {
+    if (!message.trim() && attachments.length === 0) return;
+    setBusy(analyzeOnly ? 'analyze' : 'dispatch');
     try {
       const res = await base44.functions.invoke('orificeBridge', {
         action: 'unified_portal_dispatch',
         workspace_id: workspaceId,
         custom_dispatch: true,
+        analyze_attachments: true,
         autonomy_status: autonomyStatus,
         sender,
         recipients,
         subject,
-        message,
+        message:
+          message.trim() ||
+          `Analyze the ${attachments.length} attached document(s) and integrate findings into the active workspace.`,
         attachments,
       });
       if (res?.data?.ok) {
         setLastDispatchResult(res.data);
         setAttachments([]);
         toast({
-          title: `Dispatched to Unified Bridge (${res.data.message_file})`,
-          description: `Synced message + ${
-            (res.data.attachments_saved || []).length
-          } attachment(s) across GitHub, Hemisphere A/B, and Library.`,
+          title: res.data.agent_document_analysis
+            ? `Agents Analyzed ${(res.data.attachments_saved || []).length || 1} Doc(s) & Saved to Workspace`
+            : `Dispatched to Unified Bridge (${res.data.message_file})`,
+          description: `Indexed in Workspace Library & Knowledge, created Studio analysis draft, and synced across GitHub & OrificeBridge.`,
         });
       }
     } catch (err) {
@@ -533,20 +569,31 @@ export default function UnifiedAgentCommsAndAttachmentPortal({ workspaceId }) {
         {/* Attachment Controls */}
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
           <div className="flex flex-wrap items-center gap-2">
-            <label className="h-8 px-3 rounded border border-border bg-card hover:bg-hover text-foreground inline-flex items-center gap-1.5 text-[10.5px] cursor-pointer">
+            <label className="h-8 px-3 rounded border border-primary/50 bg-primary/10 hover:bg-primary/20 text-foreground inline-flex items-center gap-1.5 text-[10.5px] font-bold cursor-pointer">
               {uploadingFiles ? (
                 <Loader2 size={12} className="animate-spin text-primary" />
               ) : (
                 <Paperclip size={12} className="text-primary" />
               )}
-              <span>Attach Files / Docs / PDFs / Code</span>
+              <span>Upload Docs / PDFs / CSV / Code to Workspace</span>
               <input
                 type="file"
                 multiple
+                accept=".pdf,.md,.txt,.json,.jsonc,.csv,.xlsx,.docx,.png,.jpg,.jpeg,.webp,.js,.jsx,.ts,.tsx,.py,.sh,.html,.css"
                 onChange={handleFileUpload}
                 className="hidden"
               />
             </label>
+
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setShowWorkspacePicker((v) => !v)}
+              className="h-8 text-[10.5px] px-2.5 gap-1.5"
+            >
+              <FolderOpen size={12} /> {showWorkspacePicker ? 'Hide Workspace Docs' : 'Attach from Workspace Library'}
+            </Button>
 
             <Button
               type="button"
@@ -559,26 +606,74 @@ export default function UnifiedAgentCommsAndAttachmentPortal({ workspaceId }) {
             </Button>
 
             {attachments.length > 0 && (
-              <span className="text-[10px] text-success font-bold">
-                {attachments.length} attachment(s) ready
+              <span className="px-2 py-0.5 rounded bg-success/15 text-success border border-success/40 text-[10px] font-bold">
+                ● {attachments.length} doc(s) staged for agent analysis
               </span>
             )}
           </div>
 
-          <Button
-            size="sm"
-            disabled={Boolean(busy) || uploadingFiles || !message.trim()}
-            onClick={handleDispatchPortalMessage}
-            className="h-8 text-[11px] px-4 gap-1.5"
-          >
-            {busy === 'dispatch' ? (
-              <Loader2 size={12} className="animate-spin" />
-            ) : (
-              <Send size={12} />
+          <div className="flex flex-wrap items-center gap-1.5">
+            {attachments.length > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                disabled={Boolean(busy) || uploadingFiles}
+                onClick={() => handleDispatchPortalMessage(true)}
+                className="h-8 text-[10.5px] px-3 gap-1.5 border border-primary/40"
+              >
+                {busy === 'analyze' ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <Bot size={12} className="text-primary" />
+                )}
+                Analyze Docs with Agents &amp; Save to Workspace
+              </Button>
             )}
-            Send Message &amp; Attachments to All Agents (GitHub + OrificeBridge)
-          </Button>
+            <Button
+              size="sm"
+              disabled={Boolean(busy) || uploadingFiles || (!message.trim() && attachments.length === 0)}
+              onClick={() => handleDispatchPortalMessage(false)}
+              className="h-8 text-[11px] px-4 gap-1.5"
+            >
+              {busy === 'dispatch' ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <Send size={12} />
+              )}
+              Send &amp; Analyze with All Agents (Workspace + GitHub + OrificeBridge)
+            </Button>
+          </div>
         </div>
+
+        {/* Workspace Library Document Picker */}
+        {showWorkspacePicker && (
+          <div className="p-3 rounded border border-border bg-card space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-primary flex items-center gap-1.5">
+                <FolderOpen size={11} /> Select an Existing Workspace Library Document to Attach for Agent Analysis
+              </span>
+              <Link to="/library" className="text-[9.5px] text-link hover:underline">
+                Open Full Library (/library) →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 max-h-40 overflow-y-auto">
+              {workspaceAssets.map((asset) => (
+                <button
+                  key={asset.id}
+                  type="button"
+                  onClick={() => handleAttachWorkspaceAsset(asset)}
+                  className="p-2 rounded border border-border bg-background hover:border-primary text-left space-y-0.5 transition-colors"
+                >
+                  <div className="font-bold text-foreground truncate text-[10px]">{asset.title}</div>
+                  <div className="text-[9px] text-muted-foreground truncate">
+                    {asset.kind} · {asset.project || 'Workspace Asset'}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Optional Inline Document Composer */}
         {showInlineDoc && (
@@ -657,17 +752,80 @@ export default function UnifiedAgentCommsAndAttachmentPortal({ workspaceId }) {
           </div>
         )}
 
-        {/* Latest Dispatch Receipt */}
+        {/* Latest Dispatch Receipt & Live Multi-Agent Document Analysis */}
         {lastDispatchResult && (
-          <div className="p-2.5 rounded border border-success/50 bg-success/10 space-y-1.5 text-[10px]">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="font-bold text-success flex items-center gap-1.5">
-                <CheckCircle2 size={12} /> Dispatched &amp; Committed ({lastDispatchResult.message_file}) · Receipt {lastDispatchResult.receipt_sha256}
+          <div className="p-3 rounded-lg border border-success/60 bg-success/10 space-y-3 text-[10px]">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-success/30 pb-2">
+              <span className="font-bold text-success flex items-center gap-1.5 text-[10.5px]">
+                <CheckCircle2 size={13} /> Dispatched &amp; Indexed in Workspace ({lastDispatchResult.message_file}) · Receipt {lastDispatchResult.receipt_sha256}
               </span>
-              <span className="text-[9.5px] text-muted-foreground">
-                Autonomy: {lastDispatchResult.autonomy_status}
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  to="/studio"
+                  className="px-2 py-0.5 rounded bg-background border border-border text-link hover:underline inline-flex items-center gap-1 text-[9.5px]"
+                >
+                  Open Analysis Draft in Studio (/studio) →
+                </Link>
+                <Link
+                  to="/library"
+                  className="px-2 py-0.5 rounded bg-background border border-border text-link hover:underline inline-flex items-center gap-1 text-[9.5px]"
+                >
+                  View in Workspace Library (/library) →
+                </Link>
+              </div>
             </div>
+
+            {lastDispatchResult.agent_document_analysis && (
+              <div className="p-3 rounded border border-border bg-background space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[10.5px] font-bold text-primary flex items-center gap-1.5">
+                    <Bot size={13} /> LIVE MULTI-AGENT DOCUMENT ANALYSIS REPORT
+                  </span>
+                  <span className="text-[9px] text-success font-bold">
+                    ✓ Saved to Workspace Drafts, Library &amp; Knowledge
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-foreground font-body leading-relaxed">
+                  {lastDispatchResult.agent_document_analysis.executive_summary}
+                </p>
+
+                {(lastDispatchResult.agent_document_analysis.key_findings || []).length > 0 && (
+                  <div className="space-y-1">
+                    <div className="text-[9.5px] font-bold text-muted-foreground uppercase">
+                      Key Findings Extracted from Uploaded Document(s):
+                    </div>
+                    <ul className="list-disc pl-4 space-y-0.5 text-[10px] text-foreground font-body">
+                      {lastDispatchResult.agent_document_analysis.key_findings.map((f, idx) => (
+                        <li key={idx}>{f}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {(lastDispatchResult.agent_document_analysis.agent_perspectives || []).length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+                    {lastDispatchResult.agent_document_analysis.agent_perspectives.map((p, idx) => (
+                      <div key={idx} className="p-2 rounded border border-border bg-card space-y-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <strong className="text-primary text-[10px]">{p.agent}</strong>
+                          <span className="text-[8.5px] text-muted-foreground">{p.role}</span>
+                        </div>
+                        <p className="text-[10px] text-foreground font-body leading-snug">
+                          {p.analysis}
+                        </p>
+                        {p.action_item && (
+                          <div className="text-[9.5px] text-success font-body">
+                            <strong>Next Action:</strong> {p.action_item}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-2">
               {(lastDispatchResult.github_commits || []).map((c, i) => (
                 <a

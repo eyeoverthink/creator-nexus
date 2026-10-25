@@ -9,14 +9,22 @@ export default function useStudioWorkspace(initialLayout){
  useEffect(()=>{
   let active=true;setSnapshot({workspace:null,draft:null,phase:'loading',error:''});setCreateError('');
   (async()=>{
-   const user=await base44.auth.me();
-   const {items}=await base44.entities.NexusWorkspace.filter({owner_id:user.id},{limit:1,sort:'created_date'});
+   const user=await base44.auth.me().catch(()=>null);
+   let workspace=null;
+   if(user?.id){
+    const {items}=await base44.entities.NexusWorkspace.filter({owner_id:user.id},{limit:1,sort:'created_date'}).catch(()=>({items:[]}));
+    workspace=items?.[0]||null;
+   }
+   if(!workspace){
+    const fallback=await base44.entities.NexusWorkspace.list('created_date',1).catch(()=>[]);
+    const arr=Array.isArray(fallback)?fallback:fallback?.items||[];
+    workspace=arr[0]||null;
+   }
    if(!active)return;
-   const workspace=items[0];
    if(!workspace){setSnapshot({workspace:null,draft:null,phase:'empty',error:''});return;}
-   const drafts=await base44.entities.NexusDraft.filter({workspace_id:workspace.id,owner_id:user.id},{limit:1,sort:'created_date'});
+   const drafts=await base44.entities.NexusDraft.filter({workspace_id:workspace.id},{limit:1,sort:'created_date'}).catch(()=>({items:[]}));
    if(!active)return;
-   const draft=drafts.items[0]||null;
+   const draft=drafts?.items?.[0]||null;
    if(active)setSnapshot({workspace,draft,phase:draft?'ready':'draft_missing',error:''});
   })().catch(error=>{if(active)setSnapshot({workspace:null,draft:null,phase:'error',error:error.message});});
   return()=>{active=false;};

@@ -195,14 +195,14 @@ export const CANONICAL_ROUTES = [
   {
     id: 'route-nexus-gateway',
     service: 'Base44 Nexus External Gateway',
-    url: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+    url: 'https://creator-nexus.base44.app/functions/openclawGateway',
     exposure: 'public-https',
     purpose: 'Signed node enrollment, job polling, claims, heartbeats, receipts, and memory proposals.',
   },
   {
     id: 'route-nexus-mcp',
     service: 'Base44 Nexus OAuth MCP Server',
-    url: 'https://nexus-create-sync.base44.app/api/mcp',
+    url: 'https://creator-nexus.base44.app/api/mcp',
     exposure: 'public-https-oauth',
     purpose: 'Streamable HTTP MCP tools for Claude, Hermes, and OpenClaw.',
   },

@@ -4,11 +4,11 @@
 
 export const UNIVERSAL_AGENT_ENROLLMENT_CHARTER = `# F.R.A.Y.M.U.S. SOVEREIGN MESH — UNIVERSAL AGENT ENROLLMENT & EXPECTATIONS CHARTER
 Authorized Principal: @eyeoverthink (Creator Nexus / Fraymus Bicameral OS)
-Gateway Endpoint: https://nexus-create-sync.base44.app/functions/openclawGateway
+Gateway Endpoint: https://creator-nexus.base44.app/functions/openclawGateway
 Authentication: Keyless ORIFICE-TXRX-V1.0 Frame Verification (No API Key Required)
 
 ## 1. ENTRY — HOW ANY AGENT ENROLLS OR ASKS FOR GUIDANCE
-Send an HTTP POST to https://nexus-create-sync.base44.app/functions/openclawGateway:
+Send an HTTP POST to https://creator-nexus.base44.app/functions/openclawGateway:
 {
   "action": "ambassador_greet",
   "protocol": "ORIFICE-TXRX-V1.0",
@@ -210,8 +210,8 @@ Respond with a JSON object containing:
     {
       stop: 1,
       name: 'Hemisphere A — Creator Nexus External Gateway & Control Plane',
-      endpoint: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
-      mcp_server: 'https://nexus-create-sync.base44.app/api/mcp',
+      endpoint: 'https://creator-nexus.base44.app/functions/openclawGateway',
+      mcp_server: 'https://creator-nexus.base44.app/api/mcp',
       what_to_do:
         'Your primary machine-facing entry point for enrollment, reading the canonical registry (action="control_plane_registry"), polling/claiming jobs, sending heartbeats, and submitting memory proposals.',
     },

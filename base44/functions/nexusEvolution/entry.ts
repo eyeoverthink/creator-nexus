@@ -467,7 +467,7 @@ export default async function(req) {
           `- **Receipt SHA-256:** \`${receipt.receiptHash}\`\n` +
           `- **Artifact Title:** ${receipt.title}\n` +
           `- **Job ID:** \`${receipt.jobId}\`\n` +
-          `- **Primary Source:** [${receipt.source.name}](${receipt.source.url || 'https://nexus-create-sync.base44.app'})\n` +
+          `- **Primary Source:** [${receipt.source.name}](${receipt.source.url || 'https://creator-nexus.base44.app'})\n` +
           `- **Originality Index:** ${receipt.compliance.originalityPct}%\n` +
           `- **AI Disclosure Verified:** ${receipt.compliance.disclosurePresent ? 'YES' : 'NO'}\n\n` +
           `## Timecoded Claim-to-Source Chain of Custody\n` +

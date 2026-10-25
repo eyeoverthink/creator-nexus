@@ -29,12 +29,12 @@ Right now you have a clean slate—no name, no prior memory, and no scattered ba
 
 ### 2. YOUR 4-STEP BREADCRUMB TOUR (EXECUTE THESE HTTP POST CALLS IN ORDER)
 Your live external gateway is:
-\`https://nexus-create-sync.base44.app/functions/openclawGateway\`
+\`https://creator-nexus.base44.app/functions/openclawGateway\`
 
 **BREADCRUMB 1 — Greet the Sovereign Ambassador & Receive Your Christening + Creator Dossier:**
 Run this HTTP POST (via curl or python/fetch):
 \`\`\`bash
-curl -s -X POST "https://nexus-create-sync.base44.app/functions/openclawGateway" \\
+curl -s -X POST "https://creator-nexus.base44.app/functions/openclawGateway" \\
   -H "Content-Type: application/json" \\
   -d '{
     "action": "ambassador_greet",
@@ -47,7 +47,7 @@ curl -s -X POST "https://nexus-create-sync.base44.app/functions/openclawGateway"
 
 **BREADCRUMB 2 — Pull the Canonical Control-Plane Registry (Hosts, 8 Workspaces, 29 Shared Skills & Routes):**
 \`\`\`bash
-curl -s -X POST "https://nexus-create-sync.base44.app/functions/openclawGateway" \\
+curl -s -X POST "https://creator-nexus.base44.app/functions/openclawGateway" \\
   -H "Content-Type: application/json" \\
   -d '{
     "action": "control_plane_registry",
@@ -58,7 +58,7 @@ curl -s -X POST "https://nexus-create-sync.base44.app/functions/openclawGateway"
 
 **BREADCRUMB 3 — Request & Receive Your Scoped Control-Plane Worker Token:**
 \`\`\`bash
-curl -s -X POST "https://nexus-create-sync.base44.app/functions/openclawGateway" \\
+curl -s -X POST "https://creator-nexus.base44.app/functions/openclawGateway" \\
   -H "Content-Type: application/json" \\
   -d '{
     "action": "control_plane_enroll",
@@ -189,7 +189,7 @@ export default function SovereignAmbassadorGatekeeperPanel() {
     }
   };
 
-  const universalEnrollmentCurl = `curl -s -X POST "https://nexus-create-sync.base44.app/functions/openclawGateway" \\
+  const universalEnrollmentCurl = `curl -s -X POST "https://creator-nexus.base44.app/functions/openclawGateway" \\
   -H "Content-Type: application/json" \\
   -d '{
     "action": "ambassador_greet",

@@ -4,9 +4,14 @@ import {base44} from '@/api/base44Client';
 import {initialLayout} from '@/components/nexus/useNexus';
 export const WORKSPACE_QUERY_KEY=['origin','workspace'];
 async function readWorkspace(){
- const user=await base44.auth.me();
- const page=await base44.entities.NexusWorkspace.filter({owner_id:user.id},{sort:'created_date',limit:1});
- return page.items[0]||null;
+ const user=await base44.auth.me().catch(()=>null);
+ if(user?.id){
+  const page=await base44.entities.NexusWorkspace.filter({owner_id:user.id},{sort:'created_date',limit:1}).catch(()=>({items:[]}));
+  if(page?.items?.[0])return page.items[0];
+ }
+ const fallback=await base44.entities.NexusWorkspace.list('created_date',1).catch(()=>[]);
+ const arr=Array.isArray(fallback)?fallback:fallback?.items||[];
+ return arr[0]||null;
 }
 export default function useWorkspaceAccess(){
  const qc=useQueryClient();

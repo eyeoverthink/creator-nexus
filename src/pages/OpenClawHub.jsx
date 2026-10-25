@@ -85,7 +85,7 @@ export default function OpenClawHub() {
   const [copiedKey, setCopiedKey] = useState('');
 
   const mcpUrl = new URL('/api/mcp', window.location.origin).toString();
-  const webhookUrl = 'https://nexus-create-sync.base44.app/functions/openclawGateway';
+  const webhookUrl = 'https://creator-nexus.base44.app/functions/openclawGateway';
   const telegramUrl = base44.agents.getTelegramConnectURL('openclaw_commander');
   const whatsappUrl = base44.agents.getWhatsAppConnectURL('openclaw_commander');
 

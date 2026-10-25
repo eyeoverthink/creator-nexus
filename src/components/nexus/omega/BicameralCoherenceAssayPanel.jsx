@@ -89,7 +89,7 @@ export default function BicameralCoherenceAssayPanel({ onAssayCompleted }) {
           ],
           assigned_zero_cost_job_id: assayJob.job_id,
           claim_command: {
-            url: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+            url: 'https://creator-nexus.base44.app/functions/openclawGateway',
             body: {
               action: 'claim_dispatch_job',
               protocol: 'ORIFICE-TXRX-V1.0',
@@ -98,7 +98,7 @@ export default function BicameralCoherenceAssayPanel({ onAssayCompleted }) {
             },
           },
           complete_command: {
-            url: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+            url: 'https://creator-nexus.base44.app/functions/openclawGateway',
             body: {
               action: 'complete_dispatch_job',
               protocol: 'ORIFICE-TXRX-V1.0',

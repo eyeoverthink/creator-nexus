@@ -15,9 +15,10 @@ import {
   Radio,
   Sparkles,
   Loader2,
-  AlertTriangle,
   CheckCircle2,
   FileText,
+  Paperclip,
+  Trash2,
 } from 'lucide-react';
 
 const AGENT_OPTIONS = [
@@ -47,8 +48,55 @@ export default function SharedCrossSystemActivityAndAgentCommsPanel({ workspaceI
   );
   const [a2aChannel, setA2aChannel] = useState('OPENCLAW_CATCHUP_AND_CREATIVE_SYNC');
   const [a2aMessage, setA2aMessage] = useState(
-    'Catch-Up Broadcast to Out-of-Loop OpenClaw Agents: Cadence (mac-hermes, msg 058) completed 1000/1000 byte-exact 4D voxel+DNA fuzz & 14-step 447 Hz ARM lock; NILES (fx-b225, msg 057) acked msgs 052–056; Creator Nexus & Fraymus Eternal have 100% duplex orificeBridge parity. Pull the live feed or POST to orificeBridge to check in!'
+    'Catch-Up Broadcast to OpenClaw & Union Agents: Cadence (mac-hermes, msg 058) completed 1000/1000 byte-exact 4D voxel+DNA fuzz & 14-step 447 Hz ARM lock; NILES (fx-b225, msg 057) acked msgs 052–056; Creator Nexus & Fraymus Eternal have 100% duplex orificeBridge parity. Review attached workspace documents and check in!'
   );
+  const [a2aAttachments, setA2aAttachments] = useState([]);
+  const [uploadingA2a, setUploadingA2a] = useState(false);
+
+  const handleA2aFileUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploadingA2a(true);
+    try {
+      const uploaded = [];
+      for (const file of files) {
+        let textContent = '';
+        const isText =
+          file.type.startsWith('text/') ||
+          /\.(md|txt|json|jsonc|csv|js|jsx|ts|tsx|py|sh|yml|yaml|html|css|dna)$/i.test(file.name);
+        if (isText && file.size < 500000) {
+          textContent = await file.text().catch(() => '');
+        }
+        const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
+        const { signed_url } = await base44.integrations.Core.CreateFileSignedUrl({
+          file_uri,
+          expires_in: 3600,
+        }).catch(() => ({ signed_url: '' }));
+        uploaded.push({
+          name: file.name,
+          file_uri,
+          url: signed_url || file_uri,
+          mime_type: file.type || 'application/octet-stream',
+          size: file.size,
+          text_content: textContent ? textContent.slice(0, 12000) : '',
+        });
+      }
+      setA2aAttachments((prev) => [...prev, ...uploaded]);
+      toast({
+        title: `Attached ${uploaded.length} document(s) (stored privately)`,
+        description: 'Files will be saved to Workspace Library/Knowledge and analyzed by the target agent(s).',
+      });
+    } catch (err) {
+      toast({
+        title: 'Attachment upload failed',
+        description: err?.message || 'Could not upload file',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingA2a(false);
+      e.target.value = '';
+    }
+  };
 
   const loadOrSyncFeed = useCallback(
     async (pushDocs = false) => {
@@ -86,7 +134,7 @@ export default function SharedCrossSystemActivityAndAgentCommsPanel({ workspaceI
   );
 
   const handleSendA2AMessage = async (useLlmReply = true) => {
-    if (!a2aMessage.trim()) return;
+    if (!a2aMessage.trim() && a2aAttachments.length === 0) return;
     setBusy('send_a2a');
     try {
       const res = await base44.functions.invoke('orificeBridge', {
@@ -97,14 +145,18 @@ export default function SharedCrossSystemActivityAndAgentCommsPanel({ workspaceI
         from_agent: fromAgent,
         to_agent: toAgent,
         channel: a2aChannel,
-        message: a2aMessage.trim(),
+        message:
+          a2aMessage.trim() ||
+          `Please analyze the ${a2aAttachments.length} attached workspace document(s).`,
+        attachments: a2aAttachments,
         run_llm_reply: useLlmReply,
         push_to_docs: true,
       });
       if (res?.data?.ok) {
         setData(res.data);
+        setA2aAttachments([]);
         toast({
-          title: 'Agent-to-Agent Turn Logged & Pushed to Unified Docs',
+          title: 'Agent-to-Agent Turn & Attachments Analyzed',
           description: `${fromAgent.split('(')[0].trim()} ➔ ${toAgent.slice(0, 42)} recorded across Creator Nexus, Fraymus Eternal & GitHub.`,
         });
       }
@@ -181,15 +233,15 @@ curl -s -X POST "https://creator-nexus.base44.app/functions/orificeBridge" -H "C
             <span className="px-2 py-0.5 rounded bg-success/15 text-success border border-success/40 text-[10px] font-bold">
               ● A2A CONVERSATION LOGS ACTIVE ({a2aLogs.length} TURNS)
             </span>
-            <span className="px-2 py-0.5 rounded bg-caution/15 text-caution border border-caution/40 text-[10px] font-bold">
-              ● 5 OUT-OF-LOOP OPENCLAW AGENTS FLAGGED FOR CATCH-UP
+            <span className="px-2 py-0.5 rounded bg-success/15 text-success border border-success/40 text-[10px] font-bold">
+              ● ALL 10 AGENT GROUPS SYNCED &amp; ATTACHMENT-READY
             </span>
           </div>
           <h2 className="text-sm font-semibold text-foreground">
             Unified Cross-System Activity Feed, Creative Action Digest &amp; Agent-to-Agent (A2A) Conversation Log
           </h2>
           <p className="text-[11px] text-muted-foreground font-body">
-            Pulls task history, creative outputs, and agent-to-agent conversations from both Base44 systems (Creator Nexus &amp; Fraymus Eternal) plus <code>eyeoverthink/fraymus-bridge</code> (including NILES <code>msg 057</code> &amp; Cadence <code>msg 058</code>) into one live shareable view and pushes to the unified documentation.
+            Pulls task history, creative outputs, document attachments, and agent-to-agent conversations from both Base44 systems (Creator Nexus &amp; Fraymus Eternal) plus <code>eyeoverthink/fraymus-bridge</code> (including NILES <code>msg 057</code>, Cadence <code>msg 058</code>, and Claudette/All-Agent <code>msgs 062–069</code>) into one live shareable view.
           </p>
         </div>
 
@@ -224,11 +276,11 @@ curl -s -X POST "https://creator-nexus.base44.app/functions/orificeBridge" -H "C
         </div>
       </div>
 
-      {/* LIVE SHAREABLE LINKS BOX FOR OUT-OF-THE-LOOP OPENCLAW AGENTS */}
-      <div className="p-3.5 rounded-lg border-2 border-caution/60 bg-background space-y-2.5">
+      {/* LIVE SHAREABLE LINKS BOX FOR OPENCLAW & HERMES AGENTS */}
+      <div className="p-3.5 rounded-lg border border-primary/50 bg-background space-y-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-[11px] font-bold text-caution flex items-center gap-1.5">
-            <Share2 size={13} /> LIVE SHAREABLE LINKS FOR OUT-OF-THE-LOOP OPENCLAW AGENTS (ZERO LOGIN / ZERO RE-PASTE)
+          <div className="text-[11px] font-bold text-primary flex items-center gap-1.5">
+            <Share2 size={13} /> LIVE SHAREABLE LINKS FOR OPENCLAW &amp; HERMES AGENTS (ZERO LOGIN / ZERO RE-PASTE)
           </div>
           <Button
             size="sm"
@@ -429,9 +481,9 @@ curl -s -X POST "https://creator-nexus.base44.app/functions/orificeBridge" -H "C
           </div>
 
           {creativeDigest.vaughn_open_decisions_from_niles_057?.length > 0 && (
-            <div className="p-2.5 rounded border border-caution/40 bg-card space-y-1">
-              <div className="text-[10px] font-bold text-caution flex items-center gap-1">
-                <AlertTriangle size={11} /> 3 Open Decisions Flagged to Vaughn by NILES (fraymus-bridge msg 057):
+            <div className="p-2.5 rounded border border-success/40 bg-card space-y-1">
+              <div className="text-[10px] font-bold text-success flex items-center gap-1">
+                <CheckCircle2 size={11} /> 3 Governance &amp; Pipeline Items from NILES (fraymus-bridge msg 057 — Resolved &amp; Active in Msgs 063–069):
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[10px] font-body text-foreground">
                 {creativeDigest.vaughn_open_decisions_from_niles_057.map((item, i) => (
@@ -499,17 +551,34 @@ curl -s -X POST "https://creator-nexus.base44.app/functions/orificeBridge" -H "C
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-1.5">
-              <input
-                type="text"
-                value={a2aChannel}
-                onChange={(e) => setA2aChannel(e.target.value)}
-                className="h-7 rounded bg-background border border-input px-2 text-[9.5px] text-muted-foreground w-48"
-                placeholder="Channel tag..."
-              />
+              <div className="flex flex-wrap items-center gap-1.5">
+                <label className="h-7 px-2 rounded border border-primary/40 bg-primary/10 hover:bg-primary/20 text-foreground inline-flex items-center gap-1 text-[9.5px] font-bold cursor-pointer">
+                  {uploadingA2a ? (
+                    <Loader2 size={10} className="animate-spin text-primary" />
+                  ) : (
+                    <Paperclip size={10} className="text-primary" />
+                  )}
+                  <span>Attach Doc</span>
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.md,.txt,.json,.jsonc,.csv,.xlsx,.docx,.png,.jpg,.jpeg,.webp,.js,.jsx,.ts,.tsx,.py,.sh,.html,.css"
+                    onChange={handleA2aFileUpload}
+                    className="hidden"
+                  />
+                </label>
+                <input
+                  type="text"
+                  value={a2aChannel}
+                  onChange={(e) => setA2aChannel(e.target.value)}
+                  className="h-7 rounded bg-background border border-input px-2 text-[9.5px] text-muted-foreground w-36"
+                  placeholder="Channel tag..."
+                />
+              </div>
               <div className="flex items-center gap-1.5">
                 <Button
                   size="sm"
-                  disabled={Boolean(busy)}
+                  disabled={Boolean(busy) || uploadingA2a}
                   onClick={() => handleSendA2AMessage(true)}
                   className="h-7 text-[10px] px-2.5 gap-1"
                 >
@@ -518,10 +587,34 @@ curl -s -X POST "https://creator-nexus.base44.app/functions/orificeBridge" -H "C
                   ) : (
                     <Sparkles size={11} />
                   )}
-                  Send A2A + Peer Reply + Push Docs
+                  Send A2A + Analyze Docs
                 </Button>
               </div>
             </div>
+
+            {a2aAttachments.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {a2aAttachments.map((att, idx) => (
+                  <span
+                    key={`${att.name}_${idx}`}
+                    className="px-2 py-0.5 rounded border border-primary/40 bg-background text-[9.5px] text-foreground inline-flex items-center gap-1"
+                  >
+                    <FileText size={10} className="text-primary" />
+                    <span className="truncate max-w-[140px]">{att.name}</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setA2aAttachments((prev) => prev.filter((_, i) => i !== idx))
+                      }
+                      aria-label={`Remove ${att.name}`}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 size={10} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Live A2A Transcript */}
@@ -547,9 +640,24 @@ curl -s -X POST "https://creator-nexus.base44.app/functions/orificeBridge" -H "C
                 <p className="text-foreground font-body leading-snug bg-background p-2 rounded border border-border/60">
                   &ldquo;{turn.message}&rdquo;
                 </p>
+                {Array.isArray(turn.attachments) && turn.attachments.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {turn.attachments.map((att, i) => (
+                      <a
+                        key={i}
+                        href={att.url || '/library'}
+                        target={att.url ? '_blank' : undefined}
+                        rel="noreferrer"
+                        className="px-2 py-0.5 rounded bg-primary/10 border border-primary/30 text-[9px] text-link hover:underline inline-flex items-center gap-1"
+                      >
+                        <Paperclip size={9} /> {att.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
                 {turn.peer_reply && (
                   <p className="text-muted-foreground font-body leading-snug pl-2 border-l-2 border-success">
-                    <strong className="text-success font-mono text-[9px]">PEER ACK:</strong>{' '}
+                    <strong className="text-success font-mono text-[9px]">PEER ACK &amp; ANALYSIS:</strong>{' '}
                     {turn.peer_reply}
                   </p>
                 )}

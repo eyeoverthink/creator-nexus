@@ -220,7 +220,7 @@ async function fetchHiveSuggestions(db, scope, visitedSet, continuity) {
   for (const item of texts) {
     const matches = String(item.body || '').match(/https?:\/\/[^\s)"'`<>]+/g) || [];
     for (const u of matches) {
-      if (!visitedSet.has(u) && !/nexus-create-sync\.base44\.app|fraymus\.cloud/i.test(u)) {
+      if (!visitedSet.has(u) && !/creator-nexus\.base44\.app|fraymus\.cloud/i.test(u)) {
         hiveItems.push({
           label: `${item.title || 'Hive Artifact Reference'}`.slice(0, 110),
           url: u,

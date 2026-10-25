@@ -44,7 +44,7 @@ const QUICK_NATIVE_PRESETS = [
   {
     skill_id: 'web-pentest',
     label: 'OWASP Header & CORS Audit',
-    query: 'https://nexus-create-sync.base44.app',
+    query: 'https://creator-nexus.base44.app',
     badge: 'DAST SCAN · $0',
   },
   {
@@ -253,7 +253,7 @@ export default function NativeSkillFleetExecutorPanel({ skills = [], onJobCreate
             type="text"
             value={inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}
-            placeholder="e.g., eyeoverthink, https://nexus-create-sync.base44.app, lodash, r/LocalLLaMA..."
+            placeholder="e.g., eyeoverthink, https://creator-nexus.base44.app, lodash, r/LocalLLaMA..."
             className="w-full h-8 rounded border border-input bg-background px-2.5 text-xs"
           />
         </div>

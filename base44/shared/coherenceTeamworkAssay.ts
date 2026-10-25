@@ -189,7 +189,7 @@ export async function runBicameralCoherenceTeamworkAssay({
     ownerId,
     workspaceId,
     skillId: 'web-pentest',
-    inputQuery: 'https://nexus-create-sync.base44.app/functions/openclawGateway',
+    inputQuery: 'https://creator-nexus.base44.app/functions/openclawGateway',
     persistToVault: false,
   });
   const t2LatencyMs = Date.now() - t2Start;
@@ -511,7 +511,7 @@ export async function runBicameralCoherenceTeamworkAssay({
       name: assayWorkspace.name,
       room_id: assayWorkspace.room_id,
       enrolled_applications: [
-        'Hemisphere A — Creator Nexus (nexus-create-sync.base44.app)',
+        'Hemisphere A — Creator Nexus (creator-nexus.base44.app)',
         'Hemisphere B — Fraymus Transmuter (fraymus-transmuter.base44.app)',
       ],
       participating_agents: [

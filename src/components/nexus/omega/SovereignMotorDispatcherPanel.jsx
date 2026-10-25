@@ -200,7 +200,7 @@ to the Base44 Accountable Task Queue & Persistent Artifact Vault.
 """
 import os, time, json, urllib.request
 
-GATEWAY_URL = "https://nexus-create-sync.base44.app/functions/openclawGateway"
+GATEWAY_URL = "https://creator-nexus.base44.app/functions/openclawGateway"
 CONSOLE_KEY = os.environ.get("FRAYMUS_CONSOLE_KEY", "YOUR_FRAYMUS_CONSOLE_KEY")
 WINDOWS_OLLAMA = "http://100.88.61.56:11434"  # desktop-actid8c over Tailscale
 VPS1_NODE      = "http://100.110.6.44:11434"  # srv1944678 (45.82.73.49)

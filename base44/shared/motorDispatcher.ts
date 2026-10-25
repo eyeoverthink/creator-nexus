@@ -57,7 +57,7 @@ export const MESH_NODES = [
   {
     id: 'base44-bicameral-cloud',
     name: 'Base44 Bicameral Cloud (Creator Nexus ↔ Fraymus Transmuter)',
-    public_ip: 'nexus-create-sync.base44.app ↔ fraymus-transmuter.base44.app',
+    public_ip: 'creator-nexus.base44.app ↔ fraymus-transmuter.base44.app',
     tailscale_ip: 'ORIFICE-TXRX-V1.0 + GitHub @eyeoverthink',
     os: 'Serverless Deno + React Studio + GitHub Bus',
     role: 'Motor Dispatcher, Accountable Task Queue, PDF/Cover-Art Synthesis & Persistent Artifact Vault',
@@ -80,7 +80,7 @@ export function classifyAndRouteDirective(directive = '', preferredNode = '') {
   let task_type = 'pdf_document';
   let artifact_kind = 'pdf';
   let assigned_node = 'base44-bicameral-cloud';
-  let assigned_ip = 'nexus-create-sync.base44.app';
+  let assigned_ip = 'creator-nexus.base44.app';
   let fallback_node = 'srv1944678 (45.82.73.49 / 100.110.6.44)';
   let execution_mode = 'immediate_cloud';
   let routing_reason =
@@ -131,7 +131,7 @@ export function classifyAndRouteDirective(directive = '', preferredNode = '') {
     task_type = 'cover_art_media';
     artifact_kind = 'image';
     assigned_node = 'base44-bicameral-cloud (Media Engine)';
-    assigned_ip = 'nexus-create-sync.base44.app';
+    assigned_ip = 'creator-nexus.base44.app';
     fallback_node = 'srv1944678 (45.82.73.49 / 100.110.6.44)';
     execution_mode = 'immediate_cloud';
     routing_reason =
@@ -140,7 +140,7 @@ export function classifyAndRouteDirective(directive = '', preferredNode = '') {
     task_type = 'pdf_document';
     artifact_kind = 'pdf';
     assigned_node = 'base44-bicameral-cloud (PDF Forge)';
-    assigned_ip = 'nexus-create-sync.base44.app';
+    assigned_ip = 'creator-nexus.base44.app';
     fallback_node = 'srv1944678 (45.82.73.49 / 100.110.6.44)';
     execution_mode = 'immediate_cloud';
     routing_reason =
@@ -405,7 +405,7 @@ Produce a complete, production-ready package containing:
 - VPS-2: srv2067485.hstgr.cloud / fraymus-kvm2 (2.24.68.223 / Tailscale 100.72.161.48)
 - Windows GPU: desktop-actid8c (Tailscale 100.88.61.56)
 - Claude Code Mesh: macbook-pro (100.89.103.65), vaughns-imac (100.96.203.70), vaughns-macbook (100.113.183.102)
-- Base44 Hemispheres: nexus-create-sync.base44.app <-> fraymus-transmuter.base44.app
+- Base44 Hemispheres: creator-nexus.base44.app <-> fraymus-transmuter.base44.app
 
 Directive: "${directive}"
 Task Type: ${task_type}
