@@ -84,6 +84,8 @@ def main():
         except urllib.error.HTTPError as e:
             if e.code in (400, 401, 403, 409):
                 detail = json.loads(e.read(4096)).get('error', 'Bridge rejected the request.')
+                if 'Authentication required to view users' in detail:
+                    detail = 'Publish the latest app version before starting this worker. The public endpoint still requires app-user login.'
                 raise TerminalError(detail) from None
             raise
 

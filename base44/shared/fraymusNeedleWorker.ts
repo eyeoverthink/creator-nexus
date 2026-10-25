@@ -1,7 +1,7 @@
 import {needlePinned,needleDigest,cleanNeedleOutput} from './fraymusNeedleContract.ts';
 const reply=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
 export async function handleNeedleWorker(base44,req,a){
- const token=req.headers.get('x-needle-token')||'';
+ const token=req.headers.get('x-needle-token')||(typeof a.worker_token==='string'?a.worker_token:'');
  if(!/^[a-f0-9]{64}$/.test(token)||typeof a.worker_id!=='string'||a.worker_id.length>80)return reply({error:'Invalid worker credentials.'},401);
  const workers=base44.asServiceRole.entities.NexusNeedleWorker,jobs=base44.asServiceRole.entities.NexusNeedleJob;
  // A 256-bit pairing token is the authentication check, not an app-user session.
