@@ -1,10 +1,13 @@
 import {Layers3,Home,Clapperboard,FolderOpen,Fingerprint,Upload,Settings2,BookOpen,Users,FlaskConical,PanelLeftClose,PanelLeftOpen,Sparkles,Cpu,Bot,Terminal,Radio} from 'lucide-react';
 import {Link,useLocation} from 'react-router-dom';
 import StudioPanelLinks from '@/components/nexus/StudioPanelLinks';
+import {Activity} from 'lucide-react';
+import {useAuth} from '@/lib/AuthContext';
 export {default as agents} from '@/components/nexus/agentProfiles';
 export default function Sidebar({nexus,collapsed=false,onCollapse,originTab,onOriginTab}){
+ const {user}=useAuth();
  const location=useLocation(),view=originTab||location.state?.originTab||'sparks';
- const primary=[['Home','/',Home],['Production Factory','/factory',Clapperboard],['OpenClaw Hub','/openclaw',Bot],['Hermes Fleet','/hermes',Cpu],['Orifice Relay','/orifice-relay',Radio],['Create','/spark',Sparkles],['Library','/library',FolderOpen],['looseScrew Lab','/loose-screw',FlaskConical],['AI Workshop OS','/ai-workshop',Layers3],['Φ-Omega Portal','/ai-workshop?view=opeg',Sparkles],['Connect MCP','/connect',Terminal],['Brand','/origin',Fingerprint,'dna'],['Publish','/origin',Upload,'runs']];
+ const primary=[['Home','/',Home],...(user?.role==='admin'?[['Agent monitor','/admin/agent-monitor',Activity]]:[]),['Production Factory','/factory',Clapperboard],['OpenClaw Hub','/openclaw',Bot],['Hermes Fleet','/hermes',Cpu],['Orifice Relay','/orifice-relay',Radio],['Create','/spark',Sparkles],['Library','/library',FolderOpen],['looseScrew Lab','/loose-screw',FlaskConical],['AI Workshop OS','/ai-workshop',Layers3],['Φ-Omega Portal','/ai-workshop?view=opeg',Sparkles],['Connect MCP','/connect',Terminal],['Brand','/origin',Fingerprint,'dna'],['Publish','/origin',Upload,'runs']];
  const advanced=[['OpenClaw Hub','/openclaw',Bot],['Hermes Fleet','/hermes',Cpu],['Connect MCP','/connect',Terminal],['Φ-Omega Portal','/ai-workshop?view=opeg',Sparkles],['φ⁷⁵-Ternary Transmuter','/ai-workshop?view=phi75',Cpu],['Origin projects','/origin',Clapperboard,'sparks'],['Knowledge & AI chat','/knowledge',BookOpen],['AI employees','/origin',Users,'employees'],['Proof loop','/origin',FlaskConical,'learn'],['Director Lab','/director-lab',FlaskConical],['Argon RSI Brain','/argon',FlaskConical]];
  const active=([,path,,tab])=>location.pathname===path&&(!tab||view===tab);
  const link=item=>{const [label,path,Icon,tab]=item;return <Link key={label} to={path} state={tab?{originTab:tab}:null} onClick={()=>{if(path==='/origin'&&location.pathname===path)onOriginTab?.(tab);}} aria-label={label} title={label} aria-current={active(item)?'page':undefined} className="nexus-nav-link"><Icon size={20} className="shrink-0"/><span className="nexus-nav-label">{label}</span></Link>;};

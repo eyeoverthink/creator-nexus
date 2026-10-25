@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
+import { readFraymusPeerStatus } from '../../shared/fraymusPeerStatus.ts';
 import { runBicameralRelayAndLiveAiResearcher } from '../../shared/liveAiSkillsResearcherRelay.ts';
 import { loadOrComputeReputationLedger } from '../../shared/agentReputationAndOrganism.ts';
 import { syncSharedActivityFeedAndAgentComms } from '../../shared/sharedActivityAndAgentComms.ts';
@@ -34,6 +35,12 @@ export default async function(req: Request): Promise<Response> {
         queryAction ||
         (req.method === 'GET' ? 'shared_activity_feed' : 'run_bicameral_stream_and_curve_research')
     );
+
+    if (action === 'agent_monitor_connection') {
+      if (!user) return Response.json({error:'Authentication required.'},{status:401});
+      if (user.role !== 'admin') return Response.json({error:'Admin access required.'},{status:403});
+      return Response.json(await readFraymusPeerStatus());
+    }
 
     const db = base44.asServiceRole;
     const workspacesPage = await db.entities.NexusWorkspace.list('-created_date', 5).catch(() => []);
