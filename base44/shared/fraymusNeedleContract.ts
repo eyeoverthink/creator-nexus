@@ -28,7 +28,7 @@ export function validateNeedleValue(value,schema){
 }
 export function cleanNeedleOutput(value,input){
  if(!value||!['call','respond'].includes(value.type)||typeof value.success!=='boolean'||!Array.isArray(value.function_calls)||value.function_calls.length>8)throw new Error('Invalid native response shape.');
- const calls=value.function_calls.map(c=>{const tool=input.tools.find(t=>t.name===c.name);if(!tool||!validateNeedleValue(c.arguments,tool.parameters))throw new Error('Native call did not match an approved request schema.');return {name:c.name,arguments:c.arguments};});
+ const calls=value.function_calls.map(c=>{if(!c||typeof c!=='object'||Object.keys(c).some(k=>!['name','arguments'].includes(k)))throw new Error('Unapproved native call field.');const tool=input.tools.find(t=>t.name===c.name);if(!tool||!validateNeedleValue(c.arguments,tool.parameters))throw new Error('Native call did not match an approved request schema.');return {name:c.name,arguments:c.arguments};});
  if(value.type==='respond'&&calls.length)throw new Error('Respond turns cannot contain calls.');
  const out={type:value.type,success:value.success,function_calls:calls};
  if(typeof value.error==='string')out.error=value.error.slice(0,500);

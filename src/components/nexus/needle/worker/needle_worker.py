@@ -36,7 +36,10 @@ def isolated_complete(manifest, request):
     try:
         if not parent.poll(140):
             raise RuntimeError('Local native inference exceeded 140 seconds.')
-        message = parent.recv()
+        try:
+            message = parent.recv()
+        except EOFError:
+            raise RuntimeError('Native process exited before returning a result; check DLL dependencies and available memory.') from None
         if 'error' in message:
             raise RuntimeError(message['error'])
         return message['result']
@@ -61,6 +64,7 @@ def main():
     args = parser.parse_args()
     home = Path(__file__).resolve().parent
     manifest = json.loads((home / 'installation.json').read_text(encoding='utf-8-sig'))
+    supplied_token = os.environ.pop('FRAYMUS_NEEDLE_TOKEN', '')
     print('Checking local model, DLL and wheel SHA-256 values...')
     proof = verify_installation(manifest)
     smoke = isolated_complete(manifest, SMOKE)
@@ -71,7 +75,7 @@ def main():
     print('Pinned files match and native smoke inference passed.')
     if args.check_only:
         return
-    token = os.environ.pop('FRAYMUS_NEEDLE_TOKEN', '') or getpass.getpass('Paste the one-time displayed pairing token: ').strip()
+    token = supplied_token or getpass.getpass('Paste the one-time displayed pairing token: ').strip()
     if len(token) != 64 or any(c not in '0123456789abcdef' for c in token):
         raise RuntimeError('Pairing token must be 64 hexadecimal characters.')
 
