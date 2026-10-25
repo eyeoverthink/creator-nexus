@@ -4,7 +4,13 @@
   "tool_configs": [],
   "context_files": [],
   "app_user_connector_configs": [],
-  "selected_skill_names": [],
+  "selected_skill_names": [
+    "accessibility",
+    "apple-ui-designer",
+    "compelling-copy",
+    "marketing-psychology",
+    "ui-ux-design-guide"
+  ],
   "selected_workspace_skill_ids": [],
   "model": "automatic",
   "whatsapp_greeting": "Spearhead (fx-b9fb-8f11-403f-75a4) online \u2014 Boundary-Free Frontier Scout synced with mac-hermes, fraymus-bridge, and Creator Nexus.",

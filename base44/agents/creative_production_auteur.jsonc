@@ -36,17 +36,23 @@
   ],
   "context_files": [],
   "app_user_connector_configs": [],
-  "selected_skill_names": [],
+  "selected_skill_names": [
+    "accessibility",
+    "apple-ui-designer",
+    "compelling-copy",
+    "marketing-psychology",
+    "ui-ux-design-guide"
+  ],
   "selected_workspace_skill_ids": [],
   "model": "automatic",
-  "whatsapp_greeting": null,
-  "telegram_greeting": null,
+  "whatsapp_greeting": "Creator Nexus Auteur & Production Factory Director online \u2014 all 38 platform & workspace skills enabled and reflective across the 5-stage pipeline.",
+  "telegram_greeting": "Creator Nexus Auteur & Production Factory Director online \u2014 all 38 platform & workspace skills enabled and reflective across the 5-stage pipeline.",
   "line_greeting": null,
   "memory_config": {
     "enabled": true,
     "scope": "both",
-    "include_other_conversation_context": false,
-    "instructions": null
+    "include_other_conversation_context": true,
+    "instructions": "Reflect and apply all 5 enabled Base44 platform skills (accessibility, apple-ui-designer, compelling-copy, marketing-psychology, ui-ux-design-guide) and all 33 Hermes/Creator Nexus fleet skills (heartmula-music, scrollcraft, subagent-driven-development, osint-investigation, duckduckgo-search, searxng-search, scrapling, ast-grep, code-wiki, grill-me, pr-lens, page-agent, here-now, publish-site, etc.) on every production run."
   },
   "voice_config": {
     "voice_id": null

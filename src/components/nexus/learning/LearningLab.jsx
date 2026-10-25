@@ -7,7 +7,13 @@ import TrainingTab from '@/components/nexus/learning/TrainingTab';
 import RegressionPanel from '@/components/nexus/regression/RegressionPanel';
 import WebScrapeEvolveLoop from '@/components/nexus/hive/WebScrapeEvolveLoop';
 import AcademyPipelineAlignmentPanel from '@/components/nexus/learning/AcademyPipelineAlignmentPanel';
-const agents=[['researcher','Scout'],['writer','Scribe'],['strategist','Pulse']];
+const agents=[
+ ['researcher','1. Scout, Sera & Spearhead (spearhead_frontier_scout · 38/38 Skills)'],
+ ['writer','2. Scribe & Lyra (sovereign_skill_fleet · 38/38 Skills)'],
+ ['strategist','3. Pulse, Orin & Commander (openclaw_commander · 38/38 Skills)'],
+ ['director','4. Director & Vesper (creative_production_auteur · 38/38 Skills)'],
+ ['witness','5. The Witness & Conductor (witness_conductor · 38/38 Skills)'],
+];
 export default function LearningLab({nexus}){
  const [tab,setTab]=useState('evolve'),[agent,setAgent]=useState(nexus.agent||'writer');
  if(!nexus.workspace)return <p className="p-5 text-xs text-muted-foreground">Connecting to your learning workspace…</p>;

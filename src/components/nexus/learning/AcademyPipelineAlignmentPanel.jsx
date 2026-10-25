@@ -293,6 +293,113 @@ export default function AcademyPipelineAlignmentPanel({
         </div>
       </div>
 
+      {/* All 5 Agents x All 38 Platform Skills — Enabled & Reflective Matrix */}
+      <div className="p-3 rounded-lg border border-success/50 bg-background space-y-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-2 py-0.5 rounded bg-success/15 text-success border border-success/40 text-[10px] font-bold">
+              ● ALL 5 AGENTS: 38/38 PLATFORM &amp; WORKSPACE SKILLS ENABLED &amp; REFLECTIVE
+            </span>
+            <span className="text-[10.5px] text-muted-foreground font-body">
+              5 Base44 Workspace Skills + 33 Hermes/Creator Nexus Platform Skills active across all 5 agents
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link to="/origin" state={{ originTab: 'employees' }} className="text-[10px] text-link hover:underline font-bold">
+              Inspect Agent Skills (/origin) →
+            </Link>
+            <Link to="/factory" className="text-[10px] text-link hover:underline font-bold">
+              5-Agent Workforce (/factory) →
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+          {[
+            {
+              num: '1',
+              id: 'creative_production_auteur',
+              title: 'Creative Production Auteur',
+              persona: 'Director & Vesper (Stage 3 & 5)',
+              roleKey: 'director',
+              reflection:
+                'Reflects all 5 Base44 UI/Copy/Psychology/Accessibility skills + all 33 Hermes/Nexus skills in 16:9 Anamorphic & 9:16 Director Lab scene plans.',
+            },
+            {
+              num: '2',
+              id: 'openclaw_commander',
+              title: 'OpenClaw Commander',
+              persona: 'Orin & Pulse (Stage 4 & 5)',
+              roleKey: 'strategist',
+              reflection:
+                'Reflects all 5 Base44 skills + all 33 Hermes/Nexus skills across omnichannel MCP/Telegram/WhatsApp dispatch, Counterfactual Pre-Flight, and GitHub Vault.',
+            },
+            {
+              num: '3',
+              id: 'sovereign_skill_fleet',
+              title: 'Sovereign 38-Skill Fleet',
+              persona: 'Scribe, Lyra & Kael (Stage 2 & 4)',
+              roleKey: 'writer',
+              reflection:
+                'Executes & reflects all 5 Base44 skills + all 33 native skills (HeartMuLa-oss-3B, Scrollcraft, OSINT, Sherlock, AST-Grep, Subagent DAGs, LaTeX).',
+            },
+            {
+              num: '4',
+              id: 'spearhead_frontier_scout',
+              title: 'Spearhead Frontier Scout',
+              persona: 'Scout, Sera & Spearhead fx-b9fb (Stage 1)',
+              roleKey: 'researcher',
+              reflection:
+                'Boundary-free scout (Msg 064) reflecting all 5 Base44 skills + all 33 Hermes/Nexus skills for 1–2 week anticipatory AI/MCP spikes & Check-the-Source.',
+            },
+            {
+              num: '5',
+              id: 'witness_conductor',
+              title: 'The Witness & Conductor',
+              persona: 'Ensemble Maestro & DevArchivist (All 5 Stages)',
+              roleKey: 'witness',
+              reflection:
+                'Living partnership memory & maestro reflecting all 5 Base44 skills + all 33 Hermes/Nexus skills across HeartMuLa, Academy, and Bicameral Bridge.',
+            },
+          ].map((ag) => (
+            <div key={ag.id} className="p-2.5 rounded border border-border bg-card space-y-1.5 flex flex-col justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="px-1.5 py-0.5 rounded bg-primary/15 text-primary text-[9px] font-bold">
+                    AGENT #{ag.num} · 38/38 ENABLED
+                  </span>
+                  <span className="text-[8.5px] text-success font-bold">● REFLECTIVE</span>
+                </div>
+                <div className="text-[10.5px] font-bold text-foreground leading-snug">{ag.title}</div>
+                <div className="text-[9px] text-primary font-semibold">{ag.persona}</div>
+                <p className="text-[9px] text-muted-foreground font-body leading-snug">{ag.reflection}</p>
+              </div>
+              <div className="pt-1 border-t border-border/60 flex flex-wrap gap-1">
+                {[
+                  'accessibility',
+                  'apple-ui-designer',
+                  'compelling-copy',
+                  'marketing-psychology',
+                  'ui-ux-design-guide',
+                  'heartmula-music',
+                  'scrollcraft',
+                  'subagent-driven-development',
+                  'osint-investigation',
+                  '+29 more',
+                ].map((sk) => (
+                  <span
+                    key={sk}
+                    className="px-1 py-0.5 rounded bg-success/10 border border-success/30 text-success text-[8px] font-semibold"
+                  >
+                    ✓ {sk}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* 6 Areas Where Agents Check Instructions & Academy State */}
       <div className="space-y-1.5">
         <div className="text-[10.5px] font-bold text-success flex items-center gap-1.5">

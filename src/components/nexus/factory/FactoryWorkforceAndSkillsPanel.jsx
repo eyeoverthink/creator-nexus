@@ -163,6 +163,30 @@ while True:
                     ))}
                   </ul>
                 </div>
+
+                <div className="pt-1 border-t border-border/60 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9.5px] text-success font-bold">
+                      ENABLED &amp; REFLECTIVE SKILLS ({(p.assigned_skills || skillsManifest.map((s) => s.id)).length}/{skillsManifest.length || 38})
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded bg-success/15 text-success text-[8.5px] font-bold">
+                      100% ENABLED
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1 max-h-28 overflow-y-auto pr-0.5">
+                    {(p.assigned_skills && p.assigned_skills.length > 0
+                      ? p.assigned_skills
+                      : skillsManifest.map((s) => s.id)
+                    ).map((skId) => (
+                      <span
+                        key={skId}
+                        className="px-1.5 py-0.5 rounded border border-success/40 bg-success/10 text-success text-[8.5px] font-semibold"
+                      >
+                        ✓ {skId}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="pt-2 border-t border-border space-y-1">

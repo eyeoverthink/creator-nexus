@@ -139,100 +139,90 @@ export const HERMES_33_SKILL_MANIFEST = [
   { id: 'page-agent', name: 'page-agent', category: 'Web & Media Deployment', verdict: 'SAFE', replaces: 'Custom DOM tool handlers', summary: 'Embeds an in-page natural-language DOM copilot into Base44 and creative web apps.' },
   { id: 'scrollcraft', name: 'scrollcraft', category: 'Web & Media Deployment', verdict: 'SAFE', replaces: 'Framer Pro / GSAP Club ($45/mo)', summary: '3D-feeling scrollytelling viewport animation engine, video frame encoder (shoot.mjs/encode.sh), and taste verifier.' },
   { id: 'heartmula-music', name: 'heartmula-music', category: 'Web & Media Deployment', verdict: 'SAFE ($0 BRIDGE + GPU)', replaces: 'Suno Pro / Udio ($30/mo)', summary: 'Open-source full-song & vocal synthesis via HeartMuLa-oss-3B + MuLaCover, ACE-Step 1.5, YuE2-3B, and DiffRhythm 2 connected through orificeBridge (mac-hermes & tn-desktopgpu).' },
+  // VII. Base44 Platform & Workspace Skills (Enabled on All 5 Agents)
+  { id: 'accessibility', name: 'accessibility', category: 'Base44 Platform Skills', verdict: 'ENABLED_ALL_5', replaces: 'Manual WCAG Audits', summary: 'WCAG 2.1 AA/AAA contrast ratios, keyboard navigation, ARIA patterns, screen reader support, and focus management.' },
+  { id: 'apple-ui-designer', name: 'apple-ui-designer', category: 'Base44 Platform Skills', verdict: 'ENABLED_ALL_5', replaces: 'Generic Mobile UI', summary: 'Apple Human Interface Guidelines, native iOS/macOS precision, translucency, and tactile interaction polish.' },
+  { id: 'compelling-copy', name: 'compelling-copy', category: 'Base44 Platform Skills', verdict: 'ENABLED_ALL_5', replaces: 'Generic AI Copy', summary: 'Clear, benefit-led, high-retention narrative copywriting across scripts, hooks, treatments, and CTAs.' },
+  { id: 'marketing-psychology', name: 'marketing-psychology', category: 'Base44 Platform Skills', verdict: 'ENABLED_ALL_5', replaces: 'Guesswork Positioning', summary: 'Behavioral economics, curiosity gaps, counterfactual audience pre-flight framing, and conversion psychology.' },
+  { id: 'ui-ux-design-guide', name: 'ui-ux-design-guide', category: 'Base44 Platform Skills', verdict: 'ENABLED_ALL_5', replaces: 'Ad-hoc Styling', summary: 'Priority-ordered UI/UX architecture covering hierarchy, typography, dark-mode contrast, and data visualization.' },
 ];
+
+export const ALL_PLATFORM_SKILL_IDS = HERMES_33_SKILL_MANIFEST.map((s) => s.id);
 
 export const DEFAULT_FACTORY_PERSONAS = [
   {
     id: 'lyra',
-    name: 'Lyra · Sonic & Musical Auteur',
-    role: 'Musical Architecture, BPM/Bar Sync, Phrasing & Emotional Dynamics',
+    name: 'Lyra · Sonic & Musical Auteur (sovereign_skill_fleet)',
+    role: 'Musical Architecture, BPM/Bar Sync, Phrasing & All 38 Platform Skills Enabled',
     color: '#3b63fb',
     artistic_credo:
-      'Music is structural emotion in time. Every cut lands on a downbeat or vocal entry; the lattice breathes with the choir and swells on sustained notes.',
+      'Music is structural emotion in time. Every cut lands on a downbeat or vocal entry; the lattice breathes with the choir and swells on sustained notes while reflecting all 38 platform skills.',
     learned_instincts: [
       'Anchor pacing to 138 BPM (beat = 0.435s, bar = 1.74s) in E minor when scoring contemplative-to-anthemic arcs.',
       'Hold intimate piano breakdowns (152.2s–166.6s) to 1 cut per lyric line with near-locked 100mm macro framing.',
+      'Reflect all 5 Base44 platform skills (accessibility, apple-ui-designer, compelling-copy, marketing-psychology, ui-ux-design-guide) + all 33 Hermes/Nexus skills.',
     ],
-    assigned_skills: ['heartmula-music', 'scrollcraft', 'here-now', 'rss-feeds', 'bioinformatics'],
-    eligible_locations: ['base44_cloud', 'local_pc_windows', 'vps_hermes'],
+    assigned_skills: [...ALL_PLATFORM_SKILL_IDS],
+    eligible_locations: ['base44_cloud', 'local_pc_windows', 'vps_hermes', 'github_vault'],
   },
   {
     id: 'vesper',
-    name: 'Vesper · Visual Director & Cinematographer',
-    role: 'Anamorphic Lensing (14mm–100mm Macro), Volumetric Light & Shot Plan Compiler',
+    name: 'Vesper · Visual Director & Cinematographer (creative_production_auteur)',
+    role: 'Anamorphic Lensing (14mm–100mm Macro), Volumetric Light & All 38 Platform Skills Enabled',
     color: '#eab308',
     artistic_credo:
       'Beauty proves nothing; gold is earned only when truth is verified. Unverified threads remain silver on midnight blue (#0B1630). Camera movement is slow and motivated—never handheld.',
     learned_instincts: [
       'Enforce strict palette discipline: Midnight blue (#0B1630) field, graphite wardrobe, silver for unverified data, warm amber for signal in motion, golden-white reserved for verified truth.',
       'Never show red glowing eyes, chrome robots, glitch-horror, crowds worshipping technology, or fake UI text.',
-      'Preserve the Iconic Frame at 117.6s and 183.9s: 14mm symmetrical wide down the nave, Reader in silhouette raising her right hand at the threshold.',
+      'Reflect all 5 Base44 platform skills (accessibility, apple-ui-designer, compelling-copy, marketing-psychology, ui-ux-design-guide) + all 33 Hermes/Nexus skills.',
     ],
-    assigned_skills: ['scrollcraft', 'page-agent', 'cloudflare-temporary-deploy', 'publish-site'],
+    assigned_skills: [...ALL_PLATFORM_SKILL_IDS],
     eligible_locations: ['base44_cloud', 'local_pc_windows', 'vps_hermes', 'github_vault'],
   },
   {
     id: 'kael',
-    name: 'Kael · Principal Systems & WASM Architect',
-    role: 'Full-Stack Software Factory, Self-Healing WASM Kernels & Interactive Artifacts',
+    name: 'Kael · Principal Systems & WASM Architect (witness_conductor)',
+    role: 'Full-Stack Software Factory, Self-Healing WASM Kernels & All 38 Platform Skills Enabled',
     color: '#22c55e',
     artistic_credo:
-      'Software should feel alive, inspectable, and self-healing—from 256-byte WASM mount namespaces and 2-bit DNA strands to multi-agent emergent colonies.',
+      'Software should feel alive, inspectable, and self-healing—from 256-byte WASM mount namespaces and 2-bit DNA strands to multi-agent emergent colonies with all 38 skills active.',
     learned_instincts: [
       'Decompose complex builds via subagent-driven-development with AST verification (ast-grep) and pre-mortem stress testing (grill-me).',
       'Package interactive HTML/React/WASM builds so they run zero-dependency in the browser and auto-commit to GitHub.',
+      'Reflect all 5 Base44 platform skills (accessibility, apple-ui-designer, compelling-copy, marketing-psychology, ui-ux-design-guide) + all 33 Hermes/Nexus skills.',
     ],
-    assigned_skills: [
-      'subagent-driven-development',
-      'ast-grep',
-      'grill-me',
-      'pr-lens',
-      'code-wiki',
-      'har-derived-api-client',
-    ],
+    assigned_skills: [...ALL_PLATFORM_SKILL_IDS],
     eligible_locations: ['base44_cloud', 'local_pc_windows', 'vps_hermes', 'github_vault'],
   },
   {
     id: 'sera',
-    name: 'Sera · Empirical Source & Cultural Pulse Sentinel',
-    role: 'Source Verification ("Check the Source"), Mood/Climate Receptivity & OSINT',
+    name: 'Sera & Spearhead · Empirical Source & Frontier Sentinel (spearhead_frontier_scout)',
+    role: 'Source Verification ("Check the Source"), Frontier Radar & All 38 Platform Skills Enabled',
     color: '#a855f7',
     artistic_credo:
-      'Clean is not proof. Trace every thread to its anchor node; mark missing evidence as an honest silver ring around clear glass.',
+      'Clean is not proof. Trace every thread to its anchor node; mark missing evidence as an honest silver ring around clear glass while scouting 1–2 weeks ahead of the frontier.',
     learned_instincts: [
       'Continuously synthesize user mood/energy, workspace activity, and verified public cultural/news signals with explicit timestamps and provenance.',
       'Highlight unanchored threads before Chorus peaks so human judgment stays in command.',
+      'Reflect all 5 Base44 platform skills (accessibility, apple-ui-designer, compelling-copy, marketing-psychology, ui-ux-design-guide) + all 33 Hermes/Nexus skills.',
     ],
-    assigned_skills: [
-      'osint-investigation',
-      'duckduckgo-search',
-      'searxng-search',
-      'scrapling',
-      'reddit-reading',
-      'sherlock',
-      'oss-forensics',
-    ],
-    eligible_locations: ['base44_cloud', 'vps_hermes', 'github_vault'],
+    assigned_skills: [...ALL_PLATFORM_SKILL_IDS],
+    eligible_locations: ['base44_cloud', 'local_pc_windows', 'vps_hermes', 'github_vault'],
   },
   {
     id: 'orin',
-    name: 'Orin · Permanent Mesh & GitHub Quartermaster',
-    role: '24/7 Worker Daemon Orchestration (Cloud, Windows PC, Hostinger VPS & GitHub)',
+    name: 'Orin & Commander · Permanent Mesh Quartermaster (openclaw_commander)',
+    role: '24/7 Worker Daemon Orchestration & All 38 Platform Skills Enabled',
     color: '#38bdf8',
     artistic_credo:
-      'Every creative or engineering directive deserves an accountable worker, a verifiable artifact, and a clean handoff when local hardware is asleep.',
+      'Every creative or engineering directive deserves an accountable worker, a verifiable artifact, and all 38 platform skills enabled across Cloud, Windows PC, VPS, and GitHub.',
     learned_instincts: [
-      'Route heavy local tasks to Windows PC (100.88.61.56 / localhost:11434) or Hostinger VPS (45.82.73.49) when requested, with transparent cloud execution or pull-queue handoffs.',
+      'Route heavy local tasks to Windows PC (tn-desktopgpu) or Hostinger VPS (tne-srv1944) when requested, with transparent cloud execution or pull-queue handoffs.',
       'Commit every finished treatment, shot plan, and software artifact to GitHub Vault.',
+      'Reflect all 5 Base44 platform skills (accessibility, apple-ui-designer, compelling-copy, marketing-psychology, ui-ux-design-guide) + all 33 Hermes/Nexus skills.',
     ],
-    assigned_skills: [
-      'live-dashboard',
-      'parallel-cli',
-      'rest-graphql-debug',
-      '1password',
-      'web-pentest',
-      'unbroker',
-    ],
+    assigned_skills: [...ALL_PLATFORM_SKILL_IDS],
     eligible_locations: ['base44_cloud', 'local_pc_windows', 'vps_hermes', 'github_vault'],
   },
 ];
@@ -683,10 +673,28 @@ export async function ensureFactorySeedData({ db, ownerId, workspaceId }) {
     productions = [flagshipVideo, flagshipSoftware].filter(Boolean);
   }
 
-  // Merge stored persona adjustments from NexusContinuity
+  // Merge stored persona adjustments from NexusContinuity and guarantee all 5 agents have all 38 platform skills enabled & reflective
   const personaRecord = continuities.find((c) => c.scope === 'director');
   const savedPersonas = personaRecord?.settings?.factory_personas;
-  const personas = Array.isArray(savedPersonas) && savedPersonas.length > 0 ? savedPersonas : DEFAULT_FACTORY_PERSONAS;
+  const rawPersonas =
+    Array.isArray(savedPersonas) && savedPersonas.length >= 5
+      ? savedPersonas
+      : DEFAULT_FACTORY_PERSONAS;
+  const personas = rawPersonas.map((p, idx) => {
+    const fallback = DEFAULT_FACTORY_PERSONAS[idx] || DEFAULT_FACTORY_PERSONAS[0];
+    const mergedSkills = Array.from(
+      new Set([...(Array.isArray(p.assigned_skills) ? p.assigned_skills : []), ...ALL_PLATFORM_SKILL_IDS])
+    );
+    return {
+      ...fallback,
+      ...p,
+      assigned_skills: mergedSkills,
+      eligible_locations:
+        Array.isArray(p.eligible_locations) && p.eligible_locations.length > 0
+          ? p.eligible_locations
+          : ['base44_cloud', 'local_pc_windows', 'vps_hermes', 'github_vault'],
+    };
+  });
 
   return {
     productions,
