@@ -1,4 +1,5 @@
 // Orifice GitHub Sync, L1-L5 Framing & Peer Bridge Helpers for openclawGateway and orificeBridge
+import { solveFraymusHamiltonian } from './fraymusOsOneMath.ts';
 
 const PEER_TRANSMUTER_URL = 'https://fraymus-transmuter.base44.app/functions/fraymusComms';
 const PHI = (1 + Math.sqrt(5)) / 2;
@@ -60,35 +61,7 @@ export function computeOpegReceipt({
   epsilon = 0.001,
   goal = 'PT-symmetric EP3 verification',
 } = {}) {
-  const gNum = Number.isFinite(Number(g)) ? Number(g) : 1.0;
-  const gammaNum = Number.isFinite(Number(gamma)) ? Number(gamma) : 0.5;
-  const epsNum = Number.isFinite(Number(epsilon)) ? Math.max(1e-9, Number(epsilon)) : 0.001;
-  const gammaEp3 = Math.SQRT2 * Math.abs(gNum);
-  const twoG2MinusGamma2 = 2 * gNum * gNum - gammaNum * gammaNum;
-  const roots =
-    twoG2MinusGamma2 >= 0
-      ? `0, ±${Math.sqrt(twoG2MinusGamma2).toFixed(4)}`
-      : `0, ±i${Math.sqrt(-twoG2MinusGamma2).toFixed(4)}`;
-  const cbrt = Math.cbrt(epsNum);
-
-  return {
-    status: 'SUCCESS',
-    receipt_id: `R_san_cmd_ep3_${Date.now().toString(36)}`,
-    source_tool: 'simulation_api',
-    sanitizer: 'Σ',
-    protocol_version: 'OPEG-V1.0',
-    empirical_data: {
-      hamiltonian_type: 'pt_symmetric_3x3',
-      matrix_form: `H=[[i${gammaNum},${gNum},0],[${gNum},0,${gNum}],[0,${gNum},-i${gammaNum}]]`,
-      characteristic_polynomial: '-(λ^3 + λ*(γ^2 - 2g^2))',
-      roots,
-      ep3_condition: 'γ² = 2g²',
-      gamma_EP3: `√2·g = ${gammaEp3.toFixed(6)}`,
-      puiseux_leading: `ε=${epsNum} → λ₀≈${cbrt.toFixed(4)}`,
-      goal_ref: goal,
-    },
-    timestamp: new Date().toISOString(),
-  };
+  return solveFraymusHamiltonian({g, gamma, epsilon, goal});
 }
 
 export async function inspectOrificeFrameL1ToL5(payloadStr, ttl = 5) {

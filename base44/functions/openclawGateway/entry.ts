@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { secrets } from 'base44:runtime';
+import {runFraymusMethod} from '../../shared/fraymusOsOneMethods.ts';
 import {
   MESH_NODES,
   classifyAndRouteDirective,
@@ -93,6 +94,13 @@ export default async function(req) {
 
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const action = String(body.action || (req.method === 'GET' ? 'orifice_spec' : 'status'));
+    if (action === 'fraymus_codec' || action === 'fraymus_methods') {
+      if (!user) return Response.json({error:'Sign in required'}, {status:401});
+      try {
+        const result = runFraymusMethod({...body, method: action === 'fraymus_methods' ? 'outline' : body.direction});
+        return Response.json({ok:true,result});
+      } catch (error) { return Response.json({error:error.message},{status:400}); }
+    }
 
     // Allow authenticated app user (web / OAuth MCP), external OpenClaw daemon key, OR keyless ORIFICE-TXRX-V1.0 mesh enrollment/frame proof
     const expectedKey = secrets.get('FRAYMUS_CONSOLE_KEY') || '';
