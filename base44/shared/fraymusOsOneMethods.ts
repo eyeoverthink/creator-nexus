@@ -8,6 +8,7 @@ import {fraymusTernary} from './fraymusTernaryMemory.ts';
 import {executeRetainedFraymus,fraymusExecutionBudget} from './fraymusRetainedSystems.ts';
 import {fraymusMethodSchema} from './fraymusMethodSchema.ts';
 import {runFraymusSignedDispatch} from './fraymusSignedDispatch.ts';
+import {executeFraymusBrain} from './fraymusBrainOperation.ts';
 export function runFraymusMethod(input) {
   let result;
   if (input.method === 'outline') return fraymusOsOneOutline();
@@ -31,7 +32,11 @@ export async function executeFraymusMethod(base44,user,draft,agent,args) {
   }
   try {
     if(args.use_affect===true)budget=await fraymusExecutionBudget(base44,user,draft,args);
-    if(args.method==='fraymus_compile')value=compileFraymus(args);
+    if(args.method==='fraymus_brain'){
+      value=await executeFraymusBrain(base44,user,draft.workspace_id,{...args.brain_input,commit:args.commit===true});
+      if(value.error)return value;
+    }
+    else if(args.method==='fraymus_compile')value=compileFraymus(args);
     else if(args.method==='fraymus_vm')value=await executeFraymusVm(budget?{...args,max_steps:budget.applied_max_steps}:args);
     else if(args.method==='fraymus_ternary'){
       if(args.commit===true)throw new Error('Quantization is stateless; retain labeled examples with Fraymus memory instead.');

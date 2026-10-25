@@ -1,0 +1,12 @@
+import {useState} from 'react';
+import {Button} from '@/components/ui/button';
+import carbonPreflight from '@/components/nexus/brain/carbonPreflight';
+import downloadBrainReport from '@/components/nexus/brain/downloadBrainReport';
+export default function CarbonPromptPanel(){
+ const [sequence,setSequence]=useState(''),[policy,setPolicy]=useState('reject'),[result,setResult]=useState(null),[error,setError]=useState('');
+ const clear=()=>{setResult(null);setError('');};
+ const run=e=>{e.preventDefault();setError('');setResult(null);try{setResult(carbonPreflight(sequence,policy));}catch(e){setError(e.message);}};
+ return <section className="space-y-3 border border-border rounded-lg p-4"><h4 className="font-heading">Fraymus Carbon DNA preflight</h4><p className="text-muted-foreground">Runs only in this browser. No sequence is uploaded, retained or sent to a model. DNA encoding of text is not genomic inference.</p>
+ <form onSubmit={run} className="space-y-3"><label className="block">Uppercase DNA sequence<textarea value={sequence} maxLength={60000} onChange={e=>{setSequence(e.target.value);clear();}} rows={3} required className="mt-1 w-full bg-secondary border border-input rounded-md p-2 font-mono"/></label><label className="block">Incomplete six-base block<select value={policy} onChange={e=>{setPolicy(e.target.value);clear();}} className="block w-full mt-1 bg-secondary border border-input rounded-md p-2"><option value="reject">Reject without changing input</option><option value="truncate">Explicitly truncate trailing bases</option><option value="pad">Explicitly pad with A bases</option></select></label><Button type="submit">Prepare DNA prompt</Button></form>
+ {error&&<p role="alert" className="text-destructive">{error}</p>}{result&&<div role="status" className="space-y-2"><p>{result.prepared_bases} bases · {result.six_mer_blocks} six-mer blocks · {result.removed_bases} removed · {result.added_bases} added</p><pre className="max-h-40 overflow-auto whitespace-pre-wrap break-all border border-border p-2">{result.prompt}</pre><p className="text-muted-foreground">{result.notice}</p><Button variant="outline" onClick={()=>downloadBrainReport(result,'fraymus-carbon-prompt.json')}>Download local prompt</Button></div>}</section>;
+}

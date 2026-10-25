@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import FraymusBrainWorkbench from '@/components/nexus/brain/FraymusBrainWorkbench';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -268,6 +269,8 @@ ${systemPrompt}
 
   return (
     <div className="space-y-3">
+      <FraymusBrainWorkbench />
+      <p className="text-xs text-muted-foreground">Legacy preset/prompt sandbox below: synthetic tensor metrics and Ollama prompt creation are not installed-model weight training or a runnable GGUF model export. Use the measured Brain workbench above for supplied weights.</p>
       {/* Header Controls */}
       <div className="p-2.5 rounded-lg border border-border bg-card flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">

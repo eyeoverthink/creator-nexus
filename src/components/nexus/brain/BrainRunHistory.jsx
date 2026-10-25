@@ -1,0 +1,4 @@
+import {Button} from '@/components/ui/button';
+export default function BrainRunHistory({records,hasMore,busy,onMore,onOpen}){
+ return <section className="space-y-2"><h4 className="font-heading">Retained brain results</h4>{!records.length&&<p className="text-muted-foreground">No retained results in this workspace yet. Previewing a measurement does not save it.</p>}{records.map(r=><div key={r.id} className="border border-border rounded-md p-3 flex flex-wrap justify-between gap-2"><div><p>{r.title}</p><time className="text-muted-foreground" dateTime={r.created_date}>{new Date(r.created_date).toLocaleString()}</time><p className="font-mono text-muted-foreground break-all">{r.id}</p></div><Button variant="outline" disabled={busy} onClick={()=>onOpen(r.id)}>Open saved result</Button></div>)}{hasMore&&<Button disabled={busy} variant="outline" onClick={onMore}>Load more results</Button>}</section>;
+}
