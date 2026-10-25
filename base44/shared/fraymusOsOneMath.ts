@@ -13,7 +13,7 @@ export function solveFraymusHamiltonian({ g = 1, gamma = 0.5, epsilon = 0.001, g
   const ep3 = g !== 0 && Math.abs(p) <= 1e-10 * Math.max(g*g, gamma*gamma);
   const cube = Math.cbrt(epsilon);
   return {
-    status: passed ? 'SUCCESS' : 'HALT', receipt_id: `R_san_${crypto.randomUUID()}`,
+    engine: 'Fraymus OPEG Verification', status: passed ? 'SUCCESS' : 'HALT', receipt_id: `R_san_${crypto.randomUUID()}`,
     source_tool: 'analytic_numeric_solver', sanitizer: 'Σ', protocol_version: 'OPEG-V1.0',
     evidence_scope: 'Computed algebra for the specified 3x3 matrix only. Does not validate the supplied goal, a physical quantum system, consciousness, or model improvement.',
     empirical_data: {

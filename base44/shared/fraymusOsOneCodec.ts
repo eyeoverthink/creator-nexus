@@ -16,7 +16,7 @@ export function transcodeFraymusPayload({text,format='glyph',direction='encode',
       output = base + Array.from(bytes,b=>String.fromCodePoint(b<16?0xfe00+b:0xe0100+b-16)).join('');
     } else if (format === 'dna') output = Array.from(bytes,b=>[6,4,2,0].map(s=>DNA[(b>>s)&3]).join('')).join('');
     else output = Array.from(bytes,b=>[7,6,5,4,3,2,1,0].map(s=>(b>>s)&1?'\u200d':'\u200b').join('')).join('');
-    return {format,direction,output,byte_length:bytes.length,notice:'Encoding is not encryption; transport may strip invisible characters.'};
+    return {engine:'Fraymus ProtocolZero Carriers',format,direction,output,byte_length:bytes.length,notice:'Encoding is not encryption; transport may strip invisible characters.'};
   }
   if (format === 'glyph') {
     const values = [...text].map(ch=>selectorByte(ch.codePointAt(0))).filter(v=>v!==null);
@@ -32,5 +32,5 @@ export function transcodeFraymusPayload({text,format='glyph',direction='encode',
     bytes = Uint8Array.from({length:bits.length/8},(_,i)=>bits.slice(i*8,i*8+8).reduce((n,ch)=>(n<<1)|(ch==='\u200d'?1:0),0));
   }
   if (bytes.length > 4096) throw new Error('Decoded payload exceeds 4096 bytes.');
-  return {format,direction,output:new TextDecoder('utf-8',{fatal:true}).decode(bytes),byte_length:bytes.length,notice:'Decoded untrusted text only. No code was executed.'};
+  return {engine:'Fraymus ProtocolZero Carriers',format,direction,output:new TextDecoder('utf-8',{fatal:true}).decode(bytes),byte_length:bytes.length,notice:'Decoded untrusted text only. No code was executed.'};
 }
