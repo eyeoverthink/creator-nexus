@@ -380,11 +380,11 @@ export default function YinYangBicameralTrustGovernanceDeck({ workspaceId, onPul
           </div>
 
           {/* Main 3-Column Yin-Yang Brain Topology: Yang (Left) <-> Trust Core (Center) <-> Yin (Right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
             {/* YANG CORTEX (Hemisphere A) */}
-            <div className="lg:col-span-4 p-3.5 rounded-lg border border-primary/50 bg-background flex flex-col justify-between space-y-2.5">
+            <div className="xl:col-span-4 p-3.5 rounded-lg border border-primary/50 bg-background flex flex-col justify-between space-y-2.5 break-words">
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                   <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-[10px] font-bold">
                     ☀️ YANG CORTEX // HEMISPHERE A
                   </span>
@@ -416,7 +416,7 @@ export default function YinYangBicameralTrustGovernanceDeck({ workspaceId, onPul
             </div>
 
             {/* CENTER: Yin-Yang Synaptic Corpus Callosum & Live Data Streams */}
-            <div className="lg:col-span-4 p-3.5 rounded-lg border border-border bg-background flex flex-col justify-between space-y-2.5">
+            <div className="xl:col-span-4 p-3.5 rounded-lg border border-border bg-background flex flex-col justify-between space-y-2.5">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <span className="text-[10.5px] font-bold text-foreground flex items-center gap-1.5">
                   <Orbit size={13} className="text-primary" /> CORPUS CALLOSUM // LIVE STREAM BUS
@@ -478,9 +478,9 @@ export default function YinYangBicameralTrustGovernanceDeck({ workspaceId, onPul
             </div>
 
             {/* YIN RECEPTOR (Hemisphere B) */}
-            <div className="lg:col-span-4 p-3.5 rounded-lg border border-caution/50 bg-background flex flex-col justify-between space-y-2.5">
+            <div className="xl:col-span-4 p-3.5 rounded-lg border border-caution/50 bg-background flex flex-col justify-between space-y-2.5 break-words">
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                   <span className="px-2 py-0.5 rounded bg-caution/20 text-caution text-[10px] font-bold">
                     🌙 YIN RECEPTOR // HEMISPHERE B
                   </span>

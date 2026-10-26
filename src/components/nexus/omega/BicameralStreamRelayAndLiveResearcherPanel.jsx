@@ -202,11 +202,11 @@ export function BicameralStreamAndCurveResearcherPanel({ workspaceId }) {
       </div>
 
       {/* SECTION 1: HEMISPHERE A <-> HEMISPHERE B DUPLEX PARITY VERIFICATION */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
         {/* Hemisphere A */}
-        <div className="lg:col-span-5 p-3 rounded-lg border border-primary/50 bg-background space-y-2">
-          <div className="flex items-center justify-between border-b border-border pb-1.5">
-            <span className="text-[10.5px] font-bold text-primary">
+        <div className="xl:col-span-5 p-3 rounded-lg border border-primary/50 bg-background space-y-2 break-words">
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b border-border pb-1.5">
+            <span className="min-w-0 text-[10.5px] font-bold text-primary">
               ☀️ HEMISPHERE A // CREATOR NEXUS (openclawGateway + orificeBridge)
             </span>
             <span className="px-1.5 py-0.5 rounded bg-success/15 text-success text-[9.5px] font-bold">
@@ -240,7 +240,7 @@ export function BicameralStreamAndCurveResearcherPanel({ workspaceId }) {
         </div>
 
         {/* Center Duplex Parity Seal */}
-        <div className="lg:col-span-2 p-3 rounded-lg border border-success/50 bg-background flex flex-col items-center justify-center text-center space-y-1.5">
+        <div className="xl:col-span-2 p-3 rounded-lg border border-success/50 bg-background flex flex-col items-center justify-center text-center space-y-1.5">
           <ShieldCheck size={20} className="text-success" />
           <div className="text-[10px] font-bold text-success">100% DUPLEX PARITY</div>
           <div className="text-[9.5px] text-foreground font-bold">
@@ -255,9 +255,9 @@ export function BicameralStreamAndCurveResearcherPanel({ workspaceId }) {
         </div>
 
         {/* Hemisphere B */}
-        <div className="lg:col-span-5 p-3 rounded-lg border border-caution/50 bg-background space-y-2">
-          <div className="flex items-center justify-between border-b border-border pb-1.5">
-            <span className="text-[10.5px] font-bold text-caution">
+        <div className="xl:col-span-5 p-3 rounded-lg border border-caution/50 bg-background space-y-2 break-words">
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b border-border pb-1.5">
+            <span className="min-w-0 text-[10.5px] font-bold text-caution">
               🌙 HEMISPHERE B // FRAYMUS ETERNAL (orificeBridge)
             </span>
             <span className="px-1.5 py-0.5 rounded bg-success/15 text-success text-[9.5px] font-bold">
