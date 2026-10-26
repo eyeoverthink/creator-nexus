@@ -5,12 +5,14 @@ import {handleNeedleUser} from '../../shared/fraymusNeedleUser.ts';
 import {readInput} from '../../shared/runnerBridge.ts';
 import {executeFraymusAssociative} from '../../shared/fraymusAssociativeMemory.ts';
 import {digestAdaptive} from '../../shared/fraymusAdaptiveSchema.ts';
+import {readFraymusBrainReport} from '../../shared/fraymusBrainStorage.ts';
+import {ADAPTIVE_LIMITS} from '../../shared/fraymusAdaptiveLimits.ts';
 // Adaptive graph, HDC replay and affective learning share executeFraymusBrain with agent tools.
 export default async function(req){
  try{
   if(req.method!=='POST')return Response.json({error:'Use POST.'},{status:405});
   const base44=createClientFromRequest(req);
-  const input=await readInput(req,48000);if(input.error)return input.error;
+  const input=await readInput(req,ADAPTIVE_LIMITS.requestBytes);if(input.error)return input.error;
   const a=input.value;
   if(['needle_worker_hello','needle_worker_poll','needle_worker_report'].includes(a.action))return await handleNeedleWorker(base44,req,a);
   const user=await base44.auth.me();
@@ -34,9 +36,9 @@ export default async function(req){
    if(!a.state_id)return Response.json({error:'Provide a saved result ID.'},{status:400});
    const records=await base44.entities.NexusAsset.filter({...scope,id:a.state_id},{limit:1});
    const record=records.items[0];if(!record)return Response.json({error:'Saved result not found in this workspace.'},{status:404});
-   const saved=JSON.parse(record.body);
-    if(saved.report.adaptive_state&&await digestAdaptive(saved.report.adaptive_state)!==saved.report.adaptive_state_sha256)return Response.json({error:'Adaptive state digest changed.'},{status:400});
-    return Response.json({result:{...saved.report,state_id:record.id,committed:true}});
+   const report=await readFraymusBrainReport(base44,record);
+        if(report.adaptive_state&&await digestAdaptive(report.adaptive_state)!==report.adaptive_state_sha256)return Response.json({error:'Adaptive state digest changed.'},{status:400});
+        return Response.json({result:{...report,state_id:record.id,committed:true}});
   }
   const result=await executeFraymusBrain(base44,user,workspace.id,a.input);
   return Response.json({result,...(result.error?{error:result.error}:{})},{status:result.error?400:200});

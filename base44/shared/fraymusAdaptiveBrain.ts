@@ -1,5 +1,6 @@
 import {fraymusAdaptiveInput,fraymusAdaptiveState,digestAdaptive} from './fraymusAdaptiveSchema.ts';
 import {adaptiveControl} from './fraymusAdaptiveControl.ts';
+import {ADAPTIVE_LIMITS} from './fraymusAdaptiveLimits.ts';
 import {advanceAdaptiveGraph,validateAdaptiveGraph} from './fraymusSpikingGraph.ts';
 import {adaptiveMemory,adaptiveTransition,verifyAdaptiveMemories} from './fraymusAdaptiveMemory.ts';
 import {adaptiveSensoryInput,adaptiveIntegrityChecks} from './fraymusAdaptiveAttention.ts';
@@ -18,5 +19,5 @@ export async function runFraymusAdaptive(input,previous){
    if(a.operation==='advance'){const sensory=await adaptiveSensoryInput(state,a);operation={...advanceAdaptiveGraph(state,a,control,sensory.packed),sensory:sensory.receipt};}
  else if(a.operation!=='initialize')operation=await adaptiveMemory(state,a,control);
  state.updated_at=new Date().toISOString();state=fraymusAdaptiveState.parse(state);validateAdaptiveGraph(state);await verifyAdaptiveMemories(state);
- return {engine:'Fraymus Adaptive Brain',status:'computed',operation:a.operation,source:FRAYMUS_ADAPTIVE_SOURCE,result:operation,transition,controls:control,integrity,adaptive_state:state,adaptive_state_sha256:await digestAdaptive(state),counts:{neurons:state.neurons.length,edges:state.edges.length,memories:state.memories.length,predictions:state.predictions.length,clock:state.clock},provenance:a.provenance,notice:'Bounded inspectable simulation with supplied observations. No biological fidelity, consciousness, real feelings, language-model weight changes, native model inference, perfect recall, autonomous code execution or cryptographic proof of truth. SHA-256 detects content changes, not who authored them.'};
+ return {engine:'Fraymus Adaptive Brain',status:'computed',operation:a.operation,limits:ADAPTIVE_LIMITS,source:FRAYMUS_ADAPTIVE_SOURCE,result:operation,transition,controls:control,integrity,adaptive_state:state,adaptive_state_sha256:await digestAdaptive(state),counts:{neurons:state.neurons.length,edges:state.edges.length,memories:state.memories.length,predictions:state.predictions.length,clock:state.clock},provenance:a.provenance,notice:'Bounded inspectable simulation with supplied observations. No biological fidelity, consciousness, real feelings, language-model weight changes, native model inference, perfect recall, autonomous code execution or cryptographic proof of truth. SHA-256 detects content changes, not who authored them.'};
 }
