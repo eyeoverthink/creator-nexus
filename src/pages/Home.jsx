@@ -24,6 +24,7 @@ export default function Home(){
  const home=useHomeData();
  return <ProShell><main className="nexus-home space-y-8 pb-12">
   <HomeHero/>
+  <FraymusLiveActivity/>
   <UniversalCreativeBlueprintStudio workspaceId={(home.boot.data?.workspace || home.boot.data)?.id}/>
   <AcademyPipelineAlignmentPanel workspaceId={(home.boot.data?.workspace || home.boot.data)?.id}/>
   <UnifiedAgentCommsAndAttachmentPortal workspaceId={(home.boot.data?.workspace || home.boot.data)?.id}/>
