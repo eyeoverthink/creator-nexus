@@ -1,0 +1,11 @@
+export const partnerDefaults=()=>({profile:{name:'Nola',personality:'Supportive',mood:65,energy:65,attentiveness:50,memory:'',voice:'browser',endpoint:'http://127.0.0.1:11434',voiceEndpoint:'http://127.0.0.1:9099',model:''},messages:[],items:[],emotionHistory:[]});
+function database(){return new Promise((resolve,reject)=>{const request=indexedDB.open('fraymus-partner-frame',1);request.onupgradeneeded=()=>request.result.createObjectStore('workspaces');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
+export async function loadPartnerState(userId){const db=await database();try{return await new Promise((resolve,reject)=>{const request=db.transaction('workspaces').objectStore('workspaces').get(userId);request.onsuccess=()=>resolve(request.result||partnerDefaults());request.onerror=()=>reject(request.error);});}finally{db.close();}}
+export async function savePartnerState(userId,state){const db=await database();try{await new Promise((resolve,reject)=>{const transaction=db.transaction('workspaces','readwrite');transaction.objectStore('workspaces').put(state,userId);transaction.oncomplete=resolve;transaction.onerror=()=>reject(transaction.error);transaction.onabort=()=>reject(transaction.error||new Error('Local save aborted.'));});}finally{db.close();}}
+export function downloadPartnerFile(blob,name){const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);}
+export async function fileToPartnerItem(file){
+ if(file.size>10*1024*1024)throw new Error('Each file must be 10 MB or smaller.');
+ const text=/^text\//.test(file.type)||/\.(txt|md|csv|json|js|jsx|ts|tsx|py|css|html)$/i.test(file.name);
+ if(text&&file.size>100000)throw new Error('Text files must be under 100 KB for editable context.');
+ return {id:crypto.randomUUID(),title:file.name.slice(0,200),type:text?'text':file.type.startsWith('image/')?'image':file.type.startsWith('audio/')?'audio':file.type.startsWith('video/')?'video':'file',mime:file.type||'application/octet-stream',body:text?await file.text():'',blob:file,created_at:new Date().toISOString()};
+}

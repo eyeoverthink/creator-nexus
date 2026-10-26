@@ -47,6 +47,7 @@ export default function AiWorkshopOs(){
  return <div className="fixed inset-0 bg-background flex flex-col">
   <header className="min-h-10 py-1.5 px-3 bg-card border-b border-border flex flex-wrap items-center justify-between gap-2 font-mono text-xs z-20">
    <div className="flex flex-wrap items-center gap-2.5">
+    <Link to="/" className="inline-flex items-center gap-1 text-link">Partner workspace</Link>
     <Link to="/studio" className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"><Layers3 size={13}/>Studio</Link>
     <span className="text-border">|</span>
     <Link to="/loose-screw" className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"><ArrowLeft size={13}/>looseScrew</Link>

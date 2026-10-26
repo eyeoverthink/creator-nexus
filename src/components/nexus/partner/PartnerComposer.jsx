@@ -1,0 +1,10 @@
+import {useEffect,useRef,useState} from 'react';
+import {Mic,Send,Square} from 'lucide-react';
+import {Button} from '@/components/ui/button';
+export default function PartnerComposer({partner}){
+ const [text,setText]=useState(''),[micError,setMicError]=useState(''),recognition=window.SpeechRecognition||window.webkitSpeechRecognition,mic=useRef(null);
+ useEffect(()=>()=>mic.current?.abort(),[]);
+ const send=()=>{if(!text.trim()||partner.busy||!partner.loaded)return;partner.send(text);setText('');};
+ const listen=()=>{if(!recognition)return;setMicError('');mic.current?.abort();const r=new recognition();mic.current=r;r.interimResults=false;r.onresult=e=>setText(value=>value+(value?' ':'')+e.results[0][0].transcript);r.onerror=e=>setMicError('Dictation stopped: '+e.error);r.start();};
+ return <div className="border-t border-border p-3"><div className="max-w-3xl mx-auto flex items-end gap-2"><label className="sr-only" htmlFor="partner-message">Message partner</label><textarea id="partner-message" rows={2} maxLength={12000} disabled={!partner.loaded} value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}} placeholder="Ask, augment selected content, or type remember: followed by a fact…" className="flex-1 resize-none rounded border border-input bg-background px-3 py-2 text-base"/><Button variant="outline" size="icon" onClick={listen} disabled={!recognition||!!partner.busy} aria-label={recognition?'Dictate message':'Speech input unavailable'}><Mic/></Button>{partner.busy==='chat'?<Button variant="destructive" size="icon" onClick={partner.stop} aria-label="Stop response"><Square/></Button>:<Button size="icon" onClick={send} disabled={!text.trim()||!!partner.busy||!partner.loaded} aria-label="Send message"><Send/></Button>}</div>{micError&&<p role="alert" className="max-w-3xl mx-auto text-destructive text-xs mt-2">{micError}</p>}{recognition&&<p className="max-w-3xl mx-auto text-xs text-muted-foreground mt-2">Dictation uses your browser’s speech service, which may process audio online.</p>}</div>;
+}

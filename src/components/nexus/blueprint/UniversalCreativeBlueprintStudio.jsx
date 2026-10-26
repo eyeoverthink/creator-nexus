@@ -43,6 +43,7 @@ const SECTION_TABS = [
 export default function UniversalCreativeBlueprintStudio({
   workspaceId,
   onLaunchInFactory,
+  initialInstruction = '',
 }) {
   const { toast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -51,7 +52,7 @@ export default function UniversalCreativeBlueprintStudio({
   const [blueprint, setBlueprint] = useState(() => structuredClone(BUILTIN_BLUEPRINT_TEMPLATES[0]));
   const [activeSectionTab, setActiveSectionTab] = useState('all');
   const [showMethodDna, setShowMethodDna] = useState(true);
-  const [aiInstruction, setAiInstruction] = useState('');
+  const [aiInstruction, setAiInstruction] = useState(initialInstruction);
   const [saveAsName, setSaveAsName] = useState('');
   const [showSaveAsInput, setShowSaveAsInput] = useState(false);
   const [busyAction, setBusyAction] = useState('');
