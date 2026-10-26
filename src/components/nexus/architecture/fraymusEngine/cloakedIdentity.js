@@ -48,6 +48,7 @@ function modPow(base,exp,mod){
 }
 
 export function isProbablePrime(n){
+ if(n<2n)return false;
  for(const p of SMALL_PRIMES){if(n===p)return true;if(n%p===0n)return false;}
  let d=n-1n,s=0;
  while((d&1n)===0n){d>>=1n;s++;}
@@ -63,6 +64,7 @@ export function isProbablePrime(n){
 
 // First probable prime strictly greater than n (java.math.BigInteger.nextProbablePrime).
 export function nextProbablePrime(n){
+ if(n<2n)return 2n;
  let c=n+1n;
  if((c&1n)===0n)c+=1n;
  while(!isProbablePrime(c))c+=2n;
