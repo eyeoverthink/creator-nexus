@@ -1,0 +1,7 @@
+import {useInfiniteQuery} from '@tanstack/react-query';
+import {base44} from '@/api/base44Client';
+import PdfEvidenceRecord from '@/components/nexus/learning/PdfEvidenceRecord';
+export default function PdfEvidenceHistory({workspace}){
+ const query=useInfiniteQuery({queryKey:['pdf-evidence',workspace.id],initialPageParam:null,queryFn:({pageParam})=>base44.entities.NexusAsset.filter({owner_id:workspace.owner_id,workspace_id:workspace.id,project:'Fraymus Artifact Forensics',source_entity:{$in:['FraymusPdfEvidenceExtraction','FraymusPdfEvidenceSourcePending']}},{sort:'-created_date',limit:10,...(pageParam?{cursor:pageParam}:{})}),getNextPageParam:page=>page.has_more?page.next_cursor:undefined});
+ return <div className="space-y-2"><h4 className="text-xs font-semibold">Retained PDF evidence</h4>{query.isPending&&<p role="status" className="text-xs text-muted-foreground">Loading evidence…</p>}{query.error&&<p role="alert" className="text-xs text-destructive">{query.error.message}</p>}{query.data?.pages.flatMap(page=>page.items).map(record=><PdfEvidenceRecord key={record.id} record={record} workspaceId={workspace.id}/>)}{!query.isPending&&!query.data?.pages.some(page=>page.items.length)&&<p className="text-xs text-muted-foreground">No imported PDF evidence yet. Originals and extraction manifests appear here after import.</p>}{query.hasNextPage&&<button onClick={()=>query.fetchNextPage()} disabled={query.isFetchingNextPage} className="text-xs text-primary">Load more evidence</button>}</div>;
+}

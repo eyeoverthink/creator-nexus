@@ -24,8 +24,8 @@ export default async function(req){
    if(typeof a.action==='string'&&a.action.startsWith('emotion_'))return await handleVocalAnalysis(base44,user,a);
   if(a.action==='artifact_pdf_intake'){
    if(typeof a.workspace_id!=='string'||!/^[a-f0-9]{24}$/i.test(a.workspace_id)||typeof a.asset_id!=='string'||!/^[a-f0-9]{24}$/i.test(a.asset_id))return Response.json({error:'Provide valid workspace_id and asset_id.'},{status:400});
-   const result=await ingestPdfEvidence(base44,user,a.workspace_id,a.asset_id);
-   return Response.json({result});
+   try{const result=await ingestPdfEvidence(base44,user,a.workspace_id,a.asset_id);return Response.json({result});}
+   catch(error){if(error.pdfCode)return Response.json({error:error.message,code:error.pdfCode},{status:error.status||422});throw error;}
   }
   if(a.action==='artifact_forensics'){
    if(typeof a.workspace_id!=='string'||!/^[a-f0-9]{24}$/i.test(a.workspace_id))return Response.json({error:'Provide a valid workspace_id.'},{status:400});
