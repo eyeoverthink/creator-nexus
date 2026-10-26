@@ -4,6 +4,7 @@ import {handleNeedleWorker} from '../../shared/fraymusNeedleWorker.ts';
 import {handleNeedleUser} from '../../shared/fraymusNeedleUser.ts';
 import {readInput} from '../../shared/runnerBridge.ts';
 import {executeFraymusAssociative} from '../../shared/fraymusAssociativeMemory.ts';
+// Adaptive graph, HDC replay and affective learning share executeFraymusBrain with agent tools.
 export default async function(req){
  try{
   if(req.method!=='POST')return Response.json({error:'Use POST.'},{status:405});
