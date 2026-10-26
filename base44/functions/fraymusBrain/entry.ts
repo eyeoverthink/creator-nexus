@@ -9,6 +9,7 @@ import {readFraymusBrainReport} from '../../shared/fraymusBrainStorage.ts';
 import {ADAPTIVE_LIMITS} from '../../shared/fraymusAdaptiveLimits.ts';
 import {handleVocalAnalysis} from '../../shared/fraymusVocalAnalysis.ts';
 import {runArtifactForensics} from '../../shared/fraymusArtifactForensics.ts';
+import {ingestPdfEvidence} from '../../shared/fraymusPdfEvidence.ts';
 // Adaptive graph, HDC replay and affective learning share executeFraymusBrain with agent tools.
 export default async function(req){
  try{
@@ -21,6 +22,11 @@ export default async function(req){
   if(!user)return Response.json({error:'Sign in required.'},{status:401});
   if(typeof a.action==='string'&&a.action.startsWith('needle_'))return await handleNeedleUser(base44,user,a);
    if(typeof a.action==='string'&&a.action.startsWith('emotion_'))return await handleVocalAnalysis(base44,user,a);
+  if(a.action==='artifact_pdf_intake'){
+   if(typeof a.workspace_id!=='string'||!/^[a-f0-9]{24}$/i.test(a.workspace_id)||typeof a.asset_id!=='string'||!/^[a-f0-9]{24}$/i.test(a.asset_id))return Response.json({error:'Provide valid workspace_id and asset_id.'},{status:400});
+   const result=await ingestPdfEvidence(base44,user,a.workspace_id,a.asset_id);
+   return Response.json({result});
+  }
   if(a.action==='artifact_forensics'){
    if(typeof a.workspace_id!=='string'||!/^[a-f0-9]{24}$/i.test(a.workspace_id))return Response.json({error:'Provide a valid workspace_id.'},{status:400});
    const result=await runArtifactForensics(base44,user,a.workspace_id,a.input||{});
