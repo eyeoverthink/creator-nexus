@@ -622,9 +622,9 @@ export async function runAutonomousAgentPracticeSandbox({
   // 1. Ensure isolated "Agent Creative Practice & Refinement Sandbox" workspace exists
   const SANDBOX_ROOM_ID = 'ws-agent-creative-practice-sandbox';
   const existingWsP = await db.entities.NexusWorkspace.filter(
-    { room_id: SANDBOX_ROOM_ID },
-    { limit: 1 }
-  ).catch(() => ({ items: [] }));
+    { owner_id: ownerId, room_id: SANDBOX_ROOM_ID },
+    { sort: 'created_date', limit: 1 }
+  );
   const existingWsList = Array.isArray(existingWsP) ? existingWsP : existingWsP?.items || [];
   let sandboxWorkspace = existingWsList[0] || null;
 

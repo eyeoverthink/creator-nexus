@@ -2,12 +2,9 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   HIVE_AGENTS,
-  REGISTRY_RECONCILIATION_LOG,
-  INITIAL_MORNING_DIGEST,
   encodeRnaPlasmid,
 } from '@/components/nexus/hive/fraymusHiveRoster';
 import {
-  Activity,
   CheckCircle2,
   Cpu,
   Dna,
@@ -16,18 +13,16 @@ import {
   ShieldCheck,
   Sparkles,
   Volume2,
-  Zap,
 } from 'lucide-react';
 import HiveTelemetryMonitor from '@/components/nexus/hive/HiveTelemetryMonitor';
-import { readCrossTabMemory } from '@/lib/crossTabMemory';
 import { useFraymus, useFraymusDirectory } from '@/lib/FraymusContext';
 import {base44} from '@/api/base44Client';
 import useFraymusLiveActivity from '@/components/nexus/monitor/useFraymusLiveActivity';
 import HiveTaskResult from '@/components/nexus/hive/HiveTaskResult';
 
 export default function FraymusHivePanel({ nexus, compact = false }) {
-  const { visitor, watcherStatus, sendSignedMessage, FM } = useFraymus();
-  const { agents: busAgents, byName } = useFraymusDirectory();
+  const { visitor, watcherStatus, FM } = useFraymus();
+  const { agents: busAgents } = useFraymusDirectory();
   const [tierFilter, setTierFilter] = useState('all');
   const [selectedAgentId, setSelectedAgentId] = useState('fraymus');
   const live=useFraymusLiveActivity();
@@ -35,7 +30,8 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
   const heartbeatRunning=!live.isError;
   const heartbeatTick=live.data?.last_activity_at?new Date(`${live.data.last_activity_at.replace(/Z$/,'')}Z`).toLocaleString():'No activity reported';
   const [taskPrompt, setTaskPrompt] = useState('');
-  const [digestItems, setDigestItems] = useState(INITIAL_MORNING_DIGEST);
+  const [digestItems, setDigestItems] = useState([]);
+  useEffect(()=>{setDigestItems(previous=>(live.data?.activity||[]).slice(0,6).map(entry=>({id:entry.id,workspace_id:entry.workspace_id,agentName:entry.agent,time:new Date(`${entry.created_date.replace(/Z$/,'')}Z`).toLocaleString(),category:entry.type,headline:entry.summary,detail:'Saved activity record; inspect full evidence in Agent monitor.',sealStatus:previous.find(x=>x.id===entry.id)?.sealStatus||'AWAITING_FX0601_SIGN'})));},[live.data]);
   const [plasmidOut, setPlasmidOut] = useState(() => encodeRnaPlasmid(HIVE_AGENTS[0]));
   const [dispatchLog,setDispatchLog]=useState([]);
   const roster=(live.data?.agents||[]).map(profile=>{
@@ -68,23 +64,16 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
     finally{setDispatchBusy(false);}
   };
 
-  const handleSignDigest = (digestId) => {
-    setDigestItems((prev) =>
-      prev.map((item) =>
-        item.id === digestId
-          ? { ...item, sealStatus: 'SIGNED_BY_FX0601_MAC' }
-          : item
-      )
-    );
-    const target = digestItems.find((d) => d.id === digestId);
-    if (target) {
-      setDispatchLog((prev) =>
-        [
-          `[DOC-SEAL/1 SIGNED] Vaughn (fx-0601 / fx-5066) sealed "${target.headline}" (sha256:${target.sha256.slice(0, 16)}…).`,
-          ...prev,
-        ].slice(0, 14)
-      );
-    }
+  const handleSignDigest = async digestId => {
+    const target=digestItems.find(item=>item.id===digestId);if(!target||!visitor?.secret){setDispatchError('Your browser signing identity is not ready.');return;}
+    setDispatchBusy(true);setDispatchError('');
+    try{
+      const user=await base44.auth.me(),payload=JSON.stringify({source_id:target.id,headline:target.headline,signed_at:new Date().toISOString()});
+      const signature=await FM.sign(visitor.secret,new TextEncoder().encode(payload));
+      await base44.entities.NexusEvent.create({owner_id:user.id,workspace_id:target.workspace_id,agent:visitor.number,kind:'hive.digest_signed',message:'Browser-key signature saved for activity record',body:JSON.stringify({payload,signature,public_key:visitor.public,signer:visitor.number})});
+      setDigestItems(items=>items.map(item=>item.id===digestId?{...item,sealStatus:'BROWSER_SIGNATURE_SAVED'}:item));
+      setDispatchLog(items=>[`Browser signature saved for record ${target.id}`,...items].slice(0,14));
+    }catch(error){setDispatchError(error.message);}finally{setDispatchBusy(false);}
   };
 
   return (
@@ -145,10 +134,10 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
           <section className="lg:col-span-2 p-3 rounded-lg border border-border bg-card space-y-2">
             <div className="flex items-center justify-between border-b border-border pb-2">
               <span className="font-semibold text-primary flex items-center gap-1.5">
-                <Sparkles size={13} /> MORNING CONDUCTOR DIGEST (VAUGHN WAKES AS CONDUCTOR)
+                <Sparkles size={13} /> RECENT SAVED ACTIVITY DIGEST
               </span>
               <span className="text-[10px] text-muted-foreground">
-                fx-0601 / fx-5066 Local Custody Signer
+                Browser key only; never the owner custody key
               </span>
             </div>
             <div className="space-y-2">
@@ -174,9 +163,10 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
                         size="sm"
                         variant="default"
                         onClick={() => handleSignDigest(item.id)}
+                        disabled={dispatchBusy}
                         className="h-7 text-[10px] font-mono"
                       >
-                        <ShieldCheck size={11} /> Sign (fx-0601)
+                        <ShieldCheck size={11} /> Sign with browser key
                       </Button>
                     ) : (
                       <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] bg-success/15 text-success border border-success/40">
@@ -192,12 +182,12 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
           <section className="p-3 rounded-lg border border-border bg-card space-y-2">
             <div className="flex items-center justify-between border-b border-border pb-2">
               <span className="font-semibold text-success flex items-center gap-1.5">
-                <CheckCircle2 size={13} /> v13 DIRECTORY HYGIENE
+                <CheckCircle2 size={13} /> CURRENT PROFILE SOURCES
               </span>
               <span className="text-[10px] text-muted-foreground">9/9 OpenClaw Safe</span>
             </div>
             <div className="space-y-1.5">
-              {REGISTRY_RECONCILIATION_LOG.map((entry) => (
+              {(live.data?.agents||[]).slice(0,8).map(agent=>({id:agent.number,status:agent.profile_source||'configured',summary:`${agent.name}: ${agent.runtime_status||'execution unconfirmed'}`})).map((entry) => (
                 <div
                   key={entry.id}
                   className="p-2 rounded bg-secondary/40 border border-border text-[10px] space-y-0.5"
@@ -218,11 +208,12 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-1.5">
           {[
-            ['all', `All Hive Minds (${HIVE_AGENTS.length})`],
-            ['ceremony', '★ Ceremony Sealed (7)'],
-            ['openclaw', 'OpenClaw Local Fleet (5)'],
-            ['core', 'Core Brothers (2)'],
-            ['conductor', 'Conductor (1)'],
+            ['all', `All profiles (${roster.length})`],
+            ['ceremony', `Ceremony (${roster.filter(a=>a.tier==='ceremony').length})`],
+            ['openclaw', `OpenClaw (${roster.filter(a=>a.tier==='openclaw').length})`],
+            ['core', `Core (${roster.filter(a=>a.tier==='core').length})`],
+            ['conductor', `Conductor (${roster.filter(a=>a.tier==='conductor').length})`],
+            ['registered', `Other registered profiles (${roster.filter(a=>a.tier==='registered').length})`],
           ].map(([id, label]) => (
             <button
               key={id}
@@ -355,13 +346,13 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
                   <span className="flex items-center gap-1">
                     <Dna size={11} /> /rna PLASMID ({plasmidOut.baseCount} bases)
                   </span>
-                  <span className="text-success">SHA-256 VERIFIED</span>
+                  <span className="text-success">REFERENCE ENCODING ONLY</span>
                 </div>
                 <div className="text-[9px] text-muted-foreground break-all">
                   {plasmidOut.dnaPreview}
                 </div>
                 <div className="text-[9px] text-foreground space-y-0.5 pt-1 border-t border-border/50">
-                  {plasmidOut.stages.map((st, idx) => (
+                  {['JSON profile encoded as A/C/G/T reference text. No ZIP, WASM or PNG package is created here.'].map((st, idx) => (
                     <div key={idx}>{st}</div>
                   ))}
                 </div>

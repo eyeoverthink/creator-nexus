@@ -541,7 +541,9 @@ export async function buildFull64AgentBusDirectory({ db, ownerId, hermesSkills =
   do {
     const page=await db.entities.NexusContinuity.filter({...scope,scope:'profile'},{sort:'-updated_date',limit:100,fields:['settings.spawned_organism_agents'],...(cursor?{cursor}:{})});
     for(const record of page.items)for(const profile of record.settings?.spawned_organism_agents||[]){
-      if(!profile?.name||specialistNames.has(profile.name.toLowerCase()))continue;
+      const declaredFx=profile?.fx||profile?.name?.match(/fx-(?:[a-f0-9]{4}-){3}[a-f0-9]{4}/i)?.[0];
+      if(!profile?.name||specialistNames.has(profile.name.toLowerCase())||(declaredFx&&seenNumbers.has(declaredFx)))continue;
+      if(declaredFx)seenNumbers.add(declaredFx);
       specialistNames.add(profile.name.toLowerCase());
       const slug=profile.id||`specialist-${profile.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}`;
       const kp=await getOrDeriveAgentKeypair(slug);

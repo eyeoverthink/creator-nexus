@@ -722,9 +722,9 @@ Speak your first autonomous words to the human creator (@eyeoverthink) and your 
 
   // 1. Persist into Profile Continuity (Stage II Reputation Ledger & Organism Roster)
   const contP = await db.entities.NexusContinuity.filter(
-    { workspace_id: workspaceId, scope: 'profile' },
+    { owner_id: ownerId, workspace_id: workspaceId, scope: 'profile' },
     { limit: 1 }
-  ).catch(() => ({ items: [] }));
+  );
   const profileCont = (Array.isArray(contP) ? contP : contP?.items || [])[0] || null;
   const existingSpawned = Array.isArray(profileCont?.settings?.spawned_organism_agents)
     ? profileCont.settings.spawned_organism_agents
@@ -740,7 +740,7 @@ Speak your first autonomous words to the human creator (@eyeoverthink) and your 
         ...(profileCont.settings || {}),
         spawned_organism_agents: nextSpawned,
       },
-    }).catch(() => null);
+    });
   } else {
     await db.entities.NexusContinuity.create({
       owner_id: ownerId,
@@ -752,7 +752,7 @@ Speak your first autonomous words to the human creator (@eyeoverthink) and your 
       settings: {
         spawned_organism_agents: nextSpawned,
       },
-    }).catch(() => null);
+    });
   }
 
   // 2. Also register into Director Continuity so Production Factory Workforce immediately includes this agent-born specialist!
