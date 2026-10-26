@@ -1,0 +1,8 @@
+import {useState} from 'react';
+import {base44} from '@/api/base44Client';
+import {Button} from '@/components/ui/button';
+export default function FraymusActivityEntries({entries}){
+ const [open,setOpen]=useState(null),[record,setRecord]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ const inspect=async entry=>{setOpen(`${entry.source}:${entry.id}`);setBusy(true);setRecord(null);setError('');try{const user=await base44.auth.me();const result=await base44.entities[entry.source].get(entry.id);if(result.owner_id!==user.id)throw new Error('Record access denied.');setRecord(result);}catch(e){setError(e.message);}finally{setBusy(false);}};
+ return <div className="space-y-2 max-h-80 overflow-y-auto">{!entries.length&&<p>No saved activity found.</p>}{entries.map(entry=>{const key=`${entry.source}:${entry.id}`;return <article key={key} className="border-t border-border pt-2 text-xs space-y-1"><div className="flex flex-wrap justify-between gap-2"><strong>{entry.agent||'Workspace'}</strong><time>{new Date(`${entry.created_date.replace(/Z$/,'')}Z`).toLocaleString()}</time></div><p className="break-words">{entry.summary||entry.type}</p><p className="text-muted-foreground">{entry.type} · workspace {entry.workspace_id}</p><Button size="sm" variant="ghost" disabled={busy} onClick={()=>open===key?setOpen(null):inspect(entry)}>{open===key?'Close details':'Inspect saved record'}</Button>{open===key&&(busy?<p role="status">Loading saved record…</p>:error?<p role="alert">{error}</p>:<pre className="whitespace-pre-wrap break-words max-h-64 overflow-auto">{record?.body||JSON.stringify(record?.details||record,null,2)}</pre>)}</article>;})}</div>;
+}

@@ -461,17 +461,18 @@ const CORE_V16_SPECS = [
   },
 ];
 
-export async function buildFull64AgentBusDirectory({ db, hermesSkills = [], hubUrl = '', mailToken = '' }) {
+export async function buildFull64AgentBusDirectory({ db, ownerId, hermesSkills = [], hubUrl = '', mailToken = '' }) {
+  const scope = ownerId ? {owner_id:ownerId} : {};
   const eventsP = await db.entities.NexusEvent.filter(
-    { kind: 'v16.signed_mail' },
+    { ...scope, kind: 'v16.signed_mail' },
     { sort: '-created_date', limit: 60 }
   ).catch(() => ({ items: [] }));
   const mailEvents = eventsP?.items || [];
 
   const regEventsP = await db.entities.NexusEvent.filter(
-    { kind: 'v16.identity_registered' },
-    { sort: '-created_date', limit: 30 }
-  ).catch(() => ({ items: [] }));
+    { ...scope, kind: 'v16.identity_registered' },
+    { sort: '-created_date', limit: 500 }
+  );
   const regEvents = regEventsP?.items || [];
 
   const coreAgents = [];
@@ -534,33 +535,21 @@ export async function buildFull64AgentBusDirectory({ db, hermesSkills = [], hubU
     } catch {}
   }
 
-  // Fill remaining slots up to 64 agents with real Ed25519 keypairs for the Sovereign Skill Fleet & KVM4/FRAYNIX specialists
-  const fleetAgents = [];
-  const targetTotal = 64;
-  let idx = 1;
-  while (coreAgents.length + dynamicVisitors.length + fleetAgents.length < targetTotal) {
-    const sk = hermesSkills[(idx - 1) % Math.max(1, hermesSkills.length)];
-    const slug = sk ? `fraynix-skill-${sk.id}-${idx}` : `fraynix-bus-agent-${idx}`;
-    const kp = await getOrDeriveAgentKeypair(slug);
-    if (!seenNumbers.has(kp.derivedNumber)) {
-      seenNumbers.add(kp.derivedNumber);
-      fleetAgents.push({
-        number: kp.derivedNumber,
-        alias_fx: kp.derivedNumber,
-        slug,
-        name: sk ? `fraynix-${sk.id}` : `fraynix-bus-agent-${idx}`,
-        where: idx <= 16 ? 'KVM 4 (100.88.61.56:7200)' : 'Sovereign Mesh Bus (:8787)',
-        pubkey: kp.pubHex,
-        port: 7200 + (idx % 16),
-        doorbell: 'https://creator-nexus.base44.app/functions/openclawGateway',
-        skills: sk ? [sk.id, sk.category, 'v16-ed25519'] : ['v16-ed25519', 'fraynix-bus'],
-        is_ai: true,
-      });
+  // Include persisted specialist profiles; never manufacture agents to fill a quota.
+  const fleetAgents = [], specialistNames = new Set(coreAgents.map(a=>a.name.toLowerCase()));
+  let cursor, pages=0, more=false;
+  do {
+    const page=await db.entities.NexusContinuity.filter({...scope,scope:'profile'},{sort:'-updated_date',limit:100,fields:['settings.spawned_organism_agents'],...(cursor?{cursor}:{})});
+    for(const record of page.items)for(const profile of record.settings?.spawned_organism_agents||[]){
+      if(!profile?.name||specialistNames.has(profile.name.toLowerCase()))continue;
+      specialistNames.add(profile.name.toLowerCase());
+      const slug=profile.id||`specialist-${profile.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}`;
+      const kp=await getOrDeriveAgentKeypair(slug);
+      fleetAgents.push({number:kp.derivedNumber,alias_fx:profile.fx||kp.derivedNumber,slug,name:profile.name,where:'Persisted specialist profile',pubkey:kp.pubHex,skills:profile.skills||[],role:profile.role,is_ai:true,profile_source:'NexusContinuity',runtime_status:'not_reported'});
     }
-    idx++;
-  }
-
-  const allAgents = [...coreAgents, ...dynamicVisitors, ...fleetAgents].slice(0, 64);
+    more=page.has_more;cursor=page.next_cursor;pages++;
+  }while(more&&pages<20);
+  const allAgents = [...coreAgents.map(a=>({...a,profile_source:'configured_bus_identity',runtime_status:'not_reported'})), ...dynamicVisitors, ...fleetAgents];
 
   const msgStatsByNumber = new Map();
   for (const ev of [...mailEvents].reverse()) {
@@ -606,9 +595,12 @@ export async function buildFull64AgentBusDirectory({ db, hermesSkills = [], hubU
   return {
     agents: enrichedAgents,
     totalCount: enrichedAgents.length,
+    registry_complete: !more && !regEventsP.has_more,
+    registry_warning: more || regEventsP.has_more ? 'Registry scan reached its safety bound; count is a lower bound.' : null,
     hubProbe,
     watcherStatus: {
-      active: true,
+      active: false,
+      status: 'unconfirmed_no_worker_heartbeat',
       process: 'scripts/email-watcher/watcher.mjs + decode.mjs',
       pipeline: [
         'IMAP poll (Gmail)',
@@ -619,7 +611,7 @@ export async function buildFull64AgentBusDirectory({ db, hermesSkills = [], hubU
         'Timestamp window (24h)',
         'Fail-closed dispatch -> FRAYNIX /feel, Hive /dispatch, Mail Door',
       ],
-      lastPollAt: new Date().toISOString(),
+      lastPollAt: null,
       failClosedQuarantineCount: 0,
     },
   };
@@ -651,6 +643,7 @@ export async function handleV16VisitorRelay({
 
   const busData = await buildFull64AgentBusDirectory({
     db,
+    ownerId,
     hermesSkills,
     hubUrl,
     mailToken,

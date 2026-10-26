@@ -75,6 +75,7 @@ import {
   syncSharedActivityFeedAndAgentComms,
 } from '../../shared/sharedActivityAndAgentComms.ts';
 import {runArtifactForensics} from '../../shared/fraymusArtifactForensics.ts';
+import {fraymusLiveSnapshot,runFraymusHiveTask} from '../../shared/fraymusLiveActivity.ts';
 
 function slugify(str) {
   return (
@@ -95,6 +96,11 @@ export default async function(req) {
 
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const action = String(body.action || (req.method === 'GET' ? 'orifice_spec' : 'status'));
+    if (['fraymus_live_snapshot','fraymus_hive_task'].includes(action)) {
+      if(!user)return Response.json({error:'Sign in required.'},{status:401});
+      const result=action==='fraymus_live_snapshot'?await fraymusLiveSnapshot(base44,user,body):await runFraymusHiveTask(base44,user,body);
+      return Response.json(result,{status:result.status||200,headers:{'Cache-Control':'no-store'}});
+    }
     if (action === 'artifact_forensics') {
       if (!user) return Response.json({error:'Sign in required'}, {status:401});
       const workspaceId=String(body.workspace_id||'');
@@ -185,10 +191,15 @@ export default async function(req) {
     const db = base44.asServiceRole;
 
     // Resolve target workspace
-    const workspacesPage = await db.entities.NexusWorkspace.list('-created_date', 10).catch(() => []);
-    const workspaces = Array.isArray(workspacesPage) ? workspacesPage : workspacesPage?.items || [];
+    const workspaceScope=user?.id?{owner_id:user.id}:{};
+    const [workspacesPage,selectedPage]=await Promise.all([
+      db.entities.NexusWorkspace.filter(workspaceScope,{sort:'created_date',limit:10}),
+      body.workspace_id?db.entities.NexusWorkspace.filter({...workspaceScope,id:String(body.workspace_id)},{limit:1}):Promise.resolve({items:[]}),
+    ]);
+    const workspaces = workspacesPage.items;
+    if(body.workspace_id&&!selectedPage.items[0])return Response.json({error:'Workspace not found.'},{status:404});
     const activeWorkspace =
-      workspaces.find((w) => w.id === body.workspace_id) ||
+      selectedPage.items[0] ||
       workspaces[0] || {
         id: body.workspace_id || 'ouroboros_live_ws',
         owner_id: user?.id || '6ad00af54909c671e73bb83d',

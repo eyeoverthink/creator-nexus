@@ -2,8 +2,9 @@ import {formatDistanceToNow} from 'date-fns';
 import {describeMonitorTask} from '@/components/nexus/monitor/taskMonitorSources';
 export default function TaskMonitorCard({task,source,now}){
  const info=describeMonitorTask(task,source);
- const stale=info.updated&&now-info.updated.getTime()>300000;
- const expired=task.expires_at&&new Date(task.expires_at).getTime()<now;
+ const active=[...source.running,...source.waiting].includes(task.status);
+ const stale=active&&info.updated&&now-info.updated.getTime()>300000;
+ const expired=active&&task.expires_at&&new Date(task.expires_at).getTime()<now;
  return <article className="rounded-lg border border-border bg-background p-4 space-y-3">
   <div className="flex flex-wrap items-start justify-between gap-2">
    <h3 className="font-medium break-words min-w-0">{info.title}</h3>

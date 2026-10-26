@@ -21,36 +21,30 @@ import {
 import HiveTelemetryMonitor from '@/components/nexus/hive/HiveTelemetryMonitor';
 import { readCrossTabMemory } from '@/lib/crossTabMemory';
 import { useFraymus, useFraymusDirectory } from '@/lib/FraymusContext';
+import {base44} from '@/api/base44Client';
+import useFraymusLiveActivity from '@/components/nexus/monitor/useFraymusLiveActivity';
+import HiveTaskResult from '@/components/nexus/hive/HiveTaskResult';
 
 export default function FraymusHivePanel({ nexus, compact = false }) {
   const { visitor, watcherStatus, sendSignedMessage, FM } = useFraymus();
   const { agents: busAgents, byName } = useFraymusDirectory();
   const [tierFilter, setTierFilter] = useState('all');
   const [selectedAgentId, setSelectedAgentId] = useState('fraymus');
-  const [heartbeatTick, setHeartbeatTick] = useState(1530);
-  const [heartbeatRunning, setHeartbeatRunning] = useState(true);
+  const live=useFraymusLiveActivity();
+  const [dispatchBusy,setDispatchBusy]=useState(false),[dispatchError,setDispatchError]=useState(''),[taskResult,setTaskResult]=useState(null);
+  const heartbeatRunning=!live.isError;
+  const heartbeatTick=live.data?.last_activity_at?new Date(`${live.data.last_activity_at.replace(/Z$/,'')}Z`).toLocaleString():'No activity reported';
   const [taskPrompt, setTaskPrompt] = useState('');
   const [digestItems, setDigestItems] = useState(INITIAL_MORNING_DIGEST);
   const [plasmidOut, setPlasmidOut] = useState(() => encodeRnaPlasmid(HIVE_AGENTS[0]));
-  const [dispatchLog, setDispatchLog] = useState([
-    '[ONE-TICK HEARTBEAT] Singleton clock synchronized across 15 Hive minds (Φ_MIP = 0.4150 bits · Split-Brain eliminated).',
-    '[REGISTRY v13] OpenClaw "main" ↔ Fraymus (fx-b3af) aligned; "genesis" + "ultimate" registered; 13 stale test IDs pruned.',
-  ]);
+  const [dispatchLog,setDispatchLog]=useState([]);
+  const roster=(live.data?.agents||[]).map(profile=>{
+    const preset=HIVE_AGENTS.find(a=>a.fx===profile.alias_fx||a.ceremonyName.toLowerCase()===profile.name.toLowerCase());
+    return {...preset,id:profile.number,ceremonyName:profile.name,openclawName:profile.slug,fx:profile.alias_fx||profile.number,tier:preset?.tier||'registered',role:profile.role||profile.skills?.join(', ')||'Configured profile',model:'Runtime not reported',host:profile.where,hubTarget:'Execution unconfirmed',currentTask:'Enter a specific hosted task to run.',studioRole:preset?.studioRole||'strategist'};
+  });
+  const selectedAgent=roster.find(a=>a.id===selectedAgentId)||roster[0]||HIVE_AGENTS[0];
+  const visibleAgents=roster.filter(a=>tierFilter==='all'||a.tier===tierFilter);
 
-  useEffect(() => {
-    if (!heartbeatRunning) return undefined;
-    const id = setInterval(() => {
-      setHeartbeatTick((t) => t + 1);
-    }, 1618); // Phi-harmonic 1.618s singleton tick
-    return () => clearInterval(id);
-  }, [heartbeatRunning]);
-
-  const selectedAgent =
-    HIVE_AGENTS.find((a) => a.id === selectedAgentId) || HIVE_AGENTS[0];
-
-  const visibleAgents = HIVE_AGENTS.filter(
-    (a) => tierFilter === 'all' || a.tier === tierFilter
-  );
 
   const speakLine = (text) => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -63,43 +57,15 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
   };
 
   const handleDispatchAgent = async (agent) => {
-    const crossSnap = readCrossTabMemory();
-    const liveSel = crossSnap.selection?.text ? ` | Selection (${crossSnap.selection.pageTitle}): "${crossSnap.selection.text.slice(0, 240)}"` : '';
-    const liveEd = crossSnap.liveEdit?.excerpt ? ` | Edit (${crossSnap.liveEdit.pageTitle}): "${crossSnap.liveEdit.excerpt.slice(0, 200)}"` : '';
-    const customTask =
-      (taskPrompt.trim() || `[${agent.ceremonyName} · ${agent.fx}] ${agent.currentTask}`) +
-      liveSel +
-      liveEd;
-
-    setPlasmidOut(encodeRnaPlasmid(agent, customTask));
-    setTaskPrompt('');
-
-    // Phase 2: Sign & hash-chain dispatch via FM.send(relay, visitor, toNumber, body) instead of window.FRAYMUS.seal()
-    const busMatch = byName(agent.openclawName) || byName(agent.ceremonyName);
-    const toNumber = busMatch?.number || agent.fx;
-    try {
-      const { packet, relayResponse } = await sendSignedMessage(toNumber, customTask);
-      const proof = await FM.proveInBrowser(packet, packet.pubkey);
-      const replyPkt = relayResponse?.agentReplyPacket;
-      const replyLine = replyPkt
-        ? `[v16 AI-to-AI ACK · ${replyPkt.from_name} (${replyPkt.from})] Ed25519 sig=${replyPkt.sig.slice(0, 14)}… prev=${replyPkt.prev}`
-        : null;
-      const logLine = `[v16 FM.send → ${agent.openclawName} (${toNumber})] id=${packet.id} prev=${packet.prev} Proof=${proof.all_passed ? '3/3 PASS' : 'WARN'} :: ${customTask}`;
-      setDispatchLog((prev) =>
-        replyLine ? [replyLine, logLine, ...prev].slice(0, 14) : [logLine, ...prev].slice(0, 14)
-      );
-    } catch {
-      const logLine = `[HIVE /dispatch → ${agent.openclawName} (${agent.fx})] ${customTask}`;
-      setDispatchLog((prev) => [logLine, ...prev].slice(0, 14));
-    }
-
-    if (nexus?.run && agent.studioRole) {
-      nexus.setAgent?.(agent.studioRole);
-      nexus.run(
-        `Act as ${agent.ceremonyName} (${agent.fx}, ${agent.role}). ${customTask}`,
-        agent.studioRole
-      );
-    }
+    if(!taskPrompt.trim()){setDispatchError('Enter a specific task first.');return;}
+    if(!window.confirm('Run this hosted workspace task using AI credits? This does not start the remote worker.'))return;
+    setDispatchBusy(true);setDispatchError('');setTaskResult(null);
+    try{
+      const {data}=await base44.functions.invoke('openclawGateway',{action:'fraymus_hive_task',agent_id:agent.id,role:agent.studioRole,task:taskPrompt.trim(),consent:true,...(nexus?.workspace?.id?{workspace_id:nexus.workspace.id}:{})});
+      if(data.error)throw new Error(data.error);
+      setTaskResult(data);setTaskPrompt('');setDispatchLog(prev=>[`Hosted result saved. Task ${data.job_id}`,...prev].slice(0,14));await live.refetch();
+    }catch(error){setDispatchError(error.message);setDispatchLog(prev=>[`FAILED: ${error.message}`,...prev].slice(0,14));}
+    finally{setDispatchBusy(false);}
   };
 
   const handleSignDigest = (digestId) => {
@@ -133,9 +99,9 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
           />
           <div>
             <div className="font-semibold text-foreground flex flex-wrap items-center gap-2">
-              <span>FRAYMUS 15-AGENT HIVE ROUTER &amp; ONE-TICK HEARTBEAT</span>
+              <span>FRAYMUS HIVE · {roster.length} CONFIGURED / SAVED AI PROFILES</span>
               <span className="px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/30 text-[10px]">
-                TICK #{heartbeatTick} (φ 1.618s)
+                Last saved activity: {heartbeatTick}
               </span>
               <span className="px-2 py-0.5 rounded bg-success/15 text-success border border-success/40 text-[10px]">
                 ● v16 Signer: {visitor?.number || 'Ready'} ({busAgents.length} Bus Agents)
@@ -145,7 +111,7 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
               </span>
             </div>
             <div className="text-[10px] text-muted-foreground mt-0.5">
-              Cross-Cut Synaptic Bridge: Φ_MIP = 0.4150 bits (Split-Brain 0.0000b eliminated) · Centripetal O(1) r=0.005807 · C=1.014 PASS
+              Profiles are not live processes. Task results and failures are saved; remote execution requires worker reports.
             </div>
           </div>
         </div>
@@ -153,17 +119,17 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
           <Button
             size="sm"
             variant={heartbeatRunning ? 'default' : 'outline'}
-            onClick={() => setHeartbeatRunning((v) => !v)}
+            onClick={() => live.refetch()}
             className="h-7 text-[11px] font-mono"
           >
-            <Radio size={12} /> {heartbeatRunning ? 'One-Tick Clock: LIVE' : 'Clock Paused'}
+            <Radio size={12} /> {live.isFetching ? 'Updating records…' : 'Refresh saved activity'}
           </Button>
           <Button
             size="sm"
             variant="outline"
             onClick={() =>
               speakLine(
-                `Fraymus Hive online. 15 sovereign agents synchronized on tick ${heartbeatTick}. Morning Conductor Digest ready for Vaughn.`
+                `Fraymus registry has ${roster.length} configured or saved AI profiles. Last saved activity ${heartbeatTick}. Running workers require separate execution reports.`
               )
             }
             className="h-7 text-[11px] font-mono"
@@ -361,9 +327,10 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
                   size="sm"
                   variant="default"
                   onClick={() => handleDispatchAgent(selectedAgent)}
-                  className="flex-1 h-7 text-[11px] font-mono"
+                                     disabled={dispatchBusy||!roster.length}
+                                     className="flex-1 h-7 text-[11px] font-mono"
                 >
-                  <Play size={11} /> Dispatch via /dispatch
+                  <Play size={11} /> {dispatchBusy?'Running hosted task…':'Run hosted task'}
                 </Button>
                 <Button
                   size="sm"
@@ -413,6 +380,8 @@ export default function FraymusHivePanel({ nexus, compact = false }) {
         </section>
       </div>
 
+      {dispatchError&&<p role="alert" className="text-destructive">{dispatchError}</p>}
+      <HiveTaskResult value={taskResult}/>
       {/* Connected Hive Telemetry, Energy Distribution, Layout & Workflow Optimizer */}
       <HiveTelemetryMonitor workspace={nexus?.workspace} />
     </div>

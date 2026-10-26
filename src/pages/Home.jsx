@@ -18,6 +18,7 @@ import AcademyPipelineAlignmentPanel from '@/components/nexus/learning/AcademyPi
 import SovereignMasterworkShowcase from '@/components/nexus/home/SovereignMasterworkShowcase';
 import HomeAwakeningVideoProofBanner from '@/components/nexus/home/HomeAwakeningVideoProofBanner';
 import useHomeData from '@/components/nexus/home/useHomeData';
+import FraymusLiveActivity from '@/components/nexus/monitor/FraymusLiveActivity';
 import '@/components/nexus/home/home.css';
 export default function Home(){
  const home=useHomeData();

@@ -10,6 +10,7 @@ import CrossTabMemoryBar from '@/components/nexus/CrossTabMemoryBar';
 import SovereignOsSpawnerPanel from '@/components/nexus/loosescrew/SovereignOsSpawnerPanel';
 import CounterfactualEvolutionSimulator from '@/components/nexus/spark/CounterfactualEvolutionSimulator';
 import PhiOmegaUniversalPortal from '@/components/nexus/omega/PhiOmegaUniversalPortal';
+import FraymusLiveActivity from '@/components/nexus/monitor/FraymusLiveActivity';
 
 export default function AiWorkshopOs(){
  const [showOmegaPortal,setShowOmegaPortal]=useState(true);
@@ -56,13 +57,14 @@ export default function AiWorkshopOs(){
     <Button size="sm" variant={showOmegaPortal?'default':'outline'} onClick={()=>{setShowOmegaPortal(v=>!v);if(!showOmegaPortal){setShowPreflightLab(false);setShowOsSpawner(false);setShowHive(false);setShowTelemetry(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Sparkles size={11}/>{showOmegaPortal?'Hide Φ-Omega Portal':'⚡ Φ-Omega // Optimus Prime'}</Button>
     <Button size="sm" variant={showPreflightLab?'default':'outline'} onClick={()=>{setShowPreflightLab(v=>!v);if(!showPreflightLab){setShowOmegaPortal(false);setShowOsSpawner(false);setShowHive(false);setShowTelemetry(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Activity size={11}/>{showPreflightLab?'Hide Pre-Flight & Model Lab':'🎯 Pre-Flight & Ternary Model Lab'}</Button>
     <Button size="sm" variant={showOsSpawner?'default':'outline'} onClick={()=>{setShowOsSpawner(v=>!v);if(!showOsSpawner){setShowOmegaPortal(false);setShowPreflightLab(false);setShowHive(false);setShowTelemetry(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Cpu size={11}/>{showOsSpawner?'Hide OS Engine':'⚛ Sovereign OS'}</Button>
-    <Button size="sm" variant={showHive?'default':'outline'} onClick={()=>{setShowHive(v=>!v);if(!showHive){setShowOmegaPortal(false);setShowPreflightLab(false);setShowTelemetry(false);setShowOsSpawner(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Users size={11}/>{showHive?'Hide Hive':'🐝 15-Agent Hive'}</Button>
+    <Button size="sm" variant={showHive?'default':'outline'} onClick={()=>{setShowHive(v=>!v);if(!showHive){setShowOmegaPortal(false);setShowPreflightLab(false);setShowTelemetry(false);setShowOsSpawner(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Users size={11}/>{showHive?'Hide Hive':'Agent Hive'}</Button>
     <Button size="sm" variant={showTelemetry?'default':'outline'} onClick={()=>{setShowTelemetry(v=>!v);if(!showTelemetry){setShowOmegaPortal(false);setShowPreflightLab(false);setShowHive(false);setShowOsSpawner(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Activity size={11}/>{showTelemetry?'Hide Telemetry':'RSA · RSI'}</Button>
     <Button size="sm" variant="outline" onClick={popOut} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Maximize2 size={11}/>Pop Out</Button>
     <a href="https://github.com/eyeoverthink/looseScrew" target="_blank" rel="noopener noreferrer" className="inline-flex h-7 items-center gap-1 rounded border border-primary/50 bg-selection px-2 text-[10.5px] text-primary"><ExternalLink size={11}/>GitHub</a>
    </div>
   </header>
   <CrossTabMemoryBar/>
+  <div className="shrink-0 max-h-48 overflow-auto"><FraymusLiveActivity compact/></div>
   {showOmegaPortal&&<PhiOmegaUniversalPortal onSyncToMonolith={syncSystemsToMonolith}/>}
   {showPreflightLab&&<CounterfactualEvolutionSimulator/>}
   {showOsSpawner&&<SovereignOsSpawnerPanel onSyncToMonolith={syncSystemsToMonolith}/>}
