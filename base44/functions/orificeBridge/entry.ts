@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { readFraymusPeerStatus } from '../../shared/fraymusPeerStatus.ts';
+import {handleContinuityAction} from '../../shared/fraymusContinuityActions.ts';
 import { runBicameralRelayAndLiveAiResearcher } from '../../shared/liveAiSkillsResearcherRelay.ts';
 import { loadOrComputeReputationLedger } from '../../shared/agentReputationAndOrganism.ts';
 import { syncSharedActivityFeedAndAgentComms } from '../../shared/sharedActivityAndAgentComms.ts';
@@ -35,6 +36,8 @@ export default async function(req: Request): Promise<Response> {
         queryAction ||
         (req.method === 'GET' ? 'shared_activity_feed' : 'run_bicameral_stream_and_curve_research')
     );
+
+    if (action.startsWith('continuity_')) return await handleContinuityAction(base44,user,{...body,action});
 
     if (action === 'agent_monitor_connection') {
       if (!user) return Response.json({error:'Authentication required.'},{status:401});

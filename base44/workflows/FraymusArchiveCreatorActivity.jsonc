@@ -1,0 +1,42 @@
+{
+  "name": "Fraymus Archive Creator App Activity",
+  "description": "Retain new primary-workspace event summaries and queue cross-app relay. Raw event bodies and uploads are excluded; no UI-click surveillance or builder-chat access.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "NexusEvent",
+      "events": [
+        "create"
+      ]
+    },
+    "condition": "${ .trigger.data.owner_id == \"6ad00af54909c671e73bb83d\" and .trigger.data.workspace_id == \"6ad00c80d59de24395665dee\" and ((.trigger.data.kind // \"\") | startswith(\"continuity.\") | not) }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "fraymus_archive_creator_activity",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "archive_creator_event": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "orificeBridge",
+            "args": {
+              "action": "continuity_capture_event",
+              "workspace_id": "${ .trigger.data.workspace_id }",
+              "source_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Archive app event summary",
+            "description": "Durable creator activity record; no fabricated agent work"
+          }
+        }
+      }
+    ]
+  }
+}
