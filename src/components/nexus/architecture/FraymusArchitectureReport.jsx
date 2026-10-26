@@ -1,0 +1,8 @@
+import ReactMarkdown from 'react-markdown';
+import report from '@/components/nexus/architecture/fraymusArchitectureReview.md?raw';
+import kit from '@/components/nexus/architecture/fraymusCloneKit.sh?raw';
+import {Button} from '@/components/ui/button';
+function download(text,name,type){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+export default function FraymusArchitectureReport(){
+ return <section className="space-y-5"><div className="flex flex-wrap gap-3"><Button variant="outline" onClick={()=>download(report,'fraymus-engineering-review.md','text/markdown')}>Download Review</Button><Button onClick={()=>download(kit,'fraymus-clone-kit.sh','text/plain')}>Download Pinned Clone Kit</Button></div><p className="text-muted-foreground">The kit clones all three repositories on your own computer at the reviewed commits. It does not install dependencies or start services. No checkout has been made inside this hosted project.</p><div className="overflow-x-auto text-sm leading-7 [&_h1]:text-2xl [&_h2]:text-xl [&_h2]:mt-8 [&_h3]:text-base [&_h3]:mt-6 [&_p]:my-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-2 [&_table]:w-full [&_td]:border [&_td]:p-3 [&_th]:border [&_th]:p-3 [&_code]:break-all [&_code]:text-link"><ReactMarkdown>{report}</ReactMarkdown></div></section>;
+}

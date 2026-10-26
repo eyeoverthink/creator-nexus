@@ -54,6 +54,7 @@ export default function AiWorkshopOs(){
     <strong className="text-primary truncate">F.R.A.Y.M.U.S. // 3D Monolith &amp; Sovereign OS Engine</strong>
    </div>
    <div className="flex flex-wrap items-center gap-1.5">
+    <Link to="/fraymus-architecture" className="inline-flex h-7 items-center rounded border border-border px-2.5 text-link">Agent Architecture</Link>
     <Button size="sm" variant={showOmegaPortal?'default':'outline'} onClick={()=>{setShowOmegaPortal(v=>!v);if(!showOmegaPortal){setShowPreflightLab(false);setShowOsSpawner(false);setShowHive(false);setShowTelemetry(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Sparkles size={11}/>{showOmegaPortal?'Hide Φ-Omega Portal':'⚡ Φ-Omega // Optimus Prime'}</Button>
     <Button size="sm" variant={showPreflightLab?'default':'outline'} onClick={()=>{setShowPreflightLab(v=>!v);if(!showPreflightLab){setShowOmegaPortal(false);setShowOsSpawner(false);setShowHive(false);setShowTelemetry(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Activity size={11}/>{showPreflightLab?'Hide Pre-Flight & Model Lab':'🎯 Pre-Flight & Ternary Model Lab'}</Button>
     <Button size="sm" variant={showOsSpawner?'default':'outline'} onClick={()=>{setShowOsSpawner(v=>!v);if(!showOsSpawner){setShowOmegaPortal(false);setShowPreflightLab(false);setShowHive(false);setShowTelemetry(false);}}} className="h-7 font-mono text-[10.5px] px-2.5 gap-1"><Cpu size={11}/>{showOsSpawner?'Hide OS Engine':'⚛ Sovereign OS'}</Button>

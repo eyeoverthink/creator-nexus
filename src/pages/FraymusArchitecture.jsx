@@ -1,0 +1,14 @@
+import {useState} from 'react';
+import {Link} from 'react-router-dom';
+import {useQuery} from '@tanstack/react-query';
+import {base44} from '@/api/base44Client';
+import {Button} from '@/components/ui/button';
+import FraymusArchitectureReport from '@/components/nexus/architecture/FraymusArchitectureReport';
+import FraymusSourceLedger from '@/components/nexus/architecture/FraymusSourceLedger';
+import FraymusArchitectAgent from '@/components/nexus/architecture/FraymusArchitectAgent';
+import FraymusRgbaLab from '@/components/nexus/architecture/FraymusRgbaLab';
+export default function FraymusArchitecture(){
+ const [tab,setTab]=useState('review');
+ const query=useQuery({queryKey:['fraymus-architecture-outline'],queryFn:async()=>{const {data}=await base44.functions.invoke('fraymusArchitect',{action:'outline'});if(data.error)throw new Error(data.error);return data;},retry:false,staleTime:300000});
+ return <main className="min-h-screen bg-background text-foreground"><div className="max-w-6xl mx-auto p-5 md:p-10 space-y-7"><header className="space-y-4"><Link to="/ai-workshop" className="text-link text-sm">Back to AI Workshop</Link><div><p className="font-mono text-xs text-muted-foreground tracking-widest">FRAYMUS / ENGINEERING WORKSPACE</p><h1 className="text-3xl mt-3">Unified Agency Architecture</h1><p className="text-muted-foreground mt-3 max-w-3xl">Chandra + voice + partner, mapped to the existing Nexus engines. Source-backed decisions, bounded model work, and measurable experiments.</p></div></header>{query.isPending?<p role="status">Loading the reviewed source ledger…</p>:query.isError?<div role="alert"><p className="text-destructive">{query.error.response?.data?.error||query.error.message}</p><Button className="mt-3" variant="outline" onClick={()=>query.refetch()}>Retry Access</Button></div>:<><p className="border border-border rounded p-4 text-sm text-muted-foreground">Read-only foundation. No local services running, repositories cloned, shared records written or autonomous code changes claimed.</p><nav aria-label="Architecture sections" className="flex flex-wrap gap-2 border-b border-border pb-4">{[['review','Review & Clone Kit'],['sources','Source Ledger'],['agent','Engineering Agent'],['rgba','RGBA Experiment']].map(([id,label])=><Button key={id} variant={tab===id?'default':'outline'} aria-pressed={tab===id} onClick={()=>setTab(id)}>{label}</Button>)}</nav>{tab==='review'?<FraymusArchitectureReport/>:tab==='sources'?<FraymusSourceLedger sources={query.data.sources} limits={query.data.limits}/>:tab==='agent'?<FraymusArchitectAgent/>:<FraymusRgbaLab/>}</>}</div></main>;
+}
