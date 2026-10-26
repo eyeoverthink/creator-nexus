@@ -13,7 +13,7 @@ function projection(state,packed){
 export function advanceAdaptiveGraph(state,input,control,packed=null){
  validateAdaptiveGraph(state);const byId=new Map(state.neurons.map(n=>[n.id,n]));
  for(const s of input.stimuli)if(!byId.has(s.neuron))throw new Error('Stimulus references an unknown neuron.');
- const hdc=projection(state,packed),events=[];let changed=0,spikeCount=0,arrivals=0;
+ const hdc=projection(state,packed),events=[];for(const [key,value] of hdc)hdc.set(key,adaptiveClamp(value*(control.attention_gain??1),0,6));let changed=0,spikeCount=0,arrivals=0;
  for(let tick=0;tick<input.ticks;tick++){
   state.clock++;const current=new Map(hdc),due=state.queue.filter(q=>q.at===state.clock);state.queue=state.queue.filter(q=>q.at>state.clock);
   for(const e of state.edges)e.eligibility*=Math.exp(-1/20);
