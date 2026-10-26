@@ -74,6 +74,7 @@ import {
 import {
   syncSharedActivityFeedAndAgentComms,
 } from '../../shared/sharedActivityAndAgentComms.ts';
+import {runArtifactForensics} from '../../shared/fraymusArtifactForensics.ts';
 
 function slugify(str) {
   return (
@@ -94,6 +95,13 @@ export default async function(req) {
 
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const action = String(body.action || (req.method === 'GET' ? 'orifice_spec' : 'status'));
+    if (action === 'artifact_forensics') {
+      if (!user) return Response.json({error:'Sign in required'}, {status:401});
+      const workspaceId=String(body.workspace_id||'');
+      if(!/^[a-f0-9]{24}$/i.test(workspaceId))return Response.json({error:'Provide a valid workspace_id.'},{status:400});
+      const result=await runArtifactForensics(base44,user,workspaceId,body.input||{});
+      return Response.json(result,{status:result.status||200});
+    }
     if (action === 'fraymus_codec' || action === 'fraymus_methods') {
       if (!user) return Response.json({error:'Sign in required'}, {status:401});
       try {
