@@ -4,6 +4,7 @@ import {handleNeedleWorker} from '../../shared/fraymusNeedleWorker.ts';
 import {handleNeedleUser} from '../../shared/fraymusNeedleUser.ts';
 import {readInput} from '../../shared/runnerBridge.ts';
 import {executeFraymusAssociative} from '../../shared/fraymusAssociativeMemory.ts';
+import {digestAdaptive} from '../../shared/fraymusAdaptiveSchema.ts';
 // Adaptive graph, HDC replay and affective learning share executeFraymusBrain with agent tools.
 export default async function(req){
  try{
@@ -21,6 +22,7 @@ export default async function(req){
   }
   if(!a||!['run','history','read'].includes(a.action))return Response.json({error:'Choose run, history or read.'},{status:400});
   for(const key of ['workspace_id','state_id','cursor'])if(a[key]!==undefined&&(typeof a[key]!=='string'||!a[key]||a[key].length>2000))return Response.json({error:`Invalid ${key}.`},{status:400});
+   for(const key of ['workspace_id','state_id'])if(a[key]!==undefined&&!/^[a-f0-9]{24}$/i.test(a[key]))return Response.json({error:`Invalid ${key} record ID.`},{status:400});
   const page=await base44.entities.NexusWorkspace.filter({owner_id:user.id,...(a.workspace_id?{id:a.workspace_id}:{})},{sort:'created_date',limit:1});
   const workspace=page.items[0];if(!workspace)return Response.json({error:'Create or select your own workspace before using Brain tools.'},{status:404});
   const scope={owner_id:user.id,workspace_id:workspace.id,project:'Fraymus Brain',source_entity:'FraymusBrainState'};
@@ -32,7 +34,9 @@ export default async function(req){
    if(!a.state_id)return Response.json({error:'Provide a saved result ID.'},{status:400});
    const records=await base44.entities.NexusAsset.filter({...scope,id:a.state_id},{limit:1});
    const record=records.items[0];if(!record)return Response.json({error:'Saved result not found in this workspace.'},{status:404});
-   const saved=JSON.parse(record.body);return Response.json({result:{...saved.report,state_id:record.id,committed:true}});
+   const saved=JSON.parse(record.body);
+    if(saved.report.adaptive_state&&await digestAdaptive(saved.report.adaptive_state)!==saved.report.adaptive_state_sha256)return Response.json({error:'Adaptive state digest changed.'},{status:400});
+    return Response.json({result:{...saved.report,state_id:record.id,committed:true}});
   }
   const result=await executeFraymusBrain(base44,user,workspace.id,a.input);
   return Response.json({result,...(result.error?{error:result.error}:{})},{status:result.error?400:200});
