@@ -8,6 +8,7 @@ import {digestAdaptive} from '../../shared/fraymusAdaptiveSchema.ts';
 import {readFraymusBrainReport} from '../../shared/fraymusBrainStorage.ts';
 import {ADAPTIVE_LIMITS} from '../../shared/fraymusAdaptiveLimits.ts';
 import {handleVocalAnalysis} from '../../shared/fraymusVocalAnalysis.ts';
+import {runArtifactForensics} from '../../shared/fraymusArtifactForensics.ts';
 // Adaptive graph, HDC replay and affective learning share executeFraymusBrain with agent tools.
 export default async function(req){
  try{
@@ -20,6 +21,11 @@ export default async function(req){
   if(!user)return Response.json({error:'Sign in required.'},{status:401});
   if(typeof a.action==='string'&&a.action.startsWith('needle_'))return await handleNeedleUser(base44,user,a);
    if(typeof a.action==='string'&&a.action.startsWith('emotion_'))return await handleVocalAnalysis(base44,user,a);
+  if(a.action==='artifact_forensics'){
+   if(typeof a.workspace_id!=='string'||!/^[a-f0-9]{24}$/i.test(a.workspace_id))return Response.json({error:'Provide a valid workspace_id.'},{status:400});
+   const result=await runArtifactForensics(base44,user,a.workspace_id,a.input||{});
+   return Response.json(result,{status:result.status||200});
+  }
   if(['memory_learn','memory_recall','memory_preview'].includes(a.action)){
    const result=await executeFraymusAssociative(base44,user,a.workspace_id,{text:a.text,label:a.label,minimum_similarity:a.minimum_similarity,memory_action:a.action==='memory_recall'?'recall':'learn',commit:a.action==='memory_learn'});
    return Response.json({result,...(result.error?{error:result.error}:{})},{status:result.status_code||200});
