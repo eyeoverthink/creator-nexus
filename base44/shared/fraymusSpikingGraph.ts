@@ -3,17 +3,17 @@ import {unpackFraymusAssociative} from './fraymusAssociativeVectors.ts';
 export function validateAdaptiveGraph(state){
  const ids=new Set(state.neurons.map(n=>n.id));if(ids.size!==state.neurons.length)throw new Error('Neuron IDs must be unique.');
  const pairs=new Set();for(const e of state.edges){const pair=JSON.stringify([e.source,e.target]);if(!ids.has(e.source)||!ids.has(e.target)||e.source===e.target||pairs.has(pair))throw new Error('Edges require distinct known neurons and unique source-target pairs.');pairs.add(pair);}
- if(state.neurons.some(n=>n.last_spike!==null&&n.last_spike>state.clock)||state.edges.some(e=>e.last_arrival!==null&&e.last_arrival>state.clock))throw new Error('Graph event time exceeds its clock.');
+ if(state.neurons.some(n=>n.last_spike!==null&&n.last_spike>state.clock)||state.edges.some(e=>e.last_arrival!==null&&e.last_arrival>state.clock)||state.sensory_trace?.at>state.clock)throw new Error('Graph event time exceeds its clock.');
  if(state.queue.some(q=>q.edge>=state.edges.length||q.at<=state.clock||q.at>state.clock+8))throw new Error('Invalid delayed-spike queue.');
 }
-function projection(state,packed){
+function projection(state,packed,threshold=6){
  if(!packed)return new Map();const bytes=unpackFraymusAssociative(packed),drive=new Map();
- state.neurons.forEach((n,i)=>{let active=0;for(let k=0;k<8;k++){const bit=(i*131+k*509)%4096;active+=(bytes[bit>>3]>>(bit&7))&1;}drive.set(n.id,active>=6?4:0);});return drive;
+ state.neurons.forEach((n,i)=>{let active=0;for(let k=0;k<8;k++){const bit=(i*131+k*509)%4096;active+=(bytes[bit>>3]>>(bit&7))&1;}drive.set(n.id,active>=threshold?4:0);});return drive;
 }
 export function advanceAdaptiveGraph(state,input,control,packed=null){
  validateAdaptiveGraph(state);const byId=new Map(state.neurons.map(n=>[n.id,n]));
  for(const s of input.stimuli)if(!byId.has(s.neuron))throw new Error('Stimulus references an unknown neuron.');
- const hdc=projection(state,packed),events=[];for(const [key,value] of hdc)hdc.set(key,adaptiveClamp(value*(control.attention_gain??1),0,6));let changed=0,spikeCount=0,arrivals=0;
+ const hdc=projection(state,packed,control.focus_threshold??6),events=[];for(const [key,value] of hdc)hdc.set(key,adaptiveClamp(value*(control.attention_gain??1),0,6));let changed=0,spikeCount=0,arrivals=0;
  for(let tick=0;tick<input.ticks;tick++){
   state.clock++;const current=new Map(hdc),due=state.queue.filter(q=>q.at===state.clock);state.queue=state.queue.filter(q=>q.at>state.clock);
   for(const e of state.edges)e.eligibility*=Math.exp(-1/20);
