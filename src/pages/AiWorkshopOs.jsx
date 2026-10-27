@@ -44,8 +44,8 @@ export default function AiWorkshopOs(){
   if(!w)return;
   w.document.open();w.document.write(AI_WORKSHOP_OS_HTML);w.document.close();
  };
- return <div className="fixed inset-0 bg-background flex flex-col">
-  <header className="min-h-10 py-1.5 px-3 bg-card border-b border-border flex flex-wrap items-center justify-between gap-2 font-mono text-xs z-20">
+ return <div className="fixed inset-0 bg-background overflow-y-auto">
+  <header className="md:sticky md:top-0 z-30 py-1.5 px-3 bg-card border-b border-border flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
    <div className="flex flex-wrap items-center gap-2.5">
     <Link to="/" className="inline-flex items-center gap-1 text-link">Partner workspace</Link>
     <Link to="/studio" className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"><Layers3 size={13}/>Studio</Link>
@@ -72,6 +72,6 @@ export default function AiWorkshopOs(){
   {showOsSpawner&&<SovereignOsSpawnerPanel onSyncToMonolith={syncSystemsToMonolith}/>}
   {showHive&&<div className="max-h-[58vh] overflow-y-auto border-b border-border bg-background/95 z-20"><FraymusHivePanel/></div>}
   {showTelemetry&&<div className="max-h-[54vh] overflow-y-auto border-b border-border bg-background/95 p-4 z-20"><FraymusStudioTelemetry/></div>}
-  <iframe ref={iframeRef} onLoad={()=>syncSystemsToMonolith(latestSystemsRef.current,null)} title="AI WORKSHOP OS & F.R.A.Y.M.U.S." srcDoc={AI_WORKSHOP_OS_HTML} className="flex-1 w-full border-0"/>
+  <iframe ref={iframeRef} onLoad={()=>syncSystemsToMonolith(latestSystemsRef.current,null)} title="AI WORKSHOP OS & F.R.A.Y.M.U.S." srcDoc={AI_WORKSHOP_OS_HTML} className="block w-full h-[calc(100dvh-4.5rem)] min-h-[560px] border-0"/>
  </div>;
 }

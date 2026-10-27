@@ -157,7 +157,7 @@ export default function SovereignTelemetryDeck({
       {/* Top Status Strip: SSE Stream Status + Somatic Markers Badge + Dopamine RPE Indicator */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* 4b. SSE Connection Status Indicator */}
-        <div className="p-3.5 rounded-md border border-border bg-card flex items-center justify-between gap-3">
+        <div className="p-3.5 rounded-md border border-border bg-card flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <span className="relative flex h-3 w-3 shrink-0">
               {connectionStatus === 'connected' && (
@@ -185,7 +185,7 @@ export default function SovereignTelemetryDeck({
         </div>
 
         {/* 3d. Somatic Marker Count + Emotion Tick/Event Controls */}
-        <div className="p-3.5 rounded-md border border-border bg-card flex items-center justify-between gap-3">
+        <div className="p-3.5 rounded-md border border-border bg-card flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-[10px] font-mono text-muted-foreground uppercase">DAMASIO LAYER 5</span>
@@ -247,7 +247,7 @@ export default function SovereignTelemetryDeck({
               style={{ width: `${Math.min(100, Math.max(8, Math.round(((dopamineVal + 1) / 2) * 100)))}%` }}
             />
           </div>
-          <div className="flex justify-between text-[10px] font-mono text-muted-foreground">
+          <div className="flex flex-wrap justify-between gap-x-3 gap-y-0.5 text-[10px] font-mono text-muted-foreground">
             <span>Valence: {valence.toFixed(2)}</span>
             <span>Arousal: {arousal.toFixed(2)}</span>
             <span>Coherence: {Number(bodyVec.coherence ?? 0.95).toFixed(2)}</span>
@@ -259,7 +259,7 @@ export default function SovereignTelemetryDeck({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* 3a. Emotion Ring */}
         <div className="lg:col-span-4 p-4 rounded-md border border-border bg-card flex flex-col justify-between space-y-3">
-          <div className="flex items-center justify-between border-b border-border pb-2 text-xs font-mono">
+          <div className="flex items-center justify-between gap-2 border-b border-border pb-2 text-xs font-mono">
             <span className="font-semibold text-primary flex items-center gap-1.5">
               <BrainCircuit size={14} /> EMOTION RING (OCC / BARRETT)
             </span>
@@ -305,8 +305,10 @@ export default function SovereignTelemetryDeck({
                 {dominantName}
               </span>
               <span className="text-lg font-mono font-semibold text-foreground">{dominantPct}%</span>
-              <span className="text-[10px] font-mono text-muted-foreground mt-0.5">
-                Valence: {valence.toFixed(2)} | Arousal: {arousal.toFixed(2)}
+              <span className="text-[9.5px] leading-tight font-mono text-muted-foreground mt-0.5">
+                Valence: {valence.toFixed(2)}
+                <br />
+                Arousal: {arousal.toFixed(2)}
               </span>
             </div>
           </div>
@@ -353,7 +355,7 @@ export default function SovereignTelemetryDeck({
 
         {/* 3b. Steering Dials (7 Horizontal Gauge Bars) */}
         <div className="lg:col-span-4 p-4 rounded-md border border-border bg-card flex flex-col justify-between space-y-3">
-          <div className="flex items-center justify-between border-b border-border pb-2 text-xs font-mono">
+          <div className="flex items-center justify-between gap-2 border-b border-border pb-2 text-xs font-mono">
             <span className="font-semibold text-primary flex items-center gap-1.5">
               <Sliders size={14} /> STEERING DIALS (LAYER 4 MODULATION)
             </span>
@@ -385,7 +387,7 @@ export default function SovereignTelemetryDeck({
 
         {/* 3c. Emotion-Steered Mutation Strategy Panel */}
         <div className="lg:col-span-4 p-4 rounded-md border border-border bg-card flex flex-col justify-between space-y-3 font-mono">
-          <div className="flex items-center justify-between border-b border-border pb-2 text-xs">
+          <div className="flex items-center justify-between gap-2 border-b border-border pb-2 text-xs">
             <span className="font-semibold text-primary flex items-center gap-1.5">
               <GitMerge size={14} /> EMOTION-STEERED MUTATION STRATEGY
             </span>

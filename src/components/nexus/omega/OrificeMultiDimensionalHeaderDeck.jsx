@@ -253,7 +253,7 @@ export default function OrificeMultiDimensionalHeaderDeck({
       {/* 3-Panel Multi-Dimensional Graphical & Nodular Display */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
         {/* Panel 1 (5 cols): Interactive Nodular Mesh Topology Graph */}
-        <div className="lg:col-span-5 p-3 rounded border border-border bg-background space-y-2">
+        <div className="lg:col-span-6 xl:col-span-4 p-3 rounded border border-border bg-background space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold text-primary flex items-center gap-1.5">
               <Orbit size={13} /> REAL-TIME NODULAR MESH TOPOLOGY (CLICK NODE)
@@ -379,8 +379,8 @@ export default function OrificeMultiDimensionalHeaderDeck({
         </div>
 
         {/* Panel 2 (3 cols): 7-Axis Multi-Dimensional Radar */}
-        <div className="lg:col-span-3 p-3 rounded border border-border bg-background flex flex-col justify-between space-y-2">
-          <div className="flex items-center justify-between">
+        <div className="lg:col-span-6 xl:col-span-4 p-3 rounded border border-border bg-background flex flex-col justify-between space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
             <span className="text-[11px] font-semibold text-caution">
               7-DIMENSIONAL STATE RADAR
             </span>
@@ -389,7 +389,7 @@ export default function OrificeMultiDimensionalHeaderDeck({
 
           <div className="h-52 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+              <RadarChart cx="56%" cy="50%" outerRadius="45%" data={radarData}>
                 <PolarGrid stroke="#333333" />
                 <PolarAngleAxis
                   dataKey="axis"
@@ -426,8 +426,8 @@ export default function OrificeMultiDimensionalHeaderDeck({
         </div>
 
         {/* Panel 3 (4 cols): Real-Time Statistical Convergence & Entropy Wave */}
-        <div className="lg:col-span-4 p-3 rounded border border-border bg-background flex flex-col justify-between space-y-2">
-          <div className="flex items-center justify-between">
+        <div className="lg:col-span-12 xl:col-span-4 p-3 rounded border border-border bg-background flex flex-col justify-between space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
             <span className="text-[11px] font-semibold text-success">
               STATISTICAL ENTROPY &amp; LOSS WAVE
             </span>

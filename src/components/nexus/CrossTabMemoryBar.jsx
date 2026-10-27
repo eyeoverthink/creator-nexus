@@ -173,8 +173,8 @@ export default function CrossTabMemoryBar({ nexus, workspaceId }) {
 
   return (
     <div className="border-b border-border bg-card/95 px-4 py-1.5 font-mono text-[11px] text-foreground z-20">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2 min-w-0">
+      <div className="flex flex-wrap md:flex-nowrap items-center justify-between gap-2">
+        <div className="flex flex-1 items-center gap-2 min-w-0">
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/30 text-[10px] font-semibold shrink-0">
             <Radio size={11} className="animate-pulse" />
             CROSS-TAB MEMORY ({windowsList.length} {windowsList.length === 1 ? 'WINDOW' : 'WINDOWS'})
@@ -195,7 +195,7 @@ export default function CrossTabMemoryBar({ nexus, workspaceId }) {
               </button>
             </span>
           ) : (
-            <span className="text-[10px] text-muted-foreground hidden md:inline">
+            <span className="text-[10px] text-muted-foreground hidden md:block min-w-0 truncate">
               Highlight text or edit in any tab/window to share live with all agents
             </span>
           )}
@@ -209,7 +209,7 @@ export default function CrossTabMemoryBar({ nexus, workspaceId }) {
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
           <select
             aria-label="Cross-tab agent"
             value={selectedAgent}
