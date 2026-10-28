@@ -8,7 +8,7 @@ export const PRESETS=[
 ];
 export async function loadImage(src){
  const blob=typeof src==='string'?await (await fetch(src)).blob():src;
- const bitmap=await createImageBitmap(blob,{imageOrientation:'from-image'});
+ const bitmap=await window.createImageBitmap(blob,{imageOrientation:'from-image'});
  return {bitmap,blob};
 }
 function resized(bitmap,{width,height,fit}){

@@ -70,7 +70,7 @@ export async function speak(db, { ownerId, workspaceId, text, voiceId, modelId, 
   const clean = typeof text === 'string' ? text.trim() : '';
   if (!clean) throw new VoiceError('Enter some text to speak.');
   if (clean.length > MAX_SPEAK_CHARS) throw new VoiceError(`Text is too long: ${clean.length} characters (max ${MAX_SPEAK_CHARS}).`);
-  const voice = voiceId ? String(voiceId) : secrets.get('ELEVENLABS_VOICE_ID') || '';
+  const voice = voiceId ? String(voiceId) : (await voiceProfile(db, ownerId))?.agent_voice_id || secrets.get('ELEVENLABS_VOICE_ID') || '';
   if (!VOICE_RE.test(voice)) throw new VoiceError('Choose an ElevenLabs voice.');
   const model = modelId ? String(modelId) : secrets.get('ELEVENLABS_MODEL') || 'eleven_multilingual_v2';
   if (!MODEL_RE.test(model)) throw new VoiceError('Choose an ElevenLabs model.');
@@ -111,4 +111,48 @@ export async function speak(db, { ownerId, workspaceId, text, voiceId, modelId, 
     signed_url,
     expires_in: 3600,
   };
+}
+
+// The owner's saved agent voice (used whenever no voice is chosen explicitly).
+export async function voiceProfile(db, ownerId) {
+  const page = await db.entities.NexusVoiceProfile.filter({ owner_id: ownerId }, { limit: 1 });
+  return page.items[0] || null;
+}
+
+export async function setAgentVoice(db, ownerId, voiceId, knownName) {
+  const id = String(voiceId || '');
+  if (!VOICE_RE.test(id)) throw new VoiceError('Choose an ElevenLabs voice.');
+  const name = knownName || (await listVoices()).find((v) => v.voice_id === id)?.name;
+  if (!name) throw new VoiceError('That voice is not in your ElevenLabs account.', 404);
+  const patch = { agent_voice_id: id, agent_voice_name: String(name).slice(0, 100) };
+  const current = await voiceProfile(db, ownerId);
+  if (current) await db.entities.NexusVoiceProfile.update(current.id, patch);
+  else await db.entities.NexusVoiceProfile.create({ owner_id: ownerId, ...patch });
+  return patch;
+}
+
+// Instant voice clone from the owner's privately uploaded recordings.
+export async function cloneVoice(db, { name, description, fileUris, removeNoise }) {
+  const clean = typeof name === 'string' ? name.trim().slice(0, 60) : '';
+  if (!clean) throw new VoiceError('Give your voice a name.');
+  const uris = Array.isArray(fileUris) ? fileUris.filter((u) => typeof u === 'string' && u && u.length <= 500 && !/^https?:/i.test(u)) : [];
+  if (!uris.length || uris.length > 5) throw new VoiceError('Upload 1 to 5 recordings of your voice.');
+  const form = new FormData();
+  form.append('name', clean);
+  if (typeof description === 'string' && description.trim()) form.append('description', description.trim().slice(0, 300));
+  form.append('remove_background_noise', removeNoise ? 'true' : 'false');
+  let total = 0;
+  for (const [i, uri] of uris.entries()) {
+    const { signed_url } = await db.integrations.Core.CreateFileSignedUrl({ file_uri: uri, expires_in: 600 });
+    const res = await fetch(signed_url, { signal: AbortSignal.timeout(60000) });
+    if (!res.ok) throw new VoiceError('One of the recordings could not be read. Upload it again.');
+    const blob = await res.blob();
+    total += blob.size;
+    if (blob.size > 25000000 || total > 60000000) throw new VoiceError('Recordings are too large: keep each under 25 MB.');
+    form.append('files', blob, uri.split('/').pop() || `sample-${i + 1}.mp3`);
+  }
+  const res = await request('/v1/voices/add', { method: 'POST', body: form }, 180000);
+  const data = await res.json();
+  if (!data.voice_id) throw new VoiceError('ElevenLabs did not return a voice.', 502);
+  return { voice_id: data.voice_id, name: clean, requires_verification: !!data.requires_verification };
 }

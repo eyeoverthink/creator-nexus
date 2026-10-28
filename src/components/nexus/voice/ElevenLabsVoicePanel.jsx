@@ -4,13 +4,15 @@ import {Button} from '@/components/ui/button';
 import useElevenLabs,{voiceError} from '@/components/nexus/voice/useElevenLabs';
 import ElevenLabsQuota from '@/components/nexus/voice/ElevenLabsQuota';
 import ElevenLabsResult from '@/components/nexus/voice/ElevenLabsResult';
+import AgentVoicePicker from '@/components/nexus/voice/AgentVoicePicker';
+import VoiceClonePanel from '@/components/nexus/voice/VoiceClonePanel';
 const field='mt-1 w-full rounded border border-input bg-card p-2 text-sm text-foreground';
 const MAX=2500;
 export default function ElevenLabsVoicePanel({workspaceId,initialText=''}){
- const {status,voices,speak}=useElevenLabs(workspaceId);
+ const {status,voices,speak,setAgentVoice,clone}=useElevenLabs(workspaceId);
  const [text,setText]=useState(initialText.slice(0,MAX)),[voiceId,setVoiceId]=useState(''),[modelId,setModelId]=useState(''),[title,setTitle]=useState('');
  const models=status.data?.models,left=status.data?.characters_left;
- useEffect(()=>{if(!voiceId&&voices.data?.length)setVoiceId((voices.data.find(v=>v.is_default)||voices.data[0]).voice_id);},[voices.data,voiceId]);
+ useEffect(()=>{if(!voiceId&&voices.data?.length)setVoiceId((voices.data.find(v=>v.is_agent_voice)||voices.data.find(v=>v.is_default)||voices.data[0]).voice_id);},[voices.data,voiceId]);
  useEffect(()=>{if(!modelId&&models?.length)setModelId((models.find(m=>m.is_default)||models[0]).model_id);},[models,modelId]);
  const submit=e=>{e.preventDefault();speak.mutate({text,voice_id:voiceId,model_id:modelId,title});};
  return <section aria-label="ElevenLabs voice" className="max-w-3xl space-y-4">
@@ -29,5 +31,7 @@ export default function ElevenLabsVoicePanel({workspaceId,initialText=''}){
    <Button type="submit" disabled={speak.isPending||!text.trim()||!voiceId||!modelId}>{speak.isPending?<Loader2 className="animate-spin"/>:<Mic/>}{speak.isPending?'Generating voice…':'Generate voice'}</Button>
   </form>
   {speak.data&&<ElevenLabsResult result={speak.data}/>}
+  <AgentVoicePicker voices={voices} setAgentVoice={setAgentVoice}/>
+  <VoiceClonePanel clone={clone} onCloned={d=>setVoiceId(d.voice_id)}/>
  </section>;
 }

@@ -1,0 +1,50 @@
+{
+  "name": "NexusVoiceProfile",
+  "type": "object",
+  "description": "The owner's ElevenLabs agent voice: the voice the app's agents, workflows and remote API speak with by default (for example a clone of the owner's own voice). Written only by the server.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "agent_voice_id": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "agent_voice_name": {
+      "type": "string",
+      "maxLength": 100
+    }
+  },
+  "required": [
+    "owner_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
