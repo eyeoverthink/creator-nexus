@@ -1,0 +1,3 @@
+export default function OptionChips({options,value,onChange,label}){
+ return <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">{options.map(o=><button key={o.id} type="button" role="radio" aria-checked={value===o.id} onClick={()=>onChange(o.id)} className={value===o.id?'px-3 py-2 rounded border border-primary bg-selection text-left text-sm':'px-3 py-2 rounded border border-border bg-card text-left text-sm hover:bg-hover'}><span className="block">{o.label}</span>{o.note&&<span className="block text-xs text-muted-foreground">{o.note}</span>}</button>)}</div>;
+}

@@ -23,7 +23,15 @@ async function readLimited(res, limit) {
     size += value.length;
   }
   reader.cancel().catch(() => {});
-  return new TextDecoder().decode(new Uint8Array(chunks.flatMap((c) => [...c])).slice(0, limit));
+  const out = new Uint8Array(Math.min(size, limit));
+  let offset = 0;
+  for (const c of chunks) {
+    const part = c.subarray(0, out.length - offset);
+    out.set(part, offset);
+    offset += part.length;
+    if (offset >= out.length) break;
+  }
+  return new TextDecoder().decode(out);
 }
 
 async function fetchText(raw, limit) {

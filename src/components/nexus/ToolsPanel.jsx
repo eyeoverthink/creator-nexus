@@ -120,7 +120,7 @@ function VoiceTab({workspaceId}) {
   );
 }
 
-function RenderTab({workspaceId}) {
+export function RenderTab({workspaceId}) {
   const [narration, setNarration] = useState('');
   const [style, setStyle] = useState('midnight');
   const [voice, setVoice] = useState('af_heart');
