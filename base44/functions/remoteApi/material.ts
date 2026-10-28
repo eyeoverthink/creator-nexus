@@ -24,7 +24,7 @@ export const MATERIAL = {
     entity: 'NexusEvent',
     label: 'Rendered videos & voice audio',
     query: { kind: { $in: ['job.video', 'job.audio'] } },
-    files: (r) => { const b = parse(r.body); return [['file_uri', b?.file_uri, b?.file_name]]; },
+    files: (r) => { const b = parse(r.body); return [['file_uri', b?.file_uri, b?.file_name], ['video_url', b?.video_url]]; },
   },
   drafts: { entity: 'NexusDraft', label: 'Drafts & scripts' },
   productions: {

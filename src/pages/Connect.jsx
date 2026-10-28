@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Sidebar from '@/components/nexus/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Copy, Check, Terminal, ShieldCheck, RefreshCw, ArrowLeft } from 'lucide-react';
+import RemoteAccessSection from '@/components/nexus/remote/RemoteAccessSection';
 import '@/components/nexus/theme.css';
 
 const CLIENT_TABS = [
@@ -179,6 +180,8 @@ export default function Connect() {
             </p>
           </div>
         </section>
+
+        <RemoteAccessSection />
       </main>
     </div>
   );

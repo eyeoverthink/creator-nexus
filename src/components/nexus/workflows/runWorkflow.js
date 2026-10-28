@@ -33,6 +33,7 @@ export async function runWorkflow({workflow,workspace,lookup,onStep}){
    if(entry.type==='input')out=node.config.text;
    else if(entry.kind==='guidance')out=entry.instructions;
    else if(entry.type==='output')out=text;
+   else if(entry.type==='tool:elevenlabs'){const {data}=await base44.functions.invoke('elevenLabsVoice',{action:'speak',text,workspace_id:workspace.id,title:node.config?.label||''});out=`Saved voice clip “${data.title}” to your Library (${data.characters} characters).`;}
    else{draft=draft||await workflowDraft(workspace);const {data}=await base44.functions.invoke('nexusAgent',{agent:entry.agent,draft_id:draft.id,task:node.config.task.slice(0,2000),consent:true,context:{workflow_input:text.slice(0,20000),workflow_guidance:guidance}});if(data?.error)throw new Error(data.error);out=[data.result.title,data.result.body,...(data.result.ideas||[]).map(x=>`• ${x.title}: ${x.body}`)].filter(Boolean).join('\n\n')||data.result.summary;}
    outputs[node.id]=out||'';set(i,{status:'completed',output:String(out||'').slice(0,8000)});await save({steps});
   }catch(e){const msg=e.response?.data?.error||e.message;set(i,{status:'failed',error:msg});steps.slice(i+1).forEach((_,j)=>set(i+1+j,{status:'skipped'}));await save({steps,status:'failed',error:msg.slice(0,1000)});return;}
