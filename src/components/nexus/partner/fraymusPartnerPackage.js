@@ -28,5 +28,5 @@ export async function readPartnerPackage(file,current){
   return {id:crypto.randomUUID(),title:boundedText(item.title,200),type:item.type,mime,body:boundedText(item.body||'',100000),blob,created_at:new Date().toISOString()};});
  if(total>25*1024*1024)throw new Error('Total media exceeds 25 MB.');
  const emotionHistory=(Array.isArray(data.emotionHistory)?data.emotionHistory:[]).slice(-100).map(e=>({at:boundedText(e.at||'',60),mood:Number(e.mood)||0,energy:Number(e.energy)||0}));
- return {profile:cleanProfile,messages,items,emotionHistory};
+ return {profile:cleanProfile,messages,items,emotionHistory,providers:current.providers||[]};
 }
