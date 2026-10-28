@@ -503,8 +503,8 @@ export default function OpenClawHub() {
                     checked={pushToGithub}
                     onChange={(e) => setPushToGithub(e.target.checked)}
                   />
-                  <span className="flex items-center gap-1">
-                    <GitBranch size={11} className="text-success" /> Auto-commit report to GitHub (
+                  <span className="min-w-0">
+                    <GitBranch size={11} className="text-success inline mr-1" />Auto-commit report to GitHub (
                     <code>eyeoverthink/looseScrew</code>)
                   </span>
                 </label>
@@ -656,14 +656,14 @@ export default function OpenClawHub() {
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-[10px]">
-                <span className="text-muted-foreground uppercase">
+              <div className="flex items-center justify-between gap-2 text-[10px]">
+                <span className="text-muted-foreground uppercase min-w-0">
                   2. Autonomous Daemon / Bot Webhook (x-console-key):
                 </span>
                 <button
                   type="button"
                   onClick={() => handleCopy('curl', curlSnippet)}
-                  className="text-primary hover:underline inline-flex items-center gap-1"
+                  className="text-primary hover:underline inline-flex items-center gap-1 shrink-0 whitespace-nowrap"
                 >
                   {copiedKey === 'curl' ? <Check size={10} /> : <Copy size={10} />}
                   {copiedKey === 'curl' ? 'Copied cURL' : 'Copy cURL'}
