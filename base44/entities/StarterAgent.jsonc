@@ -1,0 +1,90 @@
+{
+  "name": "StarterAgent",
+  "type": "object",
+  "description": "Editable agent document (role, outcome, rules, tools, memory, definition of done). Extensible roster: agent_key + department.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "agent_key": {
+      "type": "string",
+      "maxLength": 60
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 80
+    },
+    "department": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "role": {
+      "type": "string",
+      "maxLength": 600
+    },
+    "outcome": {
+      "type": "string",
+      "maxLength": 600
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "memory": {
+      "type": "string",
+      "maxLength": 12000
+    },
+    "definition_of_done": {
+      "type": "string",
+      "maxLength": 1200
+    },
+    "voice": {
+      "type": "string",
+      "maxLength": 200
+    }
+  },
+  "required": [
+    "owner_id",
+    "agent_key",
+    "name",
+    "department",
+    "outcome"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

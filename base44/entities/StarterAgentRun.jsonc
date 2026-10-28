@@ -1,0 +1,111 @@
+{
+  "name": "StarterAgentRun",
+  "type": "object",
+  "description": "One auditable starter-agent run with DONE output, metric and blockers.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "agent_key": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "context": {
+      "type": "string",
+      "maxLength": 6000
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "hosted",
+        "ollama"
+      ]
+    },
+    "model": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "running",
+        "completed",
+        "failed"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "done": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metric": {
+      "type": "object"
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "draft_count": {
+      "type": "integer"
+    },
+    "action_count": {
+      "type": "integer"
+    },
+    "capabilities": {
+      "type": "object"
+    },
+    "error": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "completed_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "owner_id",
+    "agent_key",
+    "outcome",
+    "provider",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
