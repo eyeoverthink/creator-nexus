@@ -39,7 +39,7 @@ export const AI_WORKSHOP_OS_HEAD_AND_BODY = `<!DOCTYPE html>
     filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.5)) contrast(1.14);
   }
   .igloo-manifesto-left {
-    position: fixed; top: 18px; left: 266px; z-index: 5;
+    position: fixed; top: 58px; left: 266px; z-index: 5;
     pointer-events: none; font-family: var(--font-mono);
     color: rgba(241, 245, 249, 0.78);
   }

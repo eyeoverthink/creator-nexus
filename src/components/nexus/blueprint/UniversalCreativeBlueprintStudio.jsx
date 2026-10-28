@@ -43,6 +43,7 @@ const SECTION_TABS = [
 export default function UniversalCreativeBlueprintStudio({
   workspaceId,
   onLaunchInFactory,
+  initialInstruction = '',
 }) {
   const { toast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -51,7 +52,7 @@ export default function UniversalCreativeBlueprintStudio({
   const [blueprint, setBlueprint] = useState(() => structuredClone(BUILTIN_BLUEPRINT_TEMPLATES[0]));
   const [activeSectionTab, setActiveSectionTab] = useState('all');
   const [showMethodDna, setShowMethodDna] = useState(true);
-  const [aiInstruction, setAiInstruction] = useState('');
+  const [aiInstruction, setAiInstruction] = useState(initialInstruction);
   const [saveAsName, setSaveAsName] = useState('');
   const [showSaveAsInput, setShowSaveAsInput] = useState(false);
   const [busyAction, setBusyAction] = useState('');
@@ -484,7 +485,7 @@ export default function UniversalCreativeBlueprintStudio({
       {/* Collapsible 6-Pillar Method Abstraction Analysis */}
       {showMethodDna && (
         <div className="p-3 rounded-lg border border-border bg-background space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <span className="text-[10.5px] font-bold text-primary">
               WHY YOUR &ldquo;AWAKENING OF AI&rdquo; METHOD WORKS — THE 6 ABSTRACTED PILLARS (APPLIED ACROSS ALL MEDIA &amp; SOFTWARE)
             </span>
@@ -492,11 +493,11 @@ export default function UniversalCreativeBlueprintStudio({
               Every template &amp; AI Assist button below enforces this structure automatically
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {ABSTRACTED_METHOD_PILLARS.map((p) => (
               <div key={p.step} className="p-2.5 rounded border border-border bg-card space-y-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="px-1.5 py-0.5 rounded bg-primary/15 text-primary text-[9px] font-bold">
+                  <span className="shrink-0 px-1.5 py-0.5 rounded bg-primary/15 text-primary text-[9px] font-bold">
                     PILLAR {p.step}
                   </span>
                   <span className="text-[10px] font-bold text-foreground leading-tight">{p.name}</span>
@@ -621,14 +622,14 @@ export default function UniversalCreativeBlueprintStudio({
                   key={tpl.id}
                   type="button"
                   onClick={() => handleSelectTemplate(tpl)}
-                  className={`p-2.5 rounded border text-left transition-colors flex flex-col justify-between gap-1 ${
+                  className={`p-2.5 rounded border text-left transition-colors flex flex-col items-stretch justify-between gap-1 min-w-0 ${
                     isSelected
                       ? 'border-primary bg-primary/15 text-foreground'
                       : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-border'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-1.5">
-                    <span className="text-[10.5px] font-bold text-foreground truncate">{tpl.name}</span>
+                    <span className="min-w-0 text-[10.5px] font-bold text-foreground truncate">{tpl.name}</span>
                     <span className="px-1.5 py-0.5 rounded bg-secondary text-[8.5px] font-bold uppercase shrink-0">
                       {tpl.isCustom ? `SAVED · ${tpl.category}` : tpl.category}
                     </span>

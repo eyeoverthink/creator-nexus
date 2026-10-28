@@ -13,7 +13,7 @@ export default function Watch(){
  useEffect(()=>{document.getElementById('watch-title-region')?.focus();},[jobId]);
  return <ProShell>
   <header className="border-b border-border"><div className="flex items-center gap-4 px-6"><Link to="/library" className="inline-flex min-h-10 items-center gap-2 text-sm text-link"><ArrowLeft size={16} aria-hidden="true"/>Library</Link><span className="text-sm text-muted-foreground">Watch</span></div></header>
-  <main id="watch-title-region" tabIndex={-1} aria-label="Watch video" className="space-y-6">
+  <main id="watch-title-region" tabIndex={-1} aria-label="Watch video" className="max-w-7xl mx-auto p-5 sm:p-8 space-y-6">
    {current.isPending?<p role="status" className="text-muted-foreground">Loading video…</p>:current.error?<p role="alert" className="text-destructive">{current.error.message}</p>:!current.data?<div className="space-y-3"><h1 className="font-heading text-2xl">Video not found</h1><p className="text-muted-foreground">This video is unavailable or isn't in your library.</p></div>:<>
     <WatchPlayer key={current.data.video.eventId} video={current.data.video}><RelatedVideos key={jobId} scope={current.data.scope} video={current.data.video}/></WatchPlayer>
    </>}

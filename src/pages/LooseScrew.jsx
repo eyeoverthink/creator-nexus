@@ -167,6 +167,7 @@ export default function LooseScrew(){
 
  return <ProShell title="looseScrew // EyeOverthink Studio" subtitle="Real Music & Video Streams, Autonomous Un-Sandboxed App Forge & Clean-Room REA Lab">
   <IngestContentDialog open={ingestOpen} onOpenChange={setIngestOpen} userId={user?.id} onCreated={rec=>{qc.invalidateQueries({queryKey:['loosescrew','items']});selectItem(rec);}}/>
+  <div className="p-4 md:p-6">
   <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-border">
    <div className="flex items-center gap-2.5">
     <span className="h-8 w-8 rounded-md border border-primary bg-secondary grid place-items-center font-mono text-primary font-bold">⚙</span>
@@ -235,6 +236,7 @@ export default function LooseScrew(){
    </div>
 
    <AvatarHostStudio avatarCanvasRef={avatarCanvasRef} customAvatarSrc={customAvatar} onLoadAvatar={e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setCustomAvatar(String(ev.target?.result||''));addLog('Custom pixel avatar PNG mounted into Broadcast Host.');speak('Custom avatar portrait locked in. I am live on looseScrew.');};r.readAsDataURL(f);}} speechText={speechText} talking={talking} onSpeak={speak} onQuickPitch={m=>{if(m==='INTRO')speak('Yo, welcome to looseScrew by EyeOverthink—where real music streams, video shaders, and autonomous un-sandboxed apps collide.');else if(m==='REA')speak('Use the Autonomous Forge bar above to describe any app or paste a URL to reverse-engineer and build live.');else{initAudio();setIsPlaying(true);speak('Dropping the Phi-Harmonic bassline right now. Watch the cyan spectrum climb.');}}} logs={logs}/>
+  </div>
   </div>
  </ProShell>;
 }

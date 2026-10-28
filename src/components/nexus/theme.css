@@ -1,6 +1,8 @@
 .nexus-app,.nexus-pro-shell { background:var(--bg-base); font-size:14px; line-height:20px; }
 .nexus-pro-shell { display:flex; min-height:100dvh; }
 .nexus-shell-content { flex:1; min-width:0; }
+.nexus-shell { display:flex; min-height:100dvh; background:var(--bg-base); }
+.nexus-main { flex:1; min-width:0; }
 .nexus-shell-content > header { min-height:56px; background:var(--bg-1); }
 .nexus-shell-content > header > div { height:56px; min-height:56px; padding-top:8px; padding-bottom:8px; flex-wrap:nowrap; overflow-x:auto; white-space:nowrap; }
 .nexus-shell-content > header > div > * { flex-shrink:0; }

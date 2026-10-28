@@ -1,0 +1,3 @@
+import {Upload} from 'lucide-react';
+import {partnerTools} from '@/components/nexus/partner/partnerTools';
+export default function PartnerToolStrip({onAdd,onTool,disabled}){return <nav aria-label="Available workspace tools" className="px-4 py-3 border-b border-border flex gap-2 overflow-x-auto"><button disabled={disabled} onClick={onAdd} className="shrink-0 min-h-11 px-3 border border-primary rounded inline-flex items-center gap-2 text-link"><Upload size={16}/>Add content</button>{partnerTools.map(tool=><button key={tool.id} onClick={()=>onTool(tool.id)} title={tool.description} className="shrink-0 min-h-11 px-3 border border-border rounded inline-flex items-center gap-2 hover:bg-hover">{tool.label}</button>)}</nav>}

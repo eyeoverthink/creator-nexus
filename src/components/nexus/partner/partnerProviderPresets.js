@@ -1,0 +1,15 @@
+export const PROVIDER_PRESETS=[
+ {id:'ollama_cloud',name:'Ollama Cloud',kind:'ollama',base_url:'https://ollama.com',help:'Create one key per membership at ollama.com/settings/keys, then add each as its own account.'},
+ {id:'openai',name:'OpenAI',kind:'openai',base_url:'https://api.openai.com/v1'},
+ {id:'anthropic',name:'Anthropic',kind:'openai',base_url:'https://api.anthropic.com/v1'},
+ {id:'gemini',name:'Google Gemini',kind:'openai',base_url:'https://generativelanguage.googleapis.com/v1beta/openai'},
+ {id:'openrouter',name:'OpenRouter',kind:'openai',base_url:'https://openrouter.ai/api/v1'},
+ {id:'groq',name:'Groq',kind:'openai',base_url:'https://api.groq.com/openai/v1'},
+ {id:'huggingface',name:'Hugging Face',kind:'openai',base_url:'https://router.huggingface.co/v1',help:'A Hugging Face access token or OAuth token works here.'},
+ {id:'together',name:'Together AI',kind:'openai',base_url:'https://api.together.xyz/v1'},
+ {id:'mistral',name:'Mistral',kind:'openai',base_url:'https://api.mistral.ai/v1'},
+ {id:'deepseek',name:'DeepSeek',kind:'openai',base_url:'https://api.deepseek.com/v1'},
+ {id:'xai',name:'xAI (Grok)',kind:'openai',base_url:'https://api.x.ai/v1'},
+ {id:'custom_openai',name:'Other OpenAI-compatible service',kind:'openai',base_url:''},
+ {id:'custom_ollama',name:'Other Ollama server (HTTPS)',kind:'ollama',base_url:''},
+];

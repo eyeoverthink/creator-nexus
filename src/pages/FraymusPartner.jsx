@@ -1,0 +1,25 @@
+import {useRef,useState} from 'react';
+import {Link} from 'react-router-dom';
+import {Download,Settings2,Share2,FolderOpen,ArrowUpRight} from 'lucide-react';
+import {Button} from '@/components/ui/button';
+import useFraymusPartner from '@/components/nexus/partner/useFraymusPartner';
+import PartnerStatusBar from '@/components/nexus/partner/PartnerStatusBar';
+import PartnerToolStrip from '@/components/nexus/partner/PartnerToolStrip';
+import PartnerMessageList from '@/components/nexus/partner/PartnerMessageList';
+import PartnerComposer from '@/components/nexus/partner/PartnerComposer';
+import PartnerConnections from '@/components/nexus/partner/PartnerConnections';
+import PartnerContentShelf from '@/components/nexus/partner/PartnerContentShelf';
+import PartnerToolsDrawer from '@/components/nexus/partner/PartnerToolsDrawer';
+export default function FraymusPartner(){
+ const partner=useFraymusPartner(),[panel,setPanel]=useState(''),[tool,setTool]=useState(''),files=useRef(null),packet=useRef(null),scroller=useRef(null),p=partner.state.profile;
+ const openTool=id=>{setTool(id);setPanel('tools');};
+ const importPacket=e=>{const file=e.target.files?.[0];e.target.value='';if(file&&window.confirm('Replace this device’s current conversation, memory and content with this package? Export a backup first.'))partner.importPackage(file);};
+ return <div className="h-[100dvh] flex flex-col bg-background text-foreground" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();if(e.dataTransfer.files.length)partner.addFiles(e.dataTransfer.files);}}>
+  <header className="p-4 border-b border-border bg-card flex flex-wrap justify-between items-center gap-3"><div><Link to="/" className="font-heading text-xl font-semibold">{p.name} <span className="text-muted-foreground font-normal">/ Fraymus</span></Link><p className="text-xs text-muted-foreground mt-1">Your partner is the workspace. Bring something in. Make it better. Take it anywhere.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={()=>setPanel('content')}>Content{partner.state.items.length?` · ${partner.state.items.length}`:''}</Button><Button variant="outline" disabled={!!partner.busy||!partner.loaded} onClick={()=>packet.current?.click()}><FolderOpen/>Import workspace</Button><Button variant="outline" disabled={!!partner.busy||!partner.loaded} onClick={()=>partner.exportPackage(false)}><Download/>Export</Button><Button variant="outline" disabled={!!partner.busy||!partner.loaded} onClick={()=>partner.exportPackage(true)}><Share2/>Share</Button><Button disabled={!partner.loaded} onClick={()=>setPanel('settings')}><Settings2/>Connections & memory</Button></div></header>
+  <PartnerStatusBar partner={partner}/><PartnerToolStrip onAdd={()=>files.current?.click()} onTool={openTool} disabled={!!partner.busy||!partner.loaded}/>
+  <input ref={files} type="file" multiple className="hidden" aria-label="Import local content" onChange={e=>{if(e.target.files.length)partner.addFiles(e.target.files);e.target.value='';}}/><input ref={packet} type="file" accept=".json,application/json" className="hidden" aria-label="Import portable workspace" onChange={importPacket}/>
+  <main className="relative flex-1 min-h-0 flex flex-col"><div ref={scroller} className="flex-1 overflow-y-auto">{!partner.loaded?<p role="status" className="p-6 text-muted-foreground">{partner.error?'Workspace could not load. Reload after checking browser storage permissions.':'Opening your device memory…'}</p>:<PartnerMessageList partner={partner} scroller={scroller}/>}</div>{partner.selected&&<div className="border-t border-border bg-selection px-4 py-2 flex items-center gap-3 text-sm"><span className="truncate">Context: {partner.selected.title}</span><button className="text-link shrink-0" onClick={()=>setPanel('content')}>Edit / preview</button><button className="ml-auto text-muted-foreground" onClick={()=>partner.setSelectedId('')}>Detach</button></div>}{partner.error&&<p role="alert" className="text-destructive px-4 py-2 text-sm">{partner.error}</p>}{partner.notice&&<p role="status" className="text-muted-foreground px-4 py-1 text-xs">{partner.notice}</p>}<PartnerComposer partner={partner}/>
+   {panel==='settings'&&<PartnerConnections partner={partner} onClose={()=>setPanel('')}/>} {panel==='content'&&<PartnerContentShelf partner={partner} onClose={()=>setPanel('')}/>} {panel==='tools'&&<PartnerToolsDrawer tool={tool} onTool={setTool} selected={partner.selected} onClose={()=>setPanel('')}/>}
+  </main><footer className="px-4 py-2 border-t border-border flex flex-wrap gap-3 justify-between text-xs text-muted-foreground"><span>Saved on this device · no cloud sync · no automatic paid runs · drag files anywhere to add them</span><Link to="/dashboard" className="inline-flex items-center gap-1 text-link">Existing dashboard <ArrowUpRight size={12}/></Link></footer>
+ </div>;
+}
