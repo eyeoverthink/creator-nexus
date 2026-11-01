@@ -1,0 +1,73 @@
+{
+  "name": "NexusRegressionRun",
+  "type": "object",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "origin",
+        "behavior",
+        "sandbox"
+      ]
+    },
+    "agent": {
+      "type": "string"
+    },
+    "metric": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "fit": {
+      "type": "object"
+    },
+    "prediction": {
+      "type": "object"
+    },
+    "guidance": {
+      "type": "string",
+      "maxLength": 3000
+    },
+    "adopted": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "source",
+    "agent",
+    "metric",
+    "version",
+    "fit",
+    "guidance"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "data.owner_id": "{{user.id}}"
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

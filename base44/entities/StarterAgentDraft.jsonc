@@ -1,0 +1,64 @@
+{
+  "name": "StarterAgentDraft",
+  "type": "object",
+  "description": "Generated work or draft saved by a starter-agent run. Never sent anywhere by itself.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "agent_key": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "kind": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "body": {
+      "type": "string",
+      "maxLength": 12000
+    }
+  },
+  "required": [
+    "owner_id",
+    "agent_key",
+    "run_id",
+    "title",
+    "body"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

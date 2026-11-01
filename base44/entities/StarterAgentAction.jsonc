@@ -1,0 +1,99 @@
+{
+  "name": "StarterAgentAction",
+  "type": "object",
+  "description": "A proposed sensitive action with its exact payload and SHA-256. Executes only after approval of that exact hash through an available capability.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "agent_key": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "message",
+        "delete",
+        "spend",
+        "booking",
+        "publish"
+      ]
+    },
+    "capability": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "payload": {
+      "type": "object"
+    },
+    "payload_sha256": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "rejected",
+        "executed",
+        "failed",
+        "blocked"
+      ]
+    },
+    "blocked_reason": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "result": {
+      "type": "object"
+    },
+    "decided_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "owner_id",
+    "agent_key",
+    "run_id",
+    "kind",
+    "capability",
+    "title",
+    "payload",
+    "payload_sha256",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

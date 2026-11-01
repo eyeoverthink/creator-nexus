@@ -1,0 +1,93 @@
+{
+  "name": "NexusAsset",
+  "type": "object",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "body": {
+      "type": "string",
+      "maxLength": 20000
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "upload",
+        "document",
+        "generated"
+      ]
+    },
+    "file_uri": {
+      "type": "string"
+    },
+    "file_name": {
+      "type": "string"
+    },
+    "mime_type": {
+      "type": "string"
+    },
+    "file_size": {
+      "type": "number"
+    },
+    "project": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "agent_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "researcher",
+          "writer",
+          "strategist",
+          "director"
+        ]
+      }
+    },
+    "favorite": {
+      "type": "boolean",
+      "default": false
+    },
+    "source_entity": {
+      "type": "string"
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "source_updated_at": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "default": 1
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "title",
+    "kind"
+  ],
+  "rls": {
+    "create": {
+      "data.owner_id": "{{user.id}}"
+    },
+    "read": {
+      "data.owner_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

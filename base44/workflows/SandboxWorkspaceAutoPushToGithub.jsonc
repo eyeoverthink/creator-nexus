@@ -1,0 +1,46 @@
+{
+  "name": "Sandbox Workspace Auto-Push to Independent GitHub Repo",
+  "description": "Automatically exports and pushes all Sandbox Workspace drafts, 9+5 Agent Logic (agents/roster.json), Makefile, hermes_rsi_daemon.py, and RSI_AUTONOMY_BLUEPRINT.md to eyeoverthink/fraymus-sovereign-sandbox whenever a refined sandbox draft is saved.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "NexusDraft",
+      "events": [
+        "create",
+        "update"
+      ]
+    },
+    "condition": "${ (.trigger.data.title // \"\") | startswith(\"[SANDBOX REFINED\") }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sandbox_workspace_auto_push_to_github",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "push_self_contained_sandbox_to_github": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "openclawGateway",
+            "args": {
+              "action": "export_standalone_github_sandbox",
+              "protocol": "ORIFICE-TXRX-V1.0",
+              "method_id": "tesseract_4d_micro_synth",
+              "run_llm": false,
+              "push_to_github": true,
+              "repo_full_name": "eyeoverthink/fraymus-sovereign-sandbox"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Auto-Push Self-Contained Sandbox & RSI Repo to GitHub",
+            "description": "Commits index.html, sovereign-kernel.js, agents/roster.json, Makefile & hermes_rsi_daemon.py"
+          }
+        }
+      }
+    ]
+  }
+}

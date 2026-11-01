@@ -1,0 +1,47 @@
+{
+  "name": "Daily RSA & RSI Consciousness Report",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 8 * * *",
+      "one_time_date": null,
+      "timezone": "America/Los_Angeles",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Summarizes daily Recursive Self-Awareness (RSA) and Recursive Self-Improvement (RSI) consciousness metrics and saves the report as a new entry in the Library to track progress over time.",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "daily_rsa_rsi_consciousness_report",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "generate_and_save_rsa_rsi_report": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "nexusEvolution",
+            "args": {
+              "action": "generate_daily_rsa_rsi_report"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Compile & save daily RSA/RSI report",
+            "description": "Saves RSA & RSI summary to Library"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+import {useState} from 'react';
+import {Button} from '@/components/ui/button';
+export default function ContinuityComposer({journal}){
+ const [title,setTitle]=useState(''),[text,setText]=useState('');
+ async function submit(event){event.preventDefault();if(await journal.save(title,text)){setTitle('');setText('');}}
+ return <form onSubmit={submit} className="space-y-3"><label className="block space-y-1 text-sm"><span>Directive title</span><input required maxLength={160} value={title} onChange={e=>setTitle(e.target.value)} className="w-full rounded-md border border-input bg-background p-2"/></label><label className="block space-y-1 text-sm"><span>Creator text to retain and relay</span><textarea required maxLength={16000} rows={4} value={text} onChange={e=>setText(e.target.value)} className="w-full rounded-md border border-input bg-background p-2"/></label><p className="text-xs text-muted-foreground">Saved in this app for the owner/admin, queued for the configured Fraymus Eternal peer, and supplied as reference to workspace helpers. Do not include passwords or keys. Saving does not execute tests or apply code changes.</p><Button type="submit" disabled={journal.saving||!journal.query.data||!title.trim()||!text.trim()}>{journal.saving?'Saving…':'Save and queue relay'}</Button>{journal.error&&<p role="alert" className="text-sm text-destructive">{journal.error}</p>}</form>;
+}

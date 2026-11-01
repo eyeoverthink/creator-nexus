@@ -1,0 +1,9 @@
+import {useState} from 'react';
+import {Button} from '@/components/ui/button';
+import {Textarea} from '@/components/ui/textarea';
+const initial=JSON.stringify([{name:'record_note',description:'Extract the note from the request for human review. Never execute an action.',parameters:{type:'object',properties:{note:{type:'string',maxLength:512}},required:['note'],additionalProperties:false}}],null,2);
+export default function NeedleInferenceForm({onSubmit,busy,ready}){
+ const [prompt,setPrompt]=useState(''),[tools,setTools]=useState(initial),[error,setError]=useState('');
+ const submit=async e=>{e.preventDefault();setError('');try{await onSubmit({prompt,tools:JSON.parse(tools),max_new_tokens:256});}catch(e){setError(e.message);}};
+ return <form onSubmit={submit} className="space-y-3"><p className="text-muted-foreground">Needle3 returns structured tool calls, not chat prose. Calls remain inert for review; no local files, commands or tools are executed.</p><label className="block space-y-1"><span>Inference request</span><Textarea required maxLength={3000} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Record this note: review the new scene plan tomorrow."/></label><label className="block space-y-1"><span>Approved tool schemas, up to eight</span><Textarea required className="font-mono min-h-40" value={tools} onChange={e=>setTools(e.target.value)} maxLength={8000}/></label><p className="text-muted-foreground">Requests and bounded outputs are saved privately in this workspace. Model binaries stay on the PC. The bridge requires internet access; native inference itself makes no network requests.</p>{error&&<p role="alert" className="text-destructive">{error}</p>}<Button disabled={busy||!ready||!prompt.trim()}>Queue local inference</Button></form>;
+}

@@ -1,0 +1,91 @@
+{
+  "name": "LinkedIn Approved Spark Auto-Queue",
+  "description": "Automatically queues approved video sparks for the next optimal LinkedIn engagement window and publishes immediately if inside a peak slot.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "NexusSpark",
+      "events": [
+        "create",
+        "update"
+      ]
+    },
+    "condition": "${ .trigger.data.status == \"approved\" and (.trigger.old_data.status // \"\") != \"approved\" }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "linkedin_approved_spark_auto_queue",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "compute_optimal_slot": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "linkedinSparkPublisher",
+            "args": {
+              "action": "auto_enqueue_spark",
+              "spark_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "compute_seconds_to_slot",
+          "x-base44": {
+            "title": "Calculate optimal LinkedIn slot",
+            "description": "Queues approved Spark for peak feed window"
+          }
+        }
+      },
+      {
+        "compute_seconds_to_slot": {
+          "call": "compute_seconds_until",
+          "with": {
+            "target_iso": "${ .compute_optimal_slot.optimal_iso }"
+          },
+          "then": "check_if_window_open",
+          "x-base44": {
+            "title": "Compute time until optimal window",
+            "description": "Measures wait until peak slot"
+          }
+        }
+      },
+      {
+        "check_if_window_open": {
+          "switch": [
+            {
+              "when": "${ .compute_optimal_slot.publish_now == true }",
+              "then": "publish_to_linkedin_now"
+            },
+            {
+              "when": "${ true }",
+              "then": "end"
+            }
+          ],
+          "x-base44": {
+            "title": "Is optimal window open now?",
+            "description": "Publish immediately or wait for scheduled dispatcher"
+          }
+        }
+      },
+      {
+        "publish_to_linkedin_now": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "linkedinSparkPublisher",
+            "args": {
+              "action": "publish_spark",
+              "item_type": "nexus_spark",
+              "item_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Publish Spark to LinkedIn feed",
+            "description": "Pushes approved Spark to LinkedIn"
+          }
+        }
+      }
+    ]
+  }
+}

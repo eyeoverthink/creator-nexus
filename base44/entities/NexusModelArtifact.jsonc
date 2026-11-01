@@ -1,0 +1,167 @@
+{
+  "name": "NexusModelArtifact",
+  "type": "object",
+  "description": "Managed Modelfile, custom/imported AI model, prompt template, or ternary (-1, 0, +1) fine-tuned adapter for the Counterfactual Audience Pre-Flight & Model Evolution Lab.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "artifact_kind": {
+      "type": "string",
+      "enum": [
+        "modelfile",
+        "model",
+        "prompt_template",
+        "ternary_adapter",
+        "fine_tune_dataset"
+      ],
+      "default": "modelfile"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "base": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "base_model": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "status": {
+      "type": "string",
+      "maxLength": 60
+    },
+    "ternaryWeight": {
+      "type": "number"
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string",
+      "maxLength": 19000
+    },
+    "system_prompt": {
+      "type": "string",
+      "maxLength": 8000
+    },
+    "file_uri": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "file_name": {
+      "type": "string",
+      "maxLength": 240
+    },
+    "weight": {
+      "type": "number",
+      "default": 1.0
+    },
+    "ternary_state": {
+      "type": "integer",
+      "enum": [
+        -1,
+        0,
+        1
+      ],
+      "default": 1
+    },
+    "ternary_matrix": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "parameters": {
+      "type": "object"
+    },
+    "preflight_score": {
+      "type": "number"
+    },
+    "surprise_bits": {
+      "type": "number"
+    },
+    "evolution_generation": {
+      "type": "integer",
+      "default": 1
+    },
+    "fine_tune_status": {
+      "type": "string",
+      "enum": [
+        "ready",
+        "calibrating",
+        "fine_tuned",
+        "evolved",
+        "created"
+      ],
+      "default": "ready"
+    },
+    "test_history": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

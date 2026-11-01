@@ -1,0 +1,44 @@
+{
+  "name": "Sovereign Ambassador Entry & Exit Watchdog",
+  "description": "Monitors all mesh task entries, worker claims, and completions on NexusDispatchJob and runs an automated Entry/Exit Watchdog audit on @eyeoverthink's behalf.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "NexusDispatchJob",
+      "events": [
+        "create",
+        "update"
+      ]
+    },
+    "condition": "${ (.trigger.data.status // \"\") | IN(\"queued\", \"claimed\", \"completed\", \"failed\") }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sovereign_ambassador_entry_exit_watchdog",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "audit_entry_exit_lifecycle": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "openclawGateway",
+            "args": {
+              "action": "ambassador_watchdog_sweep",
+              "protocol": "ORIFICE-TXRX-V1.0",
+              "log_sweep": true,
+              "trigger_info": "${ (.trigger.data.job_id // \"job\") + \":\" + (.trigger.data.status // \"updated\") }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Audit Agent Entry & Exit Lifecycle",
+            "description": "Runs Sovereign Ambassador Watchdog sweep"
+          }
+        }
+      }
+    ]
+  }
+}

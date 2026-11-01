@@ -1,0 +1,97 @@
+{
+  "name": "NexusNeedleJob",
+  "type": "object",
+  "description": "Server-managed Needle request and bounded worker receipt; outputs are inert proposals, never executable actions.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "worker_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
+        "expired"
+      ]
+    },
+    "input_json": {
+      "type": "string",
+      "maxLength": 13000
+    },
+    "input_sha256": {
+      "type": "string"
+    },
+    "nonce": {
+      "type": "string"
+    },
+    "lease_id": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "finished_at": {
+      "type": "string"
+    },
+    "result_json": {
+      "type": "string",
+      "maxLength": 15000
+    },
+    "receipt_sha256": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string",
+      "maxLength": 1000
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "worker_id",
+    "status",
+    "input_sha256",
+    "nonce"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

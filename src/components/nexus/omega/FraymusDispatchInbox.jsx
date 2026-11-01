@@ -1,0 +1,4 @@
+import {Button} from '@/components/ui/button';
+export default function FraymusDispatchInbox({items,hasMore,busy,onMore}){
+ return <div className="space-y-2"><h4 className="font-heading">Signed Review Inbox</h4>{!items.length?<p className="text-muted-foreground">No accepted dispatches yet.</p>:items.map(item=><details key={item.id} className="border border-border rounded-md p-3"><summary className="cursor-pointer break-words">{item.subject} · Accepted, Not Executed</summary><p className="text-xs text-muted-foreground break-all mt-2">Sender: {item.sender}<br/>Receipt: {item.receipt_id}</p><pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all text-xs mt-2">{JSON.stringify(JSON.parse(item.envelope_json).program,null,2)}</pre></details>)}{hasMore&&<Button variant="outline" onClick={onMore} disabled={busy}>Load More Receipts</Button>}</div>;
+}

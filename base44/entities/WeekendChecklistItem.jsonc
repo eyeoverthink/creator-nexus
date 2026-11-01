@@ -1,0 +1,71 @@
+{
+  "name": "WeekendChecklistItem",
+  "type": "object",
+  "description": "One weekend playbook task (preset or custom) and whether it is done.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "preset": {
+      "type": "boolean",
+      "default": false
+    },
+    "done": {
+      "type": "boolean",
+      "default": false
+    },
+    "order": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "owner_id",
+    "label",
+    "done"
+  ],
+  "rls": {
+    "create": {
+      "data.owner_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

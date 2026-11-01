@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.git/
+*.md
+!README.md
+.env
+.env.*
+runner/
+base44/agents/
+base44/workflows/

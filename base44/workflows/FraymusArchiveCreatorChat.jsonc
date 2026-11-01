@@ -1,0 +1,42 @@
+{
+  "name": "Fraymus Archive Creator In-App Chat",
+  "description": "Archive new primary-workspace in-app creator questions and reported agent answers, then queue peer delivery. Does not read builder chat.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "NexusChatTurn",
+      "events": [
+        "create"
+      ]
+    },
+    "condition": "${ .trigger.data.owner_id == \"6ad00af54909c671e73bb83d\" and .trigger.data.workspace_id == \"6ad00c80d59de24395665dee\" }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "fraymus_archive_creator_chat",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "archive_creator_chat": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "orificeBridge",
+            "args": {
+              "action": "continuity_capture_chat",
+              "workspace_id": "${ .trigger.data.workspace_id }",
+              "source_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Save creator chat and queue relay",
+            "description": "Owner-checked, no AI call, source text retained"
+          }
+        }
+      }
+    ]
+  }
+}

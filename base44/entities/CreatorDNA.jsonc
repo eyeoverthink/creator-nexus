@@ -1,0 +1,78 @@
+{
+  "name": "CreatorDNA",
+  "type": "object",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "interests": {
+      "type": "string",
+      "maxLength": 1500
+    },
+    "skills": {
+      "type": "string",
+      "maxLength": 1500
+    },
+    "audience": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "voice": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "goals": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "red_lines": {
+      "type": "string",
+      "maxLength": 1500
+    },
+    "on_camera": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "voice_only",
+        "no"
+      ]
+    },
+    "weekly_minutes": {
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 10080
+    },
+    "monthly_budget": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100000
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "interests",
+    "audience",
+    "voice",
+    "goals",
+    "on_camera",
+    "weekly_minutes"
+  ],
+  "rls": {
+    "create": {
+      "data.owner_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

@@ -1,0 +1,2 @@
+// Operational ceilings for this cloud engine, not claims about biological scale.
+export const ADAPTIVE_LIMITS=Object.freeze({neurons:256,edges:2048,memories:128,predictions:256,trust:256,values:256,ticks:512,stimuli:4096,spikes:32,queue:32768,requestBytes:524288,snapshotBytes:2097152});

@@ -1,0 +1,140 @@
+{
+  "name": "SparkCard",
+  "type": "object",
+  "description": "Separate Spark video card. The application updates only status, narration and job_event_id.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "batch_id": {
+      "type": "string"
+    },
+    "creator_dna_id": {
+      "type": "string",
+      "description": "SparkProfile record ID, not the existing CreatorDNA entity."
+    },
+    "card_id": {
+      "type": "string"
+    },
+    "hook_title": {
+      "type": "string",
+      "maxLength": 70
+    },
+    "one_line_pitch": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "format": {
+      "type": "string",
+      "enum": [
+        "narrated explainer",
+        "story",
+        "listicle",
+        "explainer-test"
+      ]
+    },
+    "topic_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "scene_images": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "why_it_fits_you": {
+      "type": "string"
+    },
+    "taste_fit": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "feasibility": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "why_now": {
+      "type": "object"
+    },
+    "signature_twist": {
+      "type": "string"
+    },
+    "effort": {
+      "type": "object"
+    },
+    "safe_by_default": {
+      "type": "object"
+    },
+    "signal_snapshot": {
+      "type": "object"
+    },
+    "director_score": {
+      "type": "number"
+    },
+    "director_parts": {
+      "type": "object"
+    },
+    "gates_failed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "is_pick": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "proposed",
+        "script_drafted",
+        "queued"
+      ],
+      "default": "proposed"
+    },
+    "narration": {
+      "type": "string",
+      "maxLength": 1500
+    },
+    "job_event_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "batch_id",
+    "card_id",
+    "hook_title",
+    "one_line_pitch",
+    "format",
+    "signature_twist",
+    "safe_by_default",
+    "why_now"
+  ],
+  "rls": {
+    "create": {
+      "data.owner_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

@@ -1,0 +1,255 @@
+{
+  "auth": "oauth",
+  "tools": {
+    "functions": [
+      {
+        "name": "openclaw_gateway",
+        "title": "OpenClaw Sovereign Gateway",
+        "description": "Check Creator Nexus hub telemetry, verify OPEG V1.0 PT-symmetric R_san receipts, or dispatch an OpenClaw agent task with optional workspace draft patching and GitHub repo sync.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "enum": [
+                "status",
+                "dispatch_task",
+                "opeg_verify",
+                "export_gpu_training_bundle",
+                "execute_native_skill",
+                "hermes_fleet_manifest",
+                "run_coherence_teamwork_assay",
+                "v16_visitor_relay",
+                "control_plane_registry",
+                "control_plane_enroll",
+                "ambassador_greet",
+                "spawn_dual_site_subagents",
+                "absorb_all_continuity",
+                "orifice_spec",
+                "orifice_ping",
+                "orifice_absorb",
+                "orifice_tx_queue",
+                "orifice_peer_bridge",
+                "orifice_github_sync",
+                "dispatch_route_task",
+                "list_dispatch_jobs",
+                "claim_dispatch_job",
+                "complete_dispatch_job"
+              ],
+              "description": "Gateway operation to run: status, export_gpu_training_bundle (stage A100 80GB Unsloth QLoRA + GGUF kit), execute_native_skill, hermes_fleet_manifest, run_coherence_teamwork_assay, v16_visitor_relay, dispatch_task, opeg_verify, absorb_all_continuity, or Synaptic Orifice TX/RX actions."
+            },
+            "gpu_tier": {
+              "type": "string",
+              "description": "Hostinger GPU tier for export_gpu_training_bundle (default: a100_80gb_2xlarge_mem for Reading UK A100 80GB 64GB RAM at 179 credits/hr)."
+            },
+            "base_model": {
+              "type": "string",
+              "description": "Base model for export_gpu_training_bundle (e.g. unsloth/Qwen2.5-Coder-14B-Instruct)."
+            },
+            "output_model_name": {
+              "type": "string",
+              "description": "Compiled model output tag for export_gpu_training_bundle (e.g. fraymus-sovereign-v25)."
+            },
+            "skill_id": {
+              "type": "string",
+              "description": "Skill ID when action is execute_native_skill (e.g. sherlock, web-pentest, duckduckgo-search)."
+            },
+            "query": {
+              "type": "string",
+              "description": "Input query when action is execute_native_skill."
+            },
+            "workspace_id": {
+              "type": "string",
+              "description": "Optional target NexusWorkspace ID."
+            },
+            "agent_id": {
+              "type": "string",
+              "description": "OpenClaw specialist identifier (e.g. openclaw-alpha, openclaw-sigma, openclaw-forge)."
+            },
+            "channel": {
+              "type": "string",
+              "enum": ["telegram", "whatsapp", "slack", "mcp", "vps"],
+              "description": "Origin or target communication channel."
+            },
+            "directive": {
+              "type": "string",
+              "description": "Task directive or mission instruction for dispatch_task."
+            },
+            "append_to_draft": {
+              "type": "boolean",
+              "description": "When true, appends the generated patch to the active workspace draft."
+            },
+            "push_to_github": {
+              "type": "boolean",
+              "description": "When true, commits the execution report and artifact to GitHub."
+            },
+            "g": {
+              "type": "number",
+              "description": "Coupling parameter g for OPEG PT-symmetric Hamiltonian verification."
+            },
+            "gamma": {
+              "type": "number",
+              "description": "Gain/loss parameter gamma for OPEG PT-symmetric Hamiltonian verification."
+            },
+            "epsilon": {
+              "type": "number",
+              "description": "Perturbation epsilon for Puiseux fractional 1/3 expansion."
+            }
+          },
+          "required": ["action"]
+        },
+        "handler": "openclawGateway",
+        "annotations": {
+          "read_only_hint": false,
+          "destructive_hint": false,
+          "idempotent_hint": false
+        }
+      },
+      {
+        "name": "compile_ollama_model",
+        "title": "Compile VPS Ollama Model",
+        "description": "Compile and deploy a custom φ^75-Ternary, Affective, or OPEG-V1.0 Modelfile to the live VPS Ollama server.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Model tag name to create on VPS Ollama (e.g. fraymus-openclaw-v1)."
+            },
+            "baseModel": {
+              "type": "string",
+              "description": "Base model name, defaults to llama3.2:3b-instruct-q8_0."
+            },
+            "systemPrompt": {
+              "type": "string",
+              "description": "Full SYSTEM prompt / cognitive law to embed into the compiled model."
+            }
+          },
+          "required": ["name", "systemPrompt"]
+        },
+        "handler": "createOllamaModel",
+        "annotations": {
+          "read_only_hint": false,
+          "destructive_hint": false,
+          "idempotent_hint": true
+        }
+      },
+      {
+        "name": "run_argon_evolution",
+        "title": "Run Argon Ouroboros Evolution",
+        "description": "Inspect or evolve the Argon Ouroboros-Gauntlet RSI genome, orbital memory, consciousness falsification suite, or daily RSA/RSI telemetry report.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "enum": [
+                "state",
+                "telemetry",
+                "evolve",
+                "audit_consciousness",
+                "mint_proof_certificate",
+                "store_memory",
+                "sync_workspace_memory",
+                "generate_daily_rsa_rsi_report"
+              ],
+              "description": "Evolution or telemetry action to execute."
+            },
+            "workspace_id": {
+              "type": "string",
+              "description": "Optional workspace ID."
+            },
+            "title": {
+              "type": "string",
+              "description": "Memory node title when action is store_memory."
+            },
+            "payload": {
+              "type": "string",
+              "description": "Memory node content when action is store_memory."
+            }
+          },
+          "required": ["action"]
+        },
+        "handler": "nexusEvolution",
+        "annotations": {
+          "read_only_hint": false,
+          "destructive_hint": false,
+          "idempotent_hint": false
+        }
+      },
+      {
+        "name": "build_loosescrew_app",
+        "title": "Build or Push LooseScrew App",
+        "description": "Autonomously synthesize an interactive dark-mode web app / synth module in LooseScrew Studio or push an existing build to GitHub.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "enum": ["autonomous_build", "autonomous_evolve", "push_github"],
+              "description": "Forge operation to run."
+            },
+            "prompt": {
+              "type": "string",
+              "description": "Directive describing the application or module to build."
+            },
+            "channel": {
+              "type": "string",
+              "enum": ["CODE", "MUSIC", "VIDEO"],
+              "description": "Target LooseScrew channel."
+            },
+            "target_url": {
+              "type": "string",
+              "description": "Optional reference URL to reverse-engineer or integrate."
+            },
+            "item_id": {
+              "type": "string",
+              "description": "LooseScrewItem ID when evolving or pushing to GitHub."
+            },
+            "title": {
+              "type": "string",
+              "description": "App title when pushing to GitHub."
+            }
+          },
+          "required": ["action"]
+        },
+        "handler": "looseScrewForge",
+        "annotations": {
+          "read_only_hint": false,
+          "destructive_hint": false,
+          "idempotent_hint": false
+        }
+      },
+      {
+        "name": "plan_director_scenes",
+        "title": "Plan Visual Director Scenes",
+        "description": "Compile a narrated script into a verified nexus.scene_plan/1 timed visual card blueprint.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "script": {
+              "type": "string",
+              "description": "Narration script text (up to 1500 characters)."
+            },
+            "aspect_ratio": {
+              "type": "string",
+              "enum": ["9:16", "16:9"],
+              "description": "Target video aspect ratio."
+            },
+            "ai_disclosure": {
+              "type": "boolean",
+              "description": "Ensure final scene includes AI disclosure."
+            }
+          },
+          "required": ["script"]
+        },
+        "handler": "directorPlan",
+        "annotations": {
+          "read_only_hint": true,
+          "destructive_hint": false,
+          "idempotent_hint": true
+        }
+      }
+    ]
+  }
+}

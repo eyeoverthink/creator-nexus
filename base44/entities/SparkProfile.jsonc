@@ -1,0 +1,51 @@
+{
+  "name": "SparkProfile",
+  "type": "object",
+  "description": "Versioned taste interviews, separate from existing Origin profiles.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "answers": {
+      "type": "object"
+    },
+    "profile": {
+      "type": "object"
+    },
+    "version": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "archived"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "answers",
+    "profile",
+    "version"
+  ],
+  "rls": {
+    "create": {
+      "data.owner_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

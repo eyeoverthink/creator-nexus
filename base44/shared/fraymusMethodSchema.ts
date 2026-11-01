@@ -1,0 +1,13 @@
+import {z} from 'npm:zod@4.4.3';
+import {fraymusBrainInput} from './fraymusBrainSchema.ts';
+const vector=z.array(z.number().min(-1000000).max(1000000)).min(1).max(256);
+const unit=z.number().min(0).max(1),signed=z.number().min(-1).max(1);
+export const fraymusMethodSchema=z.object({
+ method:z.enum(['outline','opeg','encode','decode','fraymus_compile','fraymus_vm','fraymus_verify','fraymus_repair','fraymus_ternary','fraymus_memory','fraymus_affect','fraymus_dispatch_verify','fraymus_brain']),
+ brain_input:fraymusBrainInput.optional(),
+ envelope_json:z.string().max(19000).optional(),assembly:z.string().max(8000).optional(),bytecode:z.array(z.number().int().min(0).max(255)).max(1280).optional(),max_steps:z.number().int().min(1).max(10000).optional(),certificate_json:z.string().max(24000).optional(),expression:z.string().max(192).optional(),state_id:z.string().min(1).max(120).optional(),commit:z.boolean().optional(),
+ text:z.string().max(32768).optional(),format:z.enum(['glyph','dna','zero']).optional(),carrier:z.string().max(32).optional(),g:z.number().min(-1000000).max(1000000).optional(),gamma:z.number().min(-1000000).max(1000000).optional(),epsilon:z.number().min(1e-18).max(1000000).optional(),goal:z.string().max(2000).optional(),
+ ternary_action:z.enum(['quantize','unpack']).optional(),vector:vector.optional(),activations:vector.optional(),packed:z.array(z.number().int().min(0).max(255)).min(1).max(64).optional(),count:z.number().int().min(1).max(256).optional(),
+ memory_mode:z.enum(['prototype','associative']).optional(),memory_action:z.enum(['learn','recall','triad']).optional(),label:z.string().min(1).max(60).optional(),minimum_similarity:signed.optional(),triad:z.object({concept:z.string().min(1).max(160),thesis:z.string().min(1).max(160),antithesis:z.string().min(1).max(160),synthesis:z.string().min(1).max(160)}).optional(),
+ interoception:z.object({energy:unit,integrity:unit,bond:unit,uncertainty:unit}).optional(),appraisal:z.object({goalRelevance:signed,likelihood:unit,agency:signed,control:signed,fairness:signed,novelty:unit}).optional(),reward_delta:signed.optional(),urgency:unit.optional(),provenance:z.string().min(1).max(300).optional(),observed_at:z.string().min(1).max(40).optional(),use_affect:z.boolean().optional(),affect_state_id:z.string().min(1).max(120).optional()
+});

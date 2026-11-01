@@ -1,0 +1,102 @@
+{
+  "name": "FraymusDispatchRecord",
+  "type": "object",
+  "description": "Server-managed trusted keys, expiring one-use challenges and signed dispatch receipts. Payloads are inert review artifacts, never executable jobs.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "trust",
+        "challenge"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "revoked",
+        "issued",
+        "accepted"
+      ]
+    },
+    "sender": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "public_key": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "fingerprint": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "nonce": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "issued_at": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "recipient": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "subject": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "receipt_id": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "envelope_json": {
+      "type": "string",
+      "maxLength": 19000
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "kind",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

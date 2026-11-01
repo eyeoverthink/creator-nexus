@@ -1,0 +1,47 @@
+{
+  "name": "LinkedIn Optimal Feed Dispatcher",
+  "description": "Checks workspace settings hourly and automatically dispatches approved Origin Sparks and final Video Sparks to LinkedIn during the workspace's configured optimal posting hours.",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "linkedin_optimal_feed_dispatcher",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "dispatch_due_sparks": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "linkedinSparkPublisher",
+            "args": {
+              "action": "dispatch_due_sparks"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Dispatch approved video sparks at workspace optimal hours",
+            "description": "Evaluates workspace timezone & optimal hours and publishes due Sparks"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 * * * *",
+      "one_time_date": null,
+      "timezone": "America/Los_Angeles",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

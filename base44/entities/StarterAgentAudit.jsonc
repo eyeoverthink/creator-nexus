@@ -1,0 +1,62 @@
+{
+  "name": "StarterAgentAudit",
+  "type": "object",
+  "description": "Append-only audit trail of starter-agent edits, runs, approvals and executions.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "agent_key": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "action_id": {
+      "type": "string"
+    },
+    "event": {
+      "type": "string",
+      "maxLength": 60
+    },
+    "detail": {
+      "type": "string",
+      "maxLength": 2000
+    }
+  },
+  "required": [
+    "owner_id",
+    "agent_key",
+    "event",
+    "detail"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

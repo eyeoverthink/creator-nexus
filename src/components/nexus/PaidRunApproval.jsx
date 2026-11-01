@@ -1,0 +1,5 @@
+import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription,DialogFooter} from '@/components/ui/dialog';
+import {Button} from '@/components/ui/button';
+export default function PaidRunApproval({request,onConfirm,onCancel}){
+ return <Dialog open={!!request} onOpenChange={open=>{if(!open)onCancel();}}><DialogContent><DialogHeader><DialogTitle>Approve this AI run?</DialogTitle><DialogDescription>{request?.label||'Run the selected hosted agent'} uses hosted AI and may consume integration credits. The exact credit charge is not available in advance; this is not a fixed-price quote.</DialogDescription></DialogHeader><p className="text-sm text-muted-foreground">Approval applies only to this action, with up to four agent steps and no automatic retries. It does not authorize media generation, publishing, or another run. Failed requests may still consume provider credits.</p><DialogFooter><Button variant="outline" onClick={onCancel}>Cancel</Button><Button onClick={onConfirm}>Approve this run</Button></DialogFooter></DialogContent></Dialog>;
+}

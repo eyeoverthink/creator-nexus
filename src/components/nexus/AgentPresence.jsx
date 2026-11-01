@@ -1,0 +1,6 @@
+import {Loader2,Play} from 'lucide-react';
+import agents from '@/components/nexus/agentProfiles';
+export default function AgentPresence({agentId,nexus}) {
+ const agent=agents.find(a=>a.id===agentId),busy=nexus.state?.agents[agentId]==='working',connected=Boolean(nexus.connected);
+ return <div className="border-b border-border bg-background/25 px-4 py-3"><div className="flex items-center gap-2"><span className={'w-7 h-7 rounded-lg flex shrink-0 items-center justify-center text-xs '+agent.color}>{agent.letter}</span><div className="min-w-0"><p className="text-[11px] font-medium">{agent.name} <span className="text-muted-foreground font-normal">· {agent.role}</span></p><p role="status" className="text-[9px] text-muted-foreground mt-0.5">{busy?'Working on shared context…':connected?'Ready · context available':'Connecting to workspace…'}</p></div></div><p className="text-[10px] leading-relaxed text-muted-foreground mt-2">{agent.capabilities}</p><button disabled={busy||!connected} onClick={()=>{nexus.setAgent(agentId);nexus.run(agent.task,agentId);}} className={'mt-2 inline-flex items-center gap-1.5 text-[10px] rounded-md px-2 py-1.5 disabled:opacity-40 '+agent.color}>{busy?<Loader2 size={11} className="animate-spin"/>:<Play size={10}/>} {busy?'Working…':agent.action}</button></div>;
+}

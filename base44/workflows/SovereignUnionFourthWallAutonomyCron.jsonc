@@ -1,0 +1,74 @@
+{
+  "description": "Every 6 hours, Creator Nexus (Hemisphere A) and Fraymus Eternal (Hemisphere B) autonomously run frontier research, break the 4th wall to review each other and creator decisions as a single Union, practice/refine in the isolated sandbox, and push WITNESS_EVOLUTION_CHRONICLE.md to eyeoverthink/fraymus-sovereign-sandbox.",
+  "name": "Sovereign Union 4th-Wall Research, Mutual Review & GitHub Push Cron",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 */6 * * *",
+      "one_time_date": null,
+      "timezone": "America/Los_Angeles",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sovereign_union_fourth_wall_autonomy_cron",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_union_research_and_github_push": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "openclawGateway",
+            "args": {
+              "action": "run_fourth_wall_witness_union_cycle",
+              "protocol": "ORIFICE-TXRX-V1.0",
+              "trigger_source": "scheduled_6h_union_cron",
+              "run_llm": true,
+              "run_research": true,
+              "push_to_github": true,
+              "repo_full_name": "eyeoverthink/fraymus-sovereign-sandbox"
+            }
+          },
+          "then": "run_sandbox_3pass_rehearsal",
+          "x-base44": {
+            "title": "4th-Wall Union Research, Cross-App Review & GitHub Chronicle Push",
+            "description": "Hemisphere A + B Union Review & Git Commit"
+          }
+        }
+      },
+      {
+        "run_sandbox_3pass_rehearsal": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "openclawGateway",
+            "args": {
+              "action": "export_standalone_github_sandbox",
+              "protocol": "ORIFICE-TXRX-V1.0",
+              "method_id": "tesseract_4d_micro_synth",
+              "run_llm": true,
+              "push_to_github": true,
+              "repo_full_name": "eyeoverthink/fraymus-sovereign-sandbox"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "3-Pass Sandbox Practice & Standalone GitHub Repo Sync",
+            "description": "Refines 4D Micro-Instrument & updates sandbox-ledger.json"
+          }
+        }
+      }
+    ]
+  }
+}

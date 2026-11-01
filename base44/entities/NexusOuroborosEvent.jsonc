@@ -1,0 +1,73 @@
+{
+  "type": "object",
+  "name": "NexusOuroborosEvent",
+  "description": "Append-only Cognitive Event Ledger entry for the Argon Ouroboros-Gauntlet RSI Engine.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "seq": {
+      "type": "integer"
+    },
+    "event_id": {
+      "type": "string"
+    },
+    "episode_id": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string"
+    },
+    "branch": {
+      "type": "string"
+    },
+    "code_hash": {
+      "type": "string"
+    },
+    "fitness": {
+      "type": "number"
+    },
+    "detail": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "boolean"
+      }
+    },
+    "latency_ns": {
+      "type": "number"
+    },
+    "entropy": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "seq",
+    "event_id",
+    "episode_id",
+    "event_type",
+    "detail"
+  ],
+  "rls": {
+    "create": {
+      "data.owner_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

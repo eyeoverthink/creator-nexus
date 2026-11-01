@@ -1,0 +1,48 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "fraymus_creator_archive_relay_heartbeat",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "relay_due_creator_entries": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "orificeBridge",
+            "args": {
+              "action": "continuity_tick",
+              "workspace_id": "6ad00c80d59de24395665dee"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Relay due creator archive entries",
+            "description": "Bounded no-AI heartbeat, even when the app is closed"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Every five minutes, process at most two due creator archive deliveries in the primary workspace, with leases, persistent retries and protocol receipts. No LLM or research calls. Browser-independent, not a guarantee of uninterrupted uptime.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/5 * * * *",
+      "one_time_date": null,
+      "timezone": "America/Los_Angeles",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "name": "Fraymus Creator Archive Relay Heartbeat"
+}

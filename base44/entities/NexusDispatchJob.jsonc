@@ -1,0 +1,192 @@
+{
+  "name": "NexusDispatchJob",
+  "type": "object",
+  "description": "Accountable cross-node task queue item routed by the Sovereign Motor Dispatcher across Base44, Hostinger KVM4 VPS nodes, Hermes 30-Skill Fleet, Windows GPU (Ollama/LoRA), Claude Code, and the Persistent Artifact Vault.",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "job_id": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "directive": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "task_type": {
+      "type": "string",
+      "enum": [
+        "pdf_document",
+        "cover_art_media",
+        "lora_training",
+        "ollama_inference",
+        "vps_daemon_scrape",
+        "claude_code_repo",
+        "rea_reverse_engineer",
+        "video_render",
+        "hermes_skill_exec",
+        "hermes_subagent_pipeline",
+        "collaboration_assay"
+      ],
+      "default": "pdf_document"
+    },
+    "assigned_node": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "assigned_ip": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "fallback_node": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "routing_reason": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "execution_mode": {
+      "type": "string",
+      "enum": [
+        "immediate_cloud",
+        "tailnet_pull_queue",
+        "hybrid_bridge"
+      ],
+      "default": "immediate_cloud"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "claimed",
+        "running",
+        "completed",
+        "failed",
+        "cancelled"
+      ],
+      "default": "queued"
+    },
+    "claimed_by": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "artifact_kind": {
+      "type": "string",
+      "enum": [
+        "pdf",
+        "image",
+        "lora_bundle",
+        "modelfile",
+        "code_patch",
+        "rea_blueprint",
+        "json_report",
+        "subagent_dag",
+        "skill_script_output",
+        "coherence_assay_report"
+      ],
+      "default": "pdf"
+    },
+    "artifact_title": {
+      "type": "string",
+      "maxLength": 240
+    },
+    "artifact_url": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "artifact_github_url": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "artifact_sha256": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "artifact_size_bytes": {
+      "type": "number"
+    },
+    "result_summary": {
+      "type": "string",
+      "maxLength": 8000
+    },
+    "completed_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "job_id",
+    "directive",
+    "task_type",
+    "assigned_node",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "name": "NexusRegressionObservation",
+  "type": "object",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "origin",
+        "behavior",
+        "sandbox"
+      ]
+    },
+    "source_key": {
+      "type": "string"
+    },
+    "record_id": {
+      "type": "string"
+    },
+    "agent": {
+      "type": "string"
+    },
+    "metric": {
+      "type": "string"
+    },
+    "partition": {
+      "type": "string",
+      "enum": [
+        "train",
+        "validation"
+      ]
+    },
+    "group_key": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "measured_at": {
+      "type": "string"
+    },
+    "provenance": {
+      "type": "string"
+    },
+    "x1": {
+      "type": "number"
+    },
+    "x2": {
+      "type": "number"
+    },
+    "x3": {
+      "type": "number"
+    },
+    "y": {
+      "type": "number"
+    },
+    "xx11": {
+      "type": "number"
+    },
+    "xx12": {
+      "type": "number"
+    },
+    "xx13": {
+      "type": "number"
+    },
+    "xx22": {
+      "type": "number"
+    },
+    "xx23": {
+      "type": "number"
+    },
+    "xx33": {
+      "type": "number"
+    },
+    "xy1": {
+      "type": "number"
+    },
+    "xy2": {
+      "type": "number"
+    },
+    "xy3": {
+      "type": "number"
+    },
+    "yy": {
+      "type": "number"
+    },
+    "t": {
+      "type": "number"
+    },
+    "tt": {
+      "type": "number"
+    },
+    "ty": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "source",
+    "source_key",
+    "agent",
+    "metric",
+    "partition",
+    "x1",
+    "x2",
+    "x3",
+    "y"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "data.owner_id": "{{user.id}}"
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

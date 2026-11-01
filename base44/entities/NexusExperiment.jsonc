@@ -1,0 +1,120 @@
+{
+  "name": "NexusExperiment",
+  "type": "object",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "workspace_id": {
+      "type": "string"
+    },
+    "spark_id": {
+      "type": "string"
+    },
+    "draft_id": {
+      "type": "string"
+    },
+    "draft_revision": {
+      "type": "integer"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "hypothesis": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "metric": {
+      "type": "string",
+      "enum": [
+        "views",
+        "likes",
+        "comments",
+        "clicks"
+      ]
+    },
+    "target": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "minimum_views": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "observation_hours": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 720
+    },
+    "registered_at": {
+      "type": "string"
+    },
+    "published_at": {
+      "type": "string"
+    },
+    "post_url": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "closes_at": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "registered",
+        "observing",
+        "final"
+      ]
+    },
+    "observed_views": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "observed_value": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "win",
+        "loss",
+        "inconclusive"
+      ]
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 2000
+    }
+  },
+  "required": [
+    "owner_id",
+    "workspace_id",
+    "spark_id",
+    "title",
+    "hypothesis",
+    "metric",
+    "target",
+    "minimum_views",
+    "observation_hours",
+    "registered_at",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "data.owner_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

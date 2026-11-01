@@ -1,0 +1,8 @@
+import {useState} from 'react';
+import {Copy,Check} from 'lucide-react';
+import {Button} from '@/components/ui/button';
+export default function SparkSafety({card}){
+ const [copied,setCopied]=useState(false),[error,setError]=useState(''),s=card.safe_by_default||{},same=s.sameness||{},disclosure=s.ai_disclosure||{};
+ async function copy(){try{await navigator.clipboard.writeText(disclosure.caption_text||'');setCopied(true);}catch{setError('Copy unavailable. Select and copy the caption text below.');}}
+ return <details className="text-xs border-t border-border pt-3"><summary className="cursor-pointer text-muted-foreground">Safety, disclosure & sameness</summary><div className="space-y-3 mt-3"><p className={s.risk_level==='high'?'text-destructive':s.risk_level==='medium'?'text-caution':'text-primary'}>Risk: {s.risk_level}</p>{!!s.risk_flags?.length&&<p>{s.risk_flags.join(', ')}</p>}{s.how_handled&&<p className="text-muted-foreground">How handled: {s.how_handled}</p>}<p><span className="text-muted-foreground">Spoken disclosure: </span>{disclosure.spoken_line}</p><p className="whitespace-pre-wrap"><span className="text-muted-foreground">Caption: </span>{disclosure.caption_text}</p><Button size="sm" variant="outline" onClick={copy}>{copied?<Check/>:<Copy/>}{copied?'Copied':'Copy caption'}</Button>{error&&<p role="alert" className="text-destructive">{error}</p>}<p className={same.verdict==='block'?'text-destructive':same.verdict==='warn'?'text-caution':'text-primary'}>Sameness: {same.verdict} · {same.score?.toFixed(3)}</p>{same.against&&<p className="text-muted-foreground">Closest to: {same.against} ({same.scope}, {same.basis})</p>}</div></details>;
+}

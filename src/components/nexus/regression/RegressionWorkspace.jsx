@@ -1,0 +1,10 @@
+import {Button} from '@/components/ui/button';
+import useRegression from '@/components/nexus/regression/useRegression';
+import RegressionResults from '@/components/nexus/regression/RegressionResults';
+import RegressionScenario from '@/components/nexus/regression/RegressionScenario';
+import RegressionHistory from '@/components/nexus/regression/RegressionHistory';
+export default function RegressionWorkspace({workspace,source,agent,metric}){
+ const analysis=useRegression(workspace,source,agent,metric),busy=analysis.busy||analysis.isFetching,data=analysis.data;
+ if(!workspace)return <p role="status" className="text-xs text-muted-foreground">Connecting to your workspace…</p>;
+ return <div className="space-y-4"><div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={busy} onClick={()=>analysis.refetch()}>Refresh measurements</Button>{source!=='behavior'&&<Button size="sm" variant="outline" disabled={busy} onClick={analysis.sync}>{analysis.hasSyncMore?'Sync next 50 saved results':'Sync saved results'}</Button>}</div>{source==='behavior'&&<p className="text-[10px] text-muted-foreground">Accepted and rejected proposals are logged from now on. Earlier decisions were not persisted; refresh after reviewing a proposal. Agent selection is a filter, not proof that one agent causes better outcomes.</p>}{analysis.isPending&&<p role="status" className="text-xs">Loading regression measurements…</p>}{analysis.error&&<p role="alert" className="text-xs text-destructive">{analysis.error}</p>}{analysis.message&&<p role="status" className="text-xs text-primary">{analysis.message}</p>}{data&&<><RegressionResults data={data}/><RegressionScenario data={data} busy={busy} onAnalyze={analysis.analyze}/><RegressionHistory logs={data.logs} busy={busy} onAdopt={analysis.adopt} onMore={analysis.more} hasMore={data.more_logs}/></>}</div>;
+}

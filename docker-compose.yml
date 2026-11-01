@@ -1,0 +1,7 @@
+services:
+  creator-nexus:
+    build: .
+    container_name: creator-nexus
+    restart: unless-stopped
+    ports:
+      - "3080:80"
