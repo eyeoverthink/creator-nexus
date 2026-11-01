@@ -187,8 +187,17 @@ export default function LivingArtifact() {
     try {
       const res = await fetch(`${API}/artifacts?limit=50`);
       if (res.ok) {
-        const data = await res.json();
-        setArtifacts(data);
+        const raw = await res.json();
+        const rows = Array.isArray(raw) ? raw : [];
+        setArtifacts(rows.filter(Boolean).map(r => ({
+          id: r.id,
+          donorName: r.donorName || r.donor_name,
+          amount: r.amount,
+          message: r.message,
+          sha256: r.sha256,
+          durationMs: r.durationMs || r.duration_ms,
+          timestamp: r.timestamp || r.created_at,
+        })));
       }
     } catch (err) {
       setError('Could not reach minting pipeline — is Chandra-FRAYMUS running?');
@@ -234,8 +243,8 @@ export default function LivingArtifact() {
       ws.onmessage = (evt) => {
         try {
           const msg = JSON.parse(evt.data);
-          if (msg.type === 'artifact') {
-            setArtifacts(prev => [msg.data, ...prev].slice(0, 100));
+          if (msg.type === 'artifact' && msg.payload) {
+            setArtifacts(prev => [msg.payload, ...prev].slice(0, 100));
           }
         } catch {}
       };
