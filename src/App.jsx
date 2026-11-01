@@ -55,8 +55,7 @@ const AuthenticatedApp = () => {
   const isPublicShareRoute =
     typeof window !== 'undefined' &&
     (window.location.pathname.startsWith('/live-feed') ||
-      window.location.pathname.startsWith('/docs') ||
-      window.location.pathname.startsWith('/living-artifact'));
+      window.location.pathname.startsWith('/docs'));
 
   // Handle authentication errors (allow public share routes /live-feed and /docs without login)
   if (authError && !isPublicShareRoute) {
@@ -79,7 +78,6 @@ const AuthenticatedApp = () => {
       <Route path="/oauth/consent" element={<OAuthConsent />} />
       <Route path="/live-feed" element={<LiveSharedFeed />} />
       <Route path="/docs" element={<LiveSharedFeed />} />
-      <Route path="/living-artifact" element={<LivingArtifact />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}><Route path="/" element={<FraymusPartner />} /><Route path="/dashboard" element={<Home />} /><Route path="/workflows" element={<Workflows />} /><Route path="/studio-tools" element={<StudioTools />} /><Route path="/agents" element={<StarterAgents />} /><Route path="/time-audit" element={<TimeAudit />} /><Route path="/studio" element={<Studio />} /><Route path="/origin" element={<Origin />} /><Route path="/knowledge" element={<Knowledge />} /><Route path="/spark" element={<Spark />} /><Route path="/library" element={<Library />} /><Route path="/watch/:jobId" element={<Watch />} /><Route path="/director-lab" element={<DirectorLab />} /><Route path="/argon" element={<ArgonEngine />} /><Route path="/loose-screw" element={<LooseScrew />} /><Route path="/ai-workshop" element={<AiWorkshopOs />} /><Route path="/openclaw" element={<OpenClawHub />} /><Route path="/orifice-relay" element={<OrificeRelay />} /><Route path="/hermes" element={<HermesHub />} /><Route path="/factory" element={<ProductionFactory />} /><Route path="/connect" element={<Connect />} /><Route path="/admin/agent-monitor" element={<AgentMonitor />} /><Route path="/fraymus-architecture" element={<FraymusArchitecture />} /></Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
@@ -90,17 +88,23 @@ const AuthenticatedApp = () => {
 function App() {
 
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <FraymusProvider>
-          <Router>
-            <ScrollToTop />
-            <AuthenticatedApp />
-          </Router>
-          <Toaster />
-        </FraymusProvider>
-      </QueryClientProvider>
-    </AuthProvider>
+    <Router>
+      <ScrollToTop />
+      <Routes>
+        {/* Living Artifact is fully isolated from Base44 — no AuthProvider, no FraymusProvider */}
+        <Route path="/living-artifact" element={<LivingArtifact />} />
+        <Route path="*" element={
+          <AuthProvider>
+            <QueryClientProvider client={queryClientInstance}>
+              <FraymusProvider>
+                <AuthenticatedApp />
+                <Toaster />
+              </FraymusProvider>
+            </QueryClientProvider>
+          </AuthProvider>
+        } />
+      </Routes>
+    </Router>
   )
 }
 
