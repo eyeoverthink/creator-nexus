@@ -7,7 +7,9 @@ and upload them via runnerReport multipart with X-Media-Type: audio.
 """
 import json, os, pathlib, re, sys, time, urllib.error, urllib.request, uuid
 
-APP = "https://nexus-create-sync.base44.app"
+# Base44 app URL. Override with RUNNER_BASE_URL (same variable runner_client.py uses).
+# The old default, nexus-create-sync.base44.app, no longer exists ("App not found") and caused 404s.
+APP = os.environ.get("RUNNER_BASE_URL", "https://creator-nexus.base44.app").rstrip("/")
 ROOT = pathlib.Path("/opt/nexus-runner")
 MAX_SIZE = 10 * 1024 * 1024
 UPLOADED_MARKER = ".audio_uploaded"
