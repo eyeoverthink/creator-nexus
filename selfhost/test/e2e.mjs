@@ -32,7 +32,7 @@ step(`signed in as ${me.email} role=${me.role} id=${me.id}`);
 // UI CRUD on the Time Audit page.
 await page.goto(BASE + '/time-audit', { waitUntil: 'networkidle' }); await page.waitForTimeout(1500);
 await page.getByText('Log this half hour').first().click(); await page.waitForTimeout(500);
-await page.locator('input[type=text]:visible').first().fill('E2E self-host check ' + new Date().toISOString().slice(0, 16));
+await page.getByLabel('What did you do?').first().fill('E2E self-host check ' + new Date().toISOString().slice(0, 16));
 await page.getByRole('button', { name: /Save & next/i }).first().click(); await page.waitForTimeout(2000);
 await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(1500);
 step('after reload, saved row visible: ' + /E2E self-host check/.test(await page.locator('body').innerText()));
