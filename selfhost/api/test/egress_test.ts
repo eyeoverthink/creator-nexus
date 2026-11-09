@@ -1,0 +1,14 @@
+const seen: string[] = [];
+globalThis.fetch = (async (i: any) => { seen.push(i instanceof Request ? i.url : String(i)); return new Response('{}'); }) as any;
+Deno.env.set('SELF_URL', 'http://127.0.0.1:8787');
+await import('../lib/egress.ts');
+const a = await fetch('https://fraymus-transmuter.base44.app/functions/orificeBridge', { method: 'POST', body: '{}' });
+const b = await fetch('https://creator-nexus.base44.app/functions/openclawGateway?x=1', { method: 'POST' });
+const c = await fetch('https://media.base44.com/files/public/x.png');
+const d = await fetch('https://media.base44.com/files/public/x.png', { method: 'POST' });
+const e = await fetch(new Request('https://app.base44.com/api/apps/1/entities/X'));
+const f = await fetch('https://api.github.com/zen');
+console.log(a.status, b.status, c.status, d.status, e.status, f.status);
+console.log(seen);
+if (seen.some(s => /base44\.app|app\.base44\.com/.test(s))) throw new Error('LEAK');
+console.log('egress guard OK');

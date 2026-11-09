@@ -29,7 +29,9 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await base44.auth.register({ email, password });
+      const result = await base44.auth.register({ email, password });
+      // Self-hosted server: no e-mail code, the account is signed in right away.
+      if (result?.access_token) { base44.auth.setToken(result.access_token); window.location.href = safeReturnTo(); return; }
       setShowOtp(true);
     } catch (err) {
       setError(err.message || "Registration failed");

@@ -1,0 +1,8 @@
+[Unit]
+Description=creator-nexus scheduled workflow %i
+After=docker.service
+
+[Service]
+Type=oneshot
+# Secret header lives in a root-only file so it never appears in the process list.
+ExecStart=/usr/bin/curl -fsS -m 600 -X POST -H @/opt/creator-nexus/selfhost/cron.header http://127.0.0.1:8787/internal/workflows/%i

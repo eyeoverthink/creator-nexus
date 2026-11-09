@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "npm:@base44/sdk@0.8.54": "./shim/sdk.ts",
+    "npm:@base44/sdk@0.8.52": "./shim/sdk.ts",
+    "base44:runtime": "./shim/runtime.ts",
+    "base44:runtime/actors": "./shim/actors.ts"
+  },
+  "nodeModulesDir": "none",
+  "tasks": { "start": "deno run -A main.ts" }
+}
