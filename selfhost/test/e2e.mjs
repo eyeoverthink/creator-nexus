@@ -46,7 +46,7 @@ const idea = await page.evaluate(async () => {
   return { status: r.status, body: await r.json() };
 });
 const run = idea.body.run || {};
-step(`ideaFinder HTTP ${idea.status} in ${Math.round((Date.now() - t0) / 1000)}s, status=${run.status}, ideas=${(run.ideas || []).length}, first="${(run.ideas || [])[0]?.title || idea.body.error || ''}"`);
+step(`ideaFinder HTTP ${idea.status} in ${Math.round((Date.now() - t0) / 1000)}s, status=${run.status}, ideas=${(run.ideas || []).length}, first="${(run.ideas || [])[0]?.name || (run.ideas || [])[0]?.title || idea.body.error || ''}"`);
 const st = await page.evaluate(async () => (await fetch('/api/selfhost/status')).json());
 step('last LLM route: ' + JSON.stringify(st.last_llm_route) + ' egress log: ' + JSON.stringify(st.egress.slice(0, 5)));
 step('browser errors: ' + JSON.stringify(errors.slice(0, 8)));
