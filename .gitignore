@@ -37,3 +37,9 @@ dist-ssr
 
 # Local link to a Base44 app, written by `base44 link`
 base44/.app.jsonc
+
+# Phase 2 data move (server-side only, never commit)
+/import/
+/backups/
+/.base44-cli-home/
+*.token

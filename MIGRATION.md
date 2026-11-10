@@ -74,24 +74,31 @@ selfhost/scripts/workflow-timers.sh status|install|enable <name>|disable all
 
 ## Phase 2: move the data (after Base44 credits reset)
 
-1. **Export** (on any machine with Node 20+; entity reads only, no AI/integration calls):
-   ```bash
-   # sign in at https://creator-nexus.base44.app as admin; copy localStorage `base44_access_token` into the env var (never into chat)
-   export BASE44_TOKEN='…'
-   npm i @base44/sdk@0.8.59
-   node selfhost/scripts/export-base44.mjs ./base44-export      # writes <Entity>.json for all 49 entities
-   ```
-   Alternative: Base44 dashboard → Data → each entity → Export CSV; the importer reads `<Entity>.csv` too.
-   Private files (`UploadPrivateFile` URIs) are not in the export; re-upload or fetch them with `CreateFileSignedUrl` while Base44 is still up (TODO script).
-2. **Copy** the folder to the server: `scp -r base44-export root@nexus-kvm8:/opt/creator-nexus/import`
-3. **Import** (keeps ids, timestamps, created_by):
-   ```bash
-   cd /opt/creator-nexus/selfhost
-   docker compose run --rm -v /opt/creator-nexus/import:/import api run -A scripts/import-base44.ts /import   # add --replace to wipe each table first
-   ```
-4. **Users**: imported `User` rows keep their Base44 ids. When a person registers on the new server with the same e-mail, the new login reuses that id, so `owner_id` links (and hard-coded ids like the workspace in the heartbeat workflow) keep working. Register *after* importing.
-5. **Runner** (dual-run test): on Nexus, a *copy* of the runner could point at `RUNNER_BASE_URL=https://<kvm8 tailnet host>` with this server's `RUNNER_SECRET` (read it on the server; don't paste it anywhere). Not done in Phase 1.
-6. Phase 3 (cutover): enable timers, implement entity triggers, switch DNS/app URL. Whether anything else (e.g. Phoenix :3080) is retired is Vaughn’s call; nothing is shut down by this plan.
+Everything runs **on nexus-kvm8 as root**, from `/opt/creator-nexus/selfhost`, with `selfhost/scripts/phase2.sh`.
+Base44 is only *read*: the exporter's single network function refuses anything but `GET` (Apps API: entity schemas,
+per-entity `count` and `v2/list`, `User` list/count). No functions, integrations, AI or writes. About 1 + 2×(entities) calls
+(~100 for 49 entities), paced at ≤55/min. The running api/web/db containers are not restarted; export/import use one-off containers.
+
+1. **Credential** (pick one, never paste it in chat):
+   - `phase2.sh cli-login`: Base44 device-code login (prints a URL + code; Vaughn approves it in his browser). Then use `--cli`;
+     every call goes through `base44 api fetch … --read-only`, which refuses non-read-only operations.
+   - or a **Read-only personal access token** (Base44 → workspace settings → Secrets → access tokens) saved as
+     `/root/.base44-readonly.token` (mode 600). Delete it afterwards.
+2. `phase2.sh backup`: `pg_dump -Fc` + files-volume tarball → `/opt/creator-nexus/backups/cn-<UTC>.dump`, `files-<UTC>.tgz` (mode 600).
+   Restore: `docker compose exec -T db pg_restore -U cn -d cn --clean < backups/cn-<UTC>.dump`.
+3. `phase2.sh export [--cli]` → `/opt/creator-nexus/import/<Entity>.json`, `_manifest.json` (Base44's own counts, schema diff,
+   API calls), `_files.json` (every Base44-hosted URL / private URI found in the data).
+4. `phase2.sh files`: downloads public copies (media.base44.com, Supabase public storage, base44 public file links: plain HTTPS,
+   not Apps API, no credits). Records keep their original URLs; `sh.base44_file_mirror` maps url → local `/files/public/<key>`.
+   Private `UploadPrivateFile` URIs are listed, not fetched.
+5. `phase2.sh import [--replace]`: takes a fresh backup, then upserts by Base44 id (keeps id, created/updated dates as UTC,
+   created_by, created_by_id, is_sample). Idempotent. Users go first; `ADMIN_EMAILS` (eyeoverthink@gmail.com) are forced to admin;
+   if an e-mail already registered here under a different id, that login (auth user/account/sessions and anything it created) is
+   moved onto the Base44 id. Local-only rows (Phase 1 test data) are kept unless `--replace`.
+6. `phase2.sh verify`: per entity Base44 count vs exported vs present in Postgres, plus field-by-field check. Exit 1 on mismatch.
+7. **Users** sign in on the new server by registering with the same e-mail (allow-listed) → they get their Base44 id and data.
+8. **Runner** stays on Base44 for now. Dual-run test later: a *copy* of the runner with `RUNNER_BASE_URL=https://<kvm8 tailnet host>`.
+9. Phase 3 (cutover): enable timers, implement entity triggers, switch the app URL. Nothing is shut down by this plan.
 
 ## Verification
 
