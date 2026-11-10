@@ -771,19 +771,8 @@ export default async function(req) {
     if (action === 'generate_daily_rsa_rsi_report') {
       if (!user) return json({ error: 'Unauthorized' }, 401);
 
-      // Find all workspaces belonging to the user (or specific workspace_id if supplied)
-      let targetWorkspaces = [];
-      if (input.workspace_id && ID_RE.test(String(input.workspace_id))) {
-        const p = await db.entities.NexusWorkspace.filter({ id: String(input.workspace_id) }, { limit: 1 });
-        if (p.items?.[0]) targetWorkspaces = [p.items[0]];
-      }
-      if (!targetWorkspaces.length && user?.id) {
-        const p = await db.entities.NexusWorkspace.filter({ owner_id: String(user.id) }, { sort: '-created_date', limit: 10 });
-        if (p.items?.length) targetWorkspaces = p.items;
-      }
-      if (!targetWorkspaces.length) {
-        targetWorkspaces = [workspace];
-      }
+      // One report per run: the requested workspace, else the main (oldest) workspace.
+      const targetWorkspaces = [workspace];
 
       const dateStr = new Date().toISOString().slice(0, 10);
       const timeStr = new Date().toUTCString();
