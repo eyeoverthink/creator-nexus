@@ -1,7 +1,7 @@
 {
   "name": "FraymusContinuityEntry",
   "type": "object",
-  "description": "Durable creator directive/archive and bounded peer outbox. Peer responded does not prove independent storage or authenticated duplex. No automatic model runs or code changes.",
+  "description": "Durable creator directive/archive and bounded peer outbox. Peer responded does not prove independent storage or authenticated duplex. skipped_echo = a peer's own receipt that is kept but never re-sent (prevents relay loops). No automatic model runs or code changes.",
   "properties": {
     "owner_id": {
       "type": "string"
@@ -40,7 +40,8 @@
         "queued",
         "sending",
         "waiting",
-        "peer_responded"
+        "peer_responded",
+        "skipped_echo"
       ]
     },
     "attempts": {

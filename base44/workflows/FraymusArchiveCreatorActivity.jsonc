@@ -1,6 +1,6 @@
 {
   "name": "Fraymus Archive Creator App Activity",
-  "description": "Retain new primary-workspace event summaries and queue cross-app relay. Raw event bodies and uploads are excluded; no UI-click surveillance or builder-chat access.",
+  "description": "Retain new primary-workspace event summaries and queue cross-app relay. Skips events received from peer apps (orifice rx receipts) so a peer's reply is never archived and sent back to it in a loop. Raw event bodies and uploads are excluded; no UI-click surveillance or builder-chat access.",
   "trigger": {
     "config": {
       "trigger_type": "entity",
@@ -9,7 +9,7 @@
         "create"
       ]
     },
-    "condition": "${ .trigger.data.owner_id == \"6ad00af54909c671e73bb83d\" and .trigger.data.workspace_id == \"6ad00c80d59de24395665dee\" and ((.trigger.data.kind // \"\") | startswith(\"continuity.\") | not) }"
+    "condition": "${ .trigger.data.owner_id == \"6ad00af54909c671e73bb83d\" and .trigger.data.workspace_id == \"6ad00c80d59de24395665dee\" and ((.trigger.data.kind // \"\") | startswith(\"continuity.\") | not) and ((.trigger.data.kind // \"\") | startswith(\"orifice.rx\") | not) and ((.trigger.data.kind // \"\") | startswith(\"orifice_rx\") | not) }"
   },
   "definition": {
     "document": {
