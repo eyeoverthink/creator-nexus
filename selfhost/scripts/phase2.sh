@@ -9,7 +9,7 @@
 #   selfhost/scripts/phase2.sh files                  # download public Base44 file copies into the export
 #   selfhost/scripts/phase2.sh import [--replace]     # backup first, then import
 #   selfhost/scripts/phase2.sh verify                 # Base44 counts vs Postgres
-#   selfhost/scripts/phase2.sh all [--cli]            # backup, export, files, import, verify
+#   selfhost/scripts/phase2.sh all [--cli]            # backup, export, files, import, verify (SKIP_BACKUP=1 to skip backup)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT=/opt/creator-nexus; IMP=$ROOT/import; BK=$ROOT/backups; B44HOME=$ROOT/.base44-cli-home
@@ -24,7 +24,9 @@ backup() {
   docker run --rm -v creator-nexus_files:/f:ro -v "$BK":/b alpine tar czf "/b/files-$TS.tgz" -C /f .
   chmod 600 "$BK/cn-$TS.dump" "$BK/files-$TS.tgz"
   [ -s "$BK/cn-$TS.dump" ] || { echo "backup is empty, stopping"; exit 1; }
-  docker compose exec -T db pg_restore -l /dev/stdin < "$BK/cn-$TS.dump" > /dev/null && echo "backup ok: $BK/cn-$TS.dump ($(du -h "$BK/cn-$TS.dump" | cut -f1)), $BK/files-$TS.tgz"
+  n=$(docker compose exec -T db sh -c 'cat > /tmp/chk.dump && pg_restore -l /tmp/chk.dump | grep -c " TABLE "; rm -f /tmp/chk.dump' < "$BK/cn-$TS.dump")
+  [ "${n:-0}" -gt 0 ] || { echo "backup did not verify, stopping"; exit 1; }
+  echo "backup verified ($n table entries)" && echo "backup ok: $BK/cn-$TS.dump ($(du -h "$BK/cn-$TS.dump" | cut -f1)), $BK/files-$TS.tgz"
 }
 node_run() { docker run --rm -v "$ROOT":/repo:ro -v "$IMP":/import -v "$B44HOME":/home/node -e HOME=/home/node -w /repo "$@"; }
 export_() {
@@ -44,8 +46,8 @@ case "$cmd" in
   cli-login) node_run -it -u node $NODE_IMG sh -c 'npx --yes base44 login && npx --yes base44 whoami' ;;
   export) export_ "$@" ;;
   files) files ;;
-  import) backup; api_run scripts/import-base44.ts /import "$@" ;;
+  import) [ "${SKIP_BACKUP:-0}" = 1 ] && echo "skipping backup (SKIP_BACKUP=1)" || backup; api_run scripts/import-base44.ts /import "$@" ;;
   verify) api_run scripts/verify-import.ts /import ;;
-  all) backup; export_ "$@"; files; api_run scripts/import-base44.ts /import; api_run scripts/verify-import.ts /import ;;
+  all) [ "${SKIP_BACKUP:-0}" = 1 ] && echo "skipping backup (SKIP_BACKUP=1)" || backup; export_ "$@"; files; api_run scripts/import-base44.ts /import; api_run scripts/verify-import.ts /import ;;
   *) sed -n 2,13p "$0" ;;
 esac
